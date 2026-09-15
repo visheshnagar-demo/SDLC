@@ -1,113 +1,84 @@
-from typing import Any, Optional
-from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 
+from pydantic import BaseModel, Field, field_validator
 
-class CartItem(BaseModel):
-    name: str
-    quantity: int = 1
-    unit_price: float
+VALID_CATEGORIES = {"Work", "Personal", "Urgent", "Promotional"}
 
 
-class CheckoutSessionRequest(BaseModel):
-    amount: float = Field(gt=0, description="Amount in base currency")
-    currency: str = Field(default="USD", description="Settlement/target currency")
-    customer_email: str
-    items: Optional[list[CartItem]] = Field(default_factory=list)
+class EmailClassifyRequest(BaseModel):
+    text: str = Field(..., min_length=1, description="Raw email body text")
+    subject: str | None = Field(None, max_length=500, description="Email subject")
+    sender: str | None = Field(None, max_length=255, description="Sender email or name")
 
 
-class CheckoutSessionResponse(BaseModel):
-    session_id: str
-    payment_intent_id: str
-    client_secret: str
-    base_amount: float
-    base_currency: str
-    target_amount: float
-    target_currency: str
-    exchange_rate: float
+class ClassificationResponse(BaseModel):
+    id: str | None = None
+    primary_category: str
+    ai_category: str | None = None
+    confidence_score: float
+    user_override_category: str | None = None
+    is_overridden: bool = False
+    all_scores: dict[str, float] | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
 
 
-class DigitalWalletPaymentRequest(BaseModel):
-    wallet_type: str = Field(description="apple_pay or google_pay")
-    payment_token: str
-    currency: str = "USD"
-    amount: float = Field(gt=0)
-    customer_email: Optional[str] = "customer@example.com"
-
-
-class DigitalWalletPaymentResponse(BaseModel):
-    transaction_id: str
-    payment_intent_id: str
-    wallet_type: str
-    amount: float
-    currency: str
-    status: str
-
-
-class ExchangeRatesResponse(BaseModel):
-    base_currency: str
-    rates: dict[str, float]
-    timestamp: str
-
-
-class RefundRequest(BaseModel):
-    transaction_id: str
-    amount: float = Field(gt=0)
-    reason: str
-    memo: Optional[str] = None
-
-
-class RefundSummary(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class EmailResponse(BaseModel):
     id: str
-    transaction_id: str
-    refund_amount: float
-    currency: str
-    reason: str
-    memo: Optional[str] = None
-    status: str
-    created_at: Optional[datetime] = None
+    sender: str | None = None
+    subject: str | None = None
+    excerpt: str
+    body_text: str
+    source_type: str
+    file_name: str | None = None
+    classification: ClassificationResponse | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
-class TransactionSummary(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+class EmailListResponse(BaseModel):
+    total: int
+    skip: int
+    limit: int
+    items: list[EmailResponse]
 
+
+class CategoryOverrideRequest(BaseModel):
+    category: str = Field(
+        ..., description="Target category: Work, Personal, Urgent, or Promotional"
+    )
+
+    @field_validator("category")
+    @classmethod
+    def validate_category(cls, v: str) -> str:
+        # Normalize title case e.g. "work" -> "Work"
+        formatted = v.strip().capitalize()
+        if formatted not in VALID_CATEGORIES:
+            raise ValueError(
+                f"Invalid category '{v}'. Allowed categories are: {', '.join(sorted(VALID_CATEGORIES))}"
+            )
+        return formatted
+
+
+class EmailOverrideResponse(BaseModel):
     id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    currency: str
-    status: str
-    created_at: Optional[datetime] = None
+    classification: ClassificationResponse
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
-class TransactionDetail(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    base_currency: str
-    target_currency: str
-    converted_amount: float
-    exchange_rate: float
-    status: str
-    refunded_amount: float
-    remaining_refundable_balance: float
-    refunds: list[RefundSummary] = Field(default_factory=list)
-    created_at: Optional[datetime] = None
-
-
-class AuditLogEntry(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    transaction_id: Optional[str] = None
-    event_type: str
-    ip_address: str
-    masked_payload: dict[str, Any]
-    created_at: Optional[datetime] = None
+class MetricsResponse(BaseModel):
+    total_processed: int
+    work_count: int
+    personal_count: int
+    urgent_count: int
+    promotional_count: int
+    overridden_count: int

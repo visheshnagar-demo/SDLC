@@ -1,17 +1,16 @@
 import os
-import uuid
-import datetime
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
-from sqlalchemy.exc import IntegrityError
-import bcrypt
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:////tmp/app.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./emails.db")
 
-connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
+connect_args = {}
+if DATABASE_URL.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
+
 engine = create_engine(DATABASE_URL, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 Base = declarative_base()
 
 
@@ -23,76 +22,88 @@ def get_db():
         db.close()
 
 
-def get_password_hash(password: str) -> str:
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
-
-
-def init_db():
+def init_db(target_engine=None):
     from server import models  # noqa: F401
 
-    Base.metadata.create_all(bind=engine)
-    db = SessionLocal()
-    try:
-        seed_data(db)
-    finally:
-        db.close()
+    eng = target_engine or engine
+    Base.metadata.create_all(bind=eng)
 
 
-def seed_data(db: Session):
-    from server.models import User, ExchangeRateCache
+def seed_data(db):
+    """Seed initial sample emails and classifications idempotently."""
+    import uuid
 
-    # Seed regular test user
-    try:
-        user = db.query(User).filter(User.email == "test@example.com").first()
-        if not user:
-            user = User(
-                id=str(uuid.uuid4()),
-                email="test@example.com",
-                hashed_password=get_password_hash("testpassword"),
-                role="user",
-                is_active=True,
-                is_verified=True,
-            )
-            db.add(user)
-            db.commit()
-    except IntegrityError:
-        db.rollback()
+    from server.models import Classification, Email
 
-    # Seed admin user
-    try:
-        admin = db.query(User).filter(User.email == "admin@example.com").first()
-        if not admin:
-            admin = User(
-                id=str(uuid.uuid4()),
-                email="admin@example.com",
-                hashed_password=get_password_hash("adminpassword"),
-                role="admin",
-                is_active=True,
-                is_verified=True,
-            )
-            db.add(admin)
-            db.commit()
-    except IntegrityError:
-        db.rollback()
+    # Check if data already exists
+    existing_count = db.query(Email).count()
+    if existing_count > 0:
+        return
 
-    # Seed initial exchange rates cache
-    try:
-        cache = (
-            db.query(ExchangeRateCache)
-            .filter(ExchangeRateCache.base_currency == "USD")
-            .first()
+    sample_items = [
+        {
+            "id": str(uuid.uuid4()),
+            "sender": "alerts@monitoring.company.com",
+            "subject": "CRITICAL: Database Replication Lag Alert",
+            "body_text": "Production database cluster db-primary-01 has detected replication lag exceeding 45 seconds. Immediate investigation required by on-call engineer.",
+            "source_type": "TEXT_ENTRY",
+            "file_name": None,
+            "category": "Urgent",
+            "confidence": 98.50,
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "sender": "sarah.jenkins@company.com",
+            "subject": "Q3 Roadmap Review and Sprint Planning",
+            "body_text": "Hi team, please find attached the agenda for our upcoming Q3 product roadmap review scheduled for Thursday at 2 PM. Review the deliverables in advance.",
+            "source_type": "TEXT_ENTRY",
+            "file_name": None,
+            "category": "Work",
+            "confidence": 92.00,
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "sender": "offers@e-deals.example.com",
+            "subject": "Flash Sale! 50% Off Cloud Hosting and Developer Tools",
+            "body_text": "Exclusive limited time deal: upgrade your cloud storage and hosting tiers today and receive a 50% discount on annual subscriptions with code DEV50.",
+            "source_type": "TEXT_ENTRY",
+            "file_name": None,
+            "category": "Promotional",
+            "confidence": 95.00,
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "sender": "alex.family@gmail.com",
+            "subject": "Weekend hiking and BBQ plans",
+            "body_text": "Hey everyone, we're planning a trip to the national park this Saturday morning followed by a barbecue at our place. Let us know if you can join!",
+            "source_type": "TEXT_ENTRY",
+            "file_name": None,
+            "category": "Personal",
+            "confidence": 89.00,
+        },
+    ]
+
+    for item in sample_items:
+        email = Email(
+            id=item["id"],
+            sender=item["sender"],
+            subject=item["subject"],
+            body_text=item["body_text"],
+            source_type=item["source_type"],
+            file_name=item["file_name"],
         )
-        if not cache:
-            now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-            cache = ExchangeRateCache(
-                id=str(uuid.uuid4()),
-                base_currency="USD",
-                rates_json='{"USD": 1.0, "EUR": 0.925, "GBP": 0.79, "JPY": 155.0, "CAD": 1.36}',
-                fetched_at=now,
-                expires_at=now + datetime.timedelta(minutes=15),
-            )
-            db.add(cache)
-            db.commit()
-    except IntegrityError:
+        db.add(email)
+        classification = Classification(
+            id=str(uuid.uuid4()),
+            email_id=item["id"],
+            ai_category=item["category"],
+            confidence_score=item["confidence"],
+            user_override_category=None,
+            is_overridden=False,
+        )
+        db.add(classification)
+
+    try:
+        db.commit()
+    except Exception:
         db.rollback()

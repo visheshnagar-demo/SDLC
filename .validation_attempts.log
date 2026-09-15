@@ -1,0 +1,156 @@
+
+============================================================
+Attempt 1 at 2026-09-15T16:07:27.119111
+Status: FAILED
+Errors:
+  CHECK 5 FAILED — quality gate:
+QUALITY GATE — SCRUM-256 — FAILED
+
+  [WARN] ruff-format (level=advisory, exit 1)
+  [WARN] ruff-lint (level=advisory, exit 1)
+  [WARN] mypy (level=advisory, exit 2)
+  [FAIL] pytest (level=block, exit 1)
+  [WARN] openapi-dump (level=advisory, exit 1)
+
+BLOCKING FAILURES — must fix before this gate passes:
+
+### pytest (exit 1)
+\tests\test_emails.py:146: AssertionError
+_______________ test_classify_email_unsupported_file_extension ________________
+
+client = <starlette.testclient.TestClient object at 0x00000232C6EC8E20>
+
+    def test_classify_email_unsupported_file_extension(client):
+        files = {
+            "file": (
+                "malicious.exe",
+                io.BytesIO(b"binary executable data"),
+                "application/octet-stream",
+            )
+        }
+        response = client.post("/api/v1/emails/classify", files=files)
+        assert response.status_code == 400
+>       assert "Unsupported file format" in response.json()["detail"]
+E       AssertionError: assert 'Unsupported file format' in 'Please provide either email text or upload a supported file (.eml, .txt, .pdf).'
+
+server\tests\test_emails.py:159: AssertionError
+__________________ test_tc02_text_file_upload_classification __________________
+
+client = <starlette.testclient.TestClient object at 0x00000232C6ECB460>
+
+    def test_tc02_text_file_upload_classification(client):
+        file_content = b"Special 50% discount on all cloud services this week only. Use coupon code FLASH50."
+        files = {"file": ("discount_offer.txt", io.BytesIO(file_content), "text/plain")}
+        response = client.post("/api/v1/emails/classify", files=files)
+>       assert response.status_code == 201
+E       assert 400 == 201
+E        +  where 400 = <Response [400 Bad Request]>.status_code
+
+test_acceptance_qa.py:73: AssertionError
+__________________ test_tc03_eml_file_upload_classification ___________________
+
+client = <starlette.testclient.TestClient object at 0x00000232C6ECB9B0>
+
+    def test_tc03_eml_file_upload_classification(client):
+        eml_raw = (
+            b"From: alice.dev@company.com\r\n"
+            b"To: team@company.com\r\n"
+            b"Subject: Urgent: Production outage on payment gateway\r\n"
+            b"\r\n"
+            b"All transactions are failing right now. Immediate fix required.\r\n"
+        )
+        files = {"file": ("outage.eml", io.BytesIO(eml_raw), "message/rfc822")}
+        response = client.post("/api/v1/emails/classify", files=files)
+>       assert response.status_code == 201
+E       assert 400 == 201
+E        +  where 400 = <Response [400 Bad Request]>.status_code
+
+test_acceptance_qa.py:89: AssertionError
+=========================== short test summary info ===========================
+FAILED server/tests/test_emails.py::test_classify_email_multipart_text - asse...
+FAILED server/tes
+
+ADVISORY (does not block, but fix for quality):
+
+### ruff-format (exit 1)
+unformatted: File would be reformatted
+   --> test_acceptance_qa.py:65:59
+    |
+64  |     assert "classification" in data
+    -     assert data["classification"]["primary_category"] in ["Work", "Personal", "Urgent", "Promotional"]
+65  +     assert data["classification"]["primary_category"] in [
+66  +         "Work",
+67  +         "Personal",
+68  +         "Urgent",
+69  +         "Promotional",
+70  +     ]
+71  |     assert 0.0 <= data["classification"]["confidence_score"] <= 100.0
+--------------------------------------------------------------------------------
+80  |     assert "id" in data
+    -     assert data["classification"]["primary_category"] in ["Work", "Personal", "Urgent", "Promotional"]
+81  +     assert data["classification"]["primary_category"] in [
+82  +         "Work",
+83  +         "Personal",
+84  +         "Urgent",
+85  +         "Promotional",
+86  +     ]
+87  |
+--------------------------------------------------------------------------------
+115 |     fake_exe = b"MZ\x90\x00\x03\x00\x00\x00"
+    -     files = {"file": ("malicious_payload.exe", io.BytesIO(fake_exe), "application/x-msdownload")}
+116 +     files = {
+117 +         "file": (
+118 +             "malicious_pa
+
+### ruff-lint (exit 1)
+I001 [*] Import block is un-sorted or un-formatted
+  --> test_acceptance_qa.py:1:1
+   |
+ 1 | / import io
+ 2 | | import pytest
+ 3 | | from fastapi.testclient import TestClient
+ 4 | | from sqlalchemy import create_engine
+ 5 | | from sqlalchemy.orm import sessionmaker
+ 6 | | from sqlalchemy.pool import StaticPool
+ 7 | |
+ 8 | | import server.models  # noqa: F401
+ 9 | | from server.database import Base, get_db
+10 | | from server.main import app
+   | |___________________________^
+11 |
+12 |   TEST_DB_URL = "sqlite:///:memory:"
+   |
+help: Organize imports
+  |
+1 | import io
+2 +
+3 | import pytest
+  |
+
+Found 1 error.
+[*] 1 fixable with the `--fix` option.
+
+### mypy (exit 2)
+--- stderr ---
+Failed to find builtin module mypy_extensions, perhaps typeshed is broken?
+
+### openapi-dump (exit 1)
+backend did not boot:
+Local\Temp\sdlc_sandbox\venv\Lib\site-packages\uvicorn\config.py", line 487, in load
+    ws_protocol_class = import_from_string(WS_PROTOCOLS.get(self.ws, self.ws))
+  File "C:\Users\Viswa\AppData\Local\Temp\sdlc_sandbox\venv\Lib\site-packages\uvicorn\importer.py", line 22, in import_from_string
+    raise exc from None
+  File "C:\Users\Viswa\AppData\Local\Temp\sdlc_sandbox\venv\Lib\site-packages\uvicorn\importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+  File "C:\Users\Viswa\AppData\Local\Python\pythoncore-3.14-64\Lib\importlib\__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1406, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1371, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1342, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 938, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 759, in exec_module
+  File "<frozen importlib._bootstrap>", line 491, in _call_with_frames_removed
+
+
+Skipped: frontend (not detected or out of scope)
