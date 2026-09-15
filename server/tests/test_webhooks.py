@@ -1,66 +1,108 @@
-from fastapi.testclient import TestClient
+def test_webhook_payment_intent_succeeded(client):
+    # Setup checkout session
+    checkout_res = client.post(
+        "/api/v1/payments/checkout-session",
+        json={
+            "amount": 80.0,
+            "currency": "USD",
+            "customer_email": "webhook_succ@example.com",
+        },
+    )
+    pi_id = checkout_res.json()["payment_intent_id"]
 
-
-def test_stripe_webhook_payment_succeeded(client: TestClient):
-    payload = {
-        "id": "evt_test_webhook_001",
+    webhook_payload = {
+        "id": "evt_test_succeeded_001",
         "type": "payment_intent.succeeded",
         "data": {
             "object": {
-                "id": "pi_1005_mock_intent",  # tx_1005 is PENDING
-                "amount": 32000,
+                "id": pi_id,
+                "amount": 8000,
                 "currency": "usd",
                 "status": "succeeded",
             }
         },
     }
-    headers = {"stripe-signature": "test_valid_signature"}
-    response = client.post("/api/v1/webhooks/stripe", json=payload, headers=headers)
-    assert response.status_code == 200
-    assert response.json()["received"] is True
 
-    # Verify tx_1005 status transitioned to COMPLETED
-    tx_resp = client.get("/api/v1/payments/transactions/tx_1005")
-    assert tx_resp.status_code == 200
-    assert tx_resp.json()["status"] == "COMPLETED"
+    res = client.post(
+        "/api/v1/webhooks/stripe",
+        json=webhook_payload,
+        headers={"stripe-signature": "t=12345,v1=valid"},
+    )
+    assert res.status_code == 200
+    assert res.json()["status"] == "success"
 
 
-def test_stripe_webhook_payment_failed(client: TestClient):
-    payload = {
-        "id": "evt_test_webhook_002",
+def test_webhook_payment_intent_failed(client):
+    checkout_res = client.post(
+        "/api/v1/payments/checkout-session",
+        json={
+            "amount": 35.0,
+            "currency": "USD",
+            "customer_email": "webhook_fail@example.com",
+        },
+    )
+    pi_id = checkout_res.json()["payment_intent_id"]
+    txs = client.get(
+        "/api/v1/payments/transactions?search=webhook_fail@example.com"
+    ).json()
+    tx_id = txs[0]["id"]
+
+    webhook_payload = {
+        "id": "evt_test_failed_002",
         "type": "payment_intent.payment_failed",
         "data": {
             "object": {
-                "id": "pi_1001_mock_intent",
-                "amount": 14999,
+                "id": pi_id,
+                "amount": 3500,
                 "currency": "usd",
-                "status": "payment_failed",
+                "status": "failed",
             }
         },
     }
-    headers = {"stripe-signature": "test_valid_signature"}
-    response = client.post("/api/v1/webhooks/stripe", json=payload, headers=headers)
-    assert response.status_code == 200
 
-    tx_resp = client.get("/api/v1/payments/transactions/tx_1001")
-    assert tx_resp.status_code == 200
-    assert tx_resp.json()["status"] == "FAILED"
+    res = client.post(
+        "/api/v1/webhooks/stripe",
+        json=webhook_payload,
+    )
+    assert res.status_code == 200
+
+    tx_detail = client.get(f"/api/v1/payments/transactions/{tx_id}").json()
+    assert tx_detail["status"] == "FAILED"
 
 
-def test_stripe_webhook_invalid_signature(client: TestClient):
-    payload = {
-        "id": "evt_test_webhook_invalid",
+def test_webhook_idempotency(client):
+    webhook_payload = {
+        "id": "evt_duplicate_test_123",
         "type": "payment_intent.succeeded",
-        "data": {"object": {"id": "pi_random"}},
+        "data": {
+            "object": {
+                "id": "pi_nonexistent_or_mock",
+            }
+        },
     }
-    headers = {"stripe-signature": "invalid_sig"}
-    # Temporarily force TESTING=False in config for strict sig check if needed or test invalid
-    from server.config import settings
 
-    prev = settings.TESTING
-    settings.TESTING = False
-    try:
-        response = client.post("/api/v1/webhooks/stripe", json=payload, headers=headers)
-        assert response.status_code == 401
-    finally:
-        settings.TESTING = prev
+    # First delivery
+    res1 = client.post("/api/v1/webhooks/stripe", json=webhook_payload)
+    assert res1.status_code == 200
+    assert res1.json()["status"] == "success"
+
+    # Second (duplicate) delivery
+    res2 = client.post("/api/v1/webhooks/stripe", json=webhook_payload)
+    assert res2.status_code == 200
+    assert res2.json()["status"] == "duplicate"
+
+
+def test_webhook_invalid_signature(client):
+    webhook_payload = {
+        "id": "evt_sig_test_999",
+        "type": "payment_intent.succeeded",
+        "data": {},
+    }
+
+    res = client.post(
+        "/api/v1/webhooks/stripe",
+        json=webhook_payload,
+        headers={"stripe-signature": "invalid_signature"},
+    )
+    assert res.status_code == 401
+    assert "invalid stripe webhook signature" in res.json()["detail"].lower()

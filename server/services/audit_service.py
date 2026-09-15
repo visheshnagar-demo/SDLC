@@ -1,77 +1,66 @@
+import json
 import uuid
-from typing import Any, Dict, Optional
+import datetime
+from typing import Any
 from sqlalchemy.orm import Session
+from server.models import AuditLog
 
-from server.models import AuditLog, get_utc_now
+
+SENSITIVE_KEYS = {
+    "card_number",
+    "pan",
+    "cvv",
+    "cvc",
+    "password",
+    "client_secret",
+    "payment_token",
+}
 
 
-class AuditService:
-    @staticmethod
-    def mask_sensitive_data(payload: Any) -> Any:
-        if not isinstance(payload, dict):
-            return payload
+def mask_value(key: str, val: Any) -> Any:
+    if not isinstance(val, str):
+        return val
+    lower_k = key.lower()
+    if any(s in lower_k for s in SENSITIVE_KEYS):
+        if len(val) <= 4:
+            return "***"
+        return f"****-****-****-{val[-4:]}"
+    return val
 
+
+def mask_payload(data: Any) -> Any:
+    if isinstance(data, dict):
         masked = {}
-        for k, v in payload.items():
-            k_lower = k.lower()
-            if isinstance(v, dict):
-                masked[k] = AuditService.mask_sensitive_data(v)
-            elif isinstance(v, list):
-                masked[k] = [
-                    AuditService.mask_sensitive_data(item)
-                    if isinstance(item, dict)
-                    else item
-                    for item in v
-                ]
-            elif any(
-                term in k_lower
-                for term in ("card_number", "cardnumber", "pan", "cc_num")
-            ):
-                s_val = str(v).replace(" ", "").replace("-", "")
-                if len(s_val) >= 4:
-                    masked[k] = f"**** **** **** {s_val[-4:]}"
-                else:
-                    masked[k] = "****"
-            elif any(
-                term in k_lower for term in ("cvv", "cvc", "security_code", "secret")
-            ):
-                masked[k] = "***"
-            elif "password" in k_lower:
-                masked[k] = "********"
+        for k, v in data.items():
+            if isinstance(v, (dict, list)):
+                masked[k] = mask_payload(v)
             else:
-                masked[k] = v
+                masked[k] = mask_value(k, v)
         return masked
+    elif isinstance(data, list):
+        return [mask_payload(item) for item in data]
+    return data
 
-    @classmethod
-    def log_event(
-        cls,
-        db: Session,
-        event_type: str,
-        action: Optional[str] = None,
-        transaction_id: Optional[str] = None,
-        user_id: Optional[str] = None,
-        ip_address: Optional[str] = "127.0.0.1",
-        status_code: Optional[int] = 200,
-        signature_valid: Optional[bool] = True,
-        raw_payload: Optional[Dict[str, Any]] = None,
-    ) -> AuditLog:
-        masked_payload = cls.mask_sensitive_data(raw_payload) if raw_payload else {}
-        audit_entry = AuditLog(
-            id=f"aud_{uuid.uuid4().hex[:12]}",
-            transaction_id=transaction_id,
-            event_type=event_type,
-            action=action or event_type,
-            ip_address=ip_address,
-            user_id=user_id,
-            status_code=status_code,
-            signature_valid=signature_valid,
-            masked_payload=masked_payload,
-            created_at=get_utc_now(),
-        )
-        try:
-            db.add(audit_entry)
-            db.commit()
-            db.refresh(audit_entry)
-        except Exception:
-            db.rollback()
-        return audit_entry
+
+def create_audit_log(
+    db: Session,
+    event_type: str,
+    transaction_id: str | None = None,
+    ip_address: str = "127.0.0.1",
+    payload: dict[str, Any] | None = None,
+) -> AuditLog:
+    masked = mask_payload(payload or {})
+    masked_json = json.dumps(masked)
+
+    log_entry = AuditLog(
+        id=f"log_{uuid.uuid4().hex[:12]}",
+        transaction_id=transaction_id,
+        event_type=event_type,
+        ip_address=ip_address,
+        masked_payload=masked_json,
+        created_at=datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None),
+    )
+    db.add(log_entry)
+    db.commit()
+    db.refresh(log_entry)
+    return log_entry

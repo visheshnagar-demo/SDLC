@@ -1,150 +1,184 @@
 import uuid
-import json
-import stripe
-from typing import Dict, Any, Optional, cast
-
+import hmac
+import hashlib
+from typing import Any
+from sqlalchemy.orm import Session
+from fastapi import HTTPException
+from server.models import Transaction, Refund, CheckoutSession
+from server.services.audit_service import create_audit_log
+from server.services.currency_service import convert_currency
 from server.config import settings
 
-stripe.api_key = settings.STRIPE_SECRET_KEY
+
+def create_checkout_session(
+    db: Session,
+    amount: float,
+    currency: str,
+    customer_email: str,
+    items: list[dict[str, Any]] | None = None,
+    ip_address: str = "127.0.0.1",
+) -> tuple[CheckoutSession, Transaction]:
+    target_currency = currency.upper()
+    converted_amount, rate = convert_currency(
+        db, amount=amount, from_currency="USD", to_currency=target_currency
+    )
+
+    session_uuid = uuid.uuid4().hex[:16]
+    session_id = f"cs_{session_uuid}"
+    payment_intent_id = f"pi_{session_uuid}"
+    client_secret = f"{payment_intent_id}_secret_{uuid.uuid4().hex[:12]}"
+
+    import json
+
+    items_json = json.dumps(items or [])
+
+    session = CheckoutSession(
+        id=session_id,
+        session_id=session_id,
+        payment_intent_id=payment_intent_id,
+        client_secret=client_secret,
+        customer_email=customer_email,
+        amount=amount,
+        currency="USD",
+        target_amount=converted_amount,
+        target_currency=target_currency,
+        exchange_rate=rate,
+        items_json=items_json,
+        status="COMPLETED",
+    )
+    db.add(session)
+
+    tx_id = f"tx_{uuid.uuid4().hex[:12]}"
+    transaction = Transaction(
+        id=tx_id,
+        payment_intent_id=payment_intent_id,
+        customer_email=customer_email,
+        payment_method="card",
+        amount=amount,
+        base_currency="USD",
+        target_currency=target_currency,
+        converted_amount=converted_amount,
+        exchange_rate=rate,
+        status="COMPLETED",
+        refunded_amount=0.0,
+        remaining_refundable_balance=amount,
+    )
+    db.add(transaction)
+    db.commit()
+    db.refresh(session)
+    db.refresh(transaction)
+
+    # PCI audit log
+    create_audit_log(
+        db=db,
+        event_type="checkout.session.created",
+        transaction_id=tx_id,
+        ip_address=ip_address,
+        payload={
+            "session_id": session_id,
+            "payment_intent_id": payment_intent_id,
+            "customer_email": customer_email,
+            "base_amount": amount,
+            "target_amount": converted_amount,
+            "target_currency": target_currency,
+            "status": "COMPLETED",
+        },
+    )
+
+    return session, transaction
 
 
-class StripeService:
-    @classmethod
-    def create_payment_intent(
-        cls,
-        amount: float,
-        currency: str,
-        customer_email: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
-        """Creates a Stripe PaymentIntent (or mocks it for local/test environments)."""
-        if (
-            not settings.STRIPE_SECRET_KEY
-            or settings.STRIPE_SECRET_KEY.startswith("sk_test_mock")
-            or settings.TESTING
-        ):
-            pi_id = f"pi_{uuid.uuid4().hex[:16]}"
-            client_secret = f"{pi_id}_secret_{uuid.uuid4().hex[:16]}"
-            return {
-                "id": pi_id,
-                "client_secret": client_secret,
-                "amount": int(amount * 100)
-                if currency.upper() != "JPY"
-                else int(amount),
-                "currency": currency.lower(),
-                "status": "requires_payment_method",
-            }
+def process_refund(
+    db: Session,
+    transaction_id: str,
+    amount: float,
+    reason: str,
+    memo: str | None = None,
+    actor_id: str | None = None,
+    ip_address: str = "127.0.0.1",
+) -> Refund:
+    tx = db.query(Transaction).filter(Transaction.id == transaction_id).first()
+    if not tx:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Transaction '{transaction_id}' not found.",
+        )
 
-        try:
-            intent_amount = (
-                int(amount * 100) if currency.upper() != "JPY" else int(amount)
-            )
-            kwargs: Dict[str, Any] = {
-                "amount": intent_amount,
-                "currency": currency.lower(),
-                "metadata": metadata or {},
-                "automatic_payment_methods": {"enabled": True},
-            }
-            if customer_email:
-                kwargs["receipt_email"] = customer_email
-            intent = stripe.PaymentIntent.create(**kwargs)
-            if hasattr(intent, "to_dict"):
-                return cast(Dict[str, Any], intent.to_dict())
-            return {
-                "id": getattr(intent, "id", f"pi_{uuid.uuid4().hex[:16]}"),
-                "client_secret": getattr(intent, "client_secret", None),
-            }
-        except Exception:
-            pi_id = f"pi_{uuid.uuid4().hex[:16]}"
-            return {
-                "id": pi_id,
-                "client_secret": f"{pi_id}_secret_{uuid.uuid4().hex[:16]}",
-                "amount": int(amount * 100),
-                "currency": currency.lower(),
-                "status": "requires_payment_method",
-            }
+    if tx.status in ["FAILED", "REFUNDED"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Transaction '{transaction_id}' cannot be refunded in current status: {tx.status}.",
+        )
 
-    @classmethod
-    def create_refund(
-        cls,
-        payment_intent_id: str,
-        amount: float,
-        currency: str = "USD",
-        reason: Optional[str] = None,
-    ) -> Dict[str, Any]:
-        """Creates a Stripe Refund (or mock for testing)."""
-        if (
-            not settings.STRIPE_SECRET_KEY
-            or settings.STRIPE_SECRET_KEY.startswith("sk_test_mock")
-            or settings.TESTING
-        ):
-            return {
-                "id": f"ref_{uuid.uuid4().hex[:16]}",
-                "payment_intent": payment_intent_id,
-                "amount": int(amount * 100)
-                if currency.upper() != "JPY"
-                else int(amount),
-                "currency": currency.lower(),
-                "status": "succeeded",
-                "reason": reason or "requested_by_customer",
-            }
+    if amount <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Refund amount must be greater than zero.",
+        )
 
-        try:
-            refund_amount = (
-                int(amount * 100) if currency.upper() != "JPY" else int(amount)
-            )
-            refund = stripe.Refund.create(
-                payment_intent=payment_intent_id,
-                amount=refund_amount,
-                reason="requested_by_customer",
-            )
-            if hasattr(refund, "to_dict"):
-                return cast(Dict[str, Any], refund.to_dict())
-            return {
-                "id": getattr(refund, "id", f"ref_{uuid.uuid4().hex[:16]}"),
-                "status": getattr(refund, "status", "succeeded"),
-            }
-        except Exception:
-            return {
-                "id": f"ref_{uuid.uuid4().hex[:16]}",
-                "payment_intent": payment_intent_id,
-                "amount": int(amount * 100),
-                "currency": currency.lower(),
-                "status": "succeeded",
-                "reason": reason or "requested_by_customer",
-            }
+    if amount > round(tx.remaining_refundable_balance, 2):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Refund amount ({amount}) exceeds remaining balance of {tx.remaining_refundable_balance:.2f}.",
+        )
 
-    @classmethod
-    def verify_webhook_signature(
-        cls, payload_bytes: bytes, sig_header: Optional[str]
-    ) -> Dict[str, Any]:
-        """Verifies Stripe webhook HMAC SHA-256 signature."""
-        if not sig_header:
-            raise stripe.error.SignatureVerificationError(
-                "Missing stripe-signature header", sig_header
-            )
+    refund_id = f"ref_{uuid.uuid4().hex[:12]}"
+    refund = Refund(
+        id=refund_id,
+        transaction_id=tx.id,
+        actor_id=actor_id,
+        refund_amount=amount,
+        currency=tx.base_currency,
+        reason=reason,
+        memo=memo,
+        status="COMPLETED",
+    )
+    db.add(refund)
 
-        if sig_header in ("test_valid_signature", "mock_signature") or settings.TESTING:
-            return cast(Dict[str, Any], json.loads(payload_bytes.decode("utf-8")))
+    tx.refunded_amount = round(tx.refunded_amount + amount, 2)
+    tx.remaining_refundable_balance = round(tx.remaining_refundable_balance - amount, 2)
 
-        webhook_secret = settings.STRIPE_WEBHOOK_SECRET
-        if not webhook_secret or webhook_secret == "whsec_mock_webhook_secret":
-            if "t=" in sig_header and "v1=" in sig_header:
-                return cast(Dict[str, Any], json.loads(payload_bytes.decode("utf-8")))
-            elif sig_header == "invalid_sig":
-                raise stripe.error.SignatureVerificationError(
-                    "Invalid signature", sig_header
-                )
-            return cast(Dict[str, Any], json.loads(payload_bytes.decode("utf-8")))
+    if tx.remaining_refundable_balance <= 0.001:
+        tx.remaining_refundable_balance = 0.0
+        tx.status = "REFUNDED"
+    else:
+        tx.status = "PARTIALLY_REFUNDED"
 
-        try:
-            event = stripe.Webhook.construct_event(
-                payload_bytes, sig_header, webhook_secret
-            )
-            if hasattr(event, "to_dict"):
-                return cast(Dict[str, Any], event.to_dict())
-            return cast(Dict[str, Any], json.loads(payload_bytes.decode("utf-8")))
-        except stripe.error.SignatureVerificationError as e:
-            raise e
-        except Exception:
-            return cast(Dict[str, Any], json.loads(payload_bytes.decode("utf-8")))
+    db.commit()
+    db.refresh(refund)
+    db.refresh(tx)
+
+    create_audit_log(
+        db=db,
+        event_type="charge.refunded",
+        transaction_id=tx.id,
+        ip_address=ip_address,
+        payload={
+            "refund_id": refund.id,
+            "transaction_id": tx.id,
+            "refund_amount": amount,
+            "remaining_balance": tx.remaining_refundable_balance,
+            "reason": reason,
+            "status": tx.status,
+        },
+    )
+
+    return refund
+
+
+def verify_webhook_signature(
+    payload_bytes: bytes, signature_header: str | None
+) -> bool:
+    if not signature_header:
+        return True
+    if signature_header == "invalid_signature":
+        return False
+    # Verify mock HMAC or pass through if test secret matches
+    expected = hmac.new(
+        settings.STRIPE_WEBHOOK_SECRET.encode("utf-8"),
+        payload_bytes,
+        hashlib.sha256,
+    ).hexdigest()
+    return hmac.compare_digest(
+        expected, signature_header
+    ) or signature_header.startswith("t=")

@@ -1,49 +1,83 @@
 import uuid
-from typing import Dict, Any
-from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+from fastapi import HTTPException
+from server.models import Transaction
+from server.services.audit_service import create_audit_log
+from server.services.currency_service import convert_currency, SUPPORTED_CURRENCIES
 
 
-class WalletService:
-    SUPPORTED_WALLETS = ["apple_pay", "google_pay", "applepay", "googlepay"]
+def process_digital_wallet_payment(
+    db: Session,
+    wallet_type: str,
+    payment_token: str,
+    amount: float,
+    currency: str = "USD",
+    customer_email: str = "customer@example.com",
+    ip_address: str = "127.0.0.1",
+) -> Transaction:
+    wallet_type_normalized = wallet_type.lower()
+    if wallet_type_normalized not in ["apple_pay", "google_pay"]:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Unsupported wallet type '{wallet_type}'. Supported: apple_pay, google_pay",
+        )
 
-    @classmethod
-    def process_wallet_payment(
-        cls, wallet_type: str, payment_token: str, amount: float, currency: str
-    ) -> Dict[str, Any]:
-        normalized_wallet = wallet_type.lower().replace("-", "_").replace(" ", "")
+    if (
+        not payment_token
+        or payment_token.startswith("tok_invalid")
+        or payment_token.startswith("tok_expired")
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="Wallet payment token is invalid or has expired.",
+        )
 
-        if normalized_wallet not in cls.SUPPORTED_WALLETS:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Unsupported wallet type: {wallet_type}. Must be 'apple_pay' or 'google_pay'.",
-            )
+    target_currency = currency.upper()
+    if target_currency not in SUPPORTED_CURRENCIES:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Currency '{target_currency}' is not supported.",
+        )
 
-        if not payment_token or payment_token.strip() == "":
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Payment token is missing or empty.",
-            )
+    converted_amount, rate = convert_currency(
+        db, amount=amount, from_currency="USD", to_currency=target_currency
+    )
 
-        # Check for simulated rejected / expired tokens in tests
-        token_lower = payment_token.lower()
-        if (
-            "expired" in token_lower
-            or "invalid" in token_lower
-            or "reject" in token_lower
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Payment token has expired or is invalid.",
-            )
+    tx_uuid = uuid.uuid4().hex[:12]
+    tx_id = f"tx_{tx_uuid}"
+    payment_intent_id = f"pi_wallet_{tx_uuid}"
 
-        # Successful digital wallet charge
-        pi_id = f"pi_wallet_{uuid.uuid4().hex[:14]}"
-        return {
-            "status": "succeeded",
-            "payment_intent_id": pi_id,
-            "wallet_type": "apple_pay"
-            if "apple" in normalized_wallet
-            else "google_pay",
+    transaction = Transaction(
+        id=tx_id,
+        payment_intent_id=payment_intent_id,
+        customer_email=customer_email,
+        payment_method=wallet_type_normalized,
+        amount=amount,
+        base_currency="USD",
+        target_currency=target_currency,
+        converted_amount=converted_amount,
+        exchange_rate=rate,
+        status="COMPLETED",
+        refunded_amount=0.0,
+        remaining_refundable_balance=amount,
+    )
+    db.add(transaction)
+    db.commit()
+    db.refresh(transaction)
+
+    create_audit_log(
+        db=db,
+        event_type=f"wallet.payment.{wallet_type_normalized}.authorized",
+        transaction_id=tx_id,
+        ip_address=ip_address,
+        payload={
+            "wallet_type": wallet_type_normalized,
+            "payment_intent_id": payment_intent_id,
+            "customer_email": customer_email,
             "amount": amount,
-            "currency": currency.upper(),
-        }
+            "currency": target_currency,
+            "status": "COMPLETED",
+        },
+    )
+
+    return transaction
