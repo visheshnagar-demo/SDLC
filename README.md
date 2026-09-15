@@ -1,4 +1,53 @@
-# Project
+# Tenant Management System (SCRUM-285)
+
+Comprehensive Multi-Tenant Management Platform enabling platform administrators to onboard enterprise tenants, enforce schema/data isolation, manage tenant-aware RBAC, configure rate limits/quotas, and maintain immutable audit logs.
+
+## ## Server Architecture & Tech Stack
+- **Language**: Python 3.11
+- **Framework**: FastAPI
+- **ORM**: SQLAlchemy 2.x
+- **Database**: PostgreSQL / SQLite (for local dev & testing)
+- **Authentication**: JWT & Passlib (Bcrypt)
+
+## Setup & Local Development
+
+### Prerequisites
+- Python 3.11+
+- pip / uv
+
+### Backend Setup & Execution
+1. Navigate to the server directory:
+   ```bash
+   cd server
+   ```
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Start the FastAPI development server:
+   ```bash
+   uvicorn server.main:app --reload --port 8000
+   ```
+5. Access API documentation at:
+   - Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
+   - ReDoc: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+### Running Automated Tests
+```bash
+pytest server/tests -v
+```
+
+## Full-Stack Local Development
+1. Start Backend on port 8000: `cd server && uvicorn server.main:app --port 8000`
+2. Start Frontend on port 5173: `cd client && npm install && npm run dev`
+3. Pre-seeded test accounts:
+   - Regular User: `test@example.com` / `testpassword`
+   - Admin User: `admin@example.com` / `adminpassword`
 
 ## Server
 

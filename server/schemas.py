@@ -1,113 +1,135 @@
-from typing import Any, Optional
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 
 
-class CartItem(BaseModel):
+class TenantOnboardRequest(BaseModel):
+    name: str = Field(..., example="Acme Corporation")
+    slug: str = Field(..., example="acme-corp")
+    domain: Optional[str] = Field(None, example="acme.com")
+    admin_email: EmailStr = Field(..., example="admin@acme.com")
+    admin_full_name: str = Field(..., example="Acme Admin")
+    admin_password: str = Field(..., example="SecurePassword123!")
+
+
+class TenantOnboardResponse(BaseModel):
+    id: str
     name: str
-    quantity: int = 1
-    unit_price: float
-
-
-class CheckoutSessionRequest(BaseModel):
-    amount: float = Field(gt=0, description="Amount in base currency")
-    currency: str = Field(default="USD", description="Settlement/target currency")
-    customer_email: str
-    items: Optional[list[CartItem]] = Field(default_factory=list)
-
-
-class CheckoutSessionResponse(BaseModel):
-    session_id: str
-    payment_intent_id: str
-    client_secret: str
-    base_amount: float
-    base_currency: str
-    target_amount: float
-    target_currency: str
-    exchange_rate: float
-
-
-class DigitalWalletPaymentRequest(BaseModel):
-    wallet_type: str = Field(description="apple_pay or google_pay")
-    payment_token: str
-    currency: str = "USD"
-    amount: float = Field(gt=0)
-    customer_email: Optional[str] = "customer@example.com"
-
-
-class DigitalWalletPaymentResponse(BaseModel):
-    transaction_id: str
-    payment_intent_id: str
-    wallet_type: str
-    amount: float
-    currency: str
+    slug: str
+    domain: Optional[str] = None
     status: str
+    admin_user_id: str
+    created_at: datetime
 
-
-class ExchangeRatesResponse(BaseModel):
-    base_currency: str
-    rates: dict[str, float]
-    timestamp: str
-
-
-class RefundRequest(BaseModel):
-    transaction_id: str
-    amount: float = Field(gt=0)
-    reason: str
-    memo: Optional[str] = None
-
-
-class RefundSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+
+class TenantResponse(BaseModel):
     id: str
-    transaction_id: str
-    refund_amount: float
-    currency: str
-    reason: str
-    memo: Optional[str] = None
+    name: str
+    slug: str
+    domain: Optional[str] = None
     status: str
-    created_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
 
-
-class TransactionSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+
+class TenantListResponse(BaseModel):
+    items: List[TenantResponse]
+    total: int
+    skip: int
+    limit: int
+
+
+class TenantStatusUpdate(BaseModel):
+    status: str = Field(..., example="Suspended")  # Active, Suspended, Deactivated
+
+
+class TenantUserInvite(BaseModel):
+    email: EmailStr
+    full_name: Optional[str] = "Tenant User"
+    role: str = Field(
+        "User", example="Tenant Admin"
+    )  # Tenant Owner, Tenant Admin, User, Viewer
+
+
+class TenantUserResponse(BaseModel):
     id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    currency: str
+    tenant_id: str
+    user_id: str
+    email: str
+    full_name: str
+    role: str
     status: str
-    created_at: Optional[datetime] = None
+    created_at: datetime
 
-
-class TransactionDetail(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+
+class TenantUserListResponse(BaseModel):
+    items: List[TenantUserResponse]
+    total: int
+    skip: int
+    limit: int
+
+
+class TenantConfigUpdate(BaseModel):
+    rate_limit_rpm: Optional[int] = Field(1000, ge=1)
+    storage_quota_gb: Optional[int] = Field(50, ge=0)
+    feature_flags: Optional[Dict[str, Any]] = Field(default_factory=dict)
+
+
+class TenantConfigResponse(BaseModel):
     id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    base_currency: str
-    target_currency: str
-    converted_amount: float
-    exchange_rate: float
-    status: str
-    refunded_amount: float
-    remaining_refundable_balance: float
-    refunds: list[RefundSummary] = Field(default_factory=list)
-    created_at: Optional[datetime] = None
+    tenant_id: str
+    rate_limit_rpm: int
+    storage_quota_gb: int
+    feature_flags: Dict[str, Any]
+    updated_at: datetime
 
-
-class AuditLogEntry(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+
+class AuditLogResponse(BaseModel):
     id: str
-    transaction_id: Optional[str] = None
-    event_type: str
-    ip_address: str
-    masked_payload: dict[str, Any]
-    created_at: Optional[datetime] = None
+    tenant_id: str
+    actor_id: Optional[str] = None
+    action: str
+    entity_type: str
+    entity_id: Optional[str] = None
+    details: Dict[str, Any] = Field(default_factory=dict)
+    ip_address: Optional[str] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AuditLogListResponse(BaseModel):
+    items: List[AuditLogResponse]
+    total: int
+    skip: int
+    limit: int
+
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+    full_name: str
+    is_active: bool
+    is_verified: bool
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse

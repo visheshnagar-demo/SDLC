@@ -1,34 +1,35 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Payment Gateway Service",
-    "version": "0.1.0"
+    "title": "Tenant Management System API",
+    "description": "Multi-tenant management platform API for onboarding, RBAC, quotas, and audit logging.",
+    "version": "1.0.0"
   },
   "paths": {
-    "/api/v1/payments/checkout-session": {
+    "/api/v1/tenants": {
       "post": {
         "tags": [
-          "payments"
+          "Tenants"
         ],
-        "summary": "Create Session",
-        "operationId": "create_session_api_v1_payments_checkout_session_post",
+        "summary": "Onboard Tenant",
+        "operationId": "onboard_tenant_api_v1_tenants_post",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CheckoutSessionRequest"
+                "$ref": "#/components/schemas/TenantOnboardRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CheckoutSessionResponse"
+                  "$ref": "#/components/schemas/TenantOnboardResponse"
                 }
               }
             }
@@ -44,119 +45,36 @@
             }
           }
         }
-      }
-    },
-    "/api/v1/payments/digital-wallet": {
-      "post": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Pay Digital Wallet",
-        "operationId": "pay_digital_wallet_api_v1_payments_digital_wallet_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DigitalWalletPaymentRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DigitalWalletPaymentResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/rates": {
+      },
       "get": {
         "tags": [
-          "payments"
+          "Tenants"
         ],
-        "summary": "Get Rates",
-        "operationId": "get_rates_api_v1_payments_rates_get",
+        "summary": "List Tenants",
+        "operationId": "list_tenants_api_v1_tenants_get",
         "parameters": [
           {
-            "name": "base_currency",
+            "name": "skip",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string",
-              "description": "Base currency code",
-              "default": "USD",
-              "title": "Base Currency"
-            },
-            "description": "Base currency code"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExchangeRatesResponse"
-                }
-              }
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
             }
           },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "List Transactions",
-        "operationId": "list_transactions_api_v1_payments_transactions_get",
-        "parameters": [
           {
-            "name": "search",
+            "name": "limit",
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Search transaction ID or email",
-              "title": "Search"
-            },
-            "description": "Search transaction ID or email"
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
           },
           {
             "name": "status",
@@ -171,28 +89,144 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by transaction status",
               "title": "Status"
-            },
-            "description": "Filter by transaction status"
-          },
-          {
-            "name": "currency",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantListResponse"
                 }
-              ],
-              "description": "Filter by currency",
-              "title": "Currency"
-            },
-            "description": "Filter by currency"
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenant_id}": {
+      "get": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Get Tenant Details",
+        "operationId": "get_tenant_details_api_v1_tenants__tenant_id__get",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/status": {
+      "patch": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Update Tenant Status",
+        "operationId": "update_tenant_status_api_v1_tenants__tenant_id__status_patch",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TenantStatusUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/users": {
+      "get": {
+        "tags": [
+          "Tenant RBAC & Users"
+        ],
+        "summary": "List Tenant Users",
+        "operationId": "list_tenant_users_api_v1_tenants__tenant_id__users_get",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
           },
           {
             "name": "skip",
@@ -213,7 +247,7 @@
               "type": "integer",
               "maximum": 100,
               "minimum": 1,
-              "default": 50,
+              "default": 20,
               "title": "Limit"
             }
           }
@@ -224,94 +258,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TransactionSummary"
-                  },
-                  "title": "Response List Transactions Api V1 Payments Transactions Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions/{transaction_id}": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Get Transaction",
-        "operationId": "get_transaction_api_v1_payments_transactions__transaction_id__get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Transaction Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TransactionDetail"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/refunds": {
-      "post": {
-        "tags": [
-          "refunds"
-        ],
-        "summary": "Create Refund Endpoint",
-        "operationId": "create_refund_endpoint_api_v1_refunds_post",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RefundRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RefundSummary"
+                  "$ref": "#/components/schemas/TenantUserListResponse"
                 }
               }
             }
@@ -328,105 +275,81 @@
           }
         }
       },
-      "get": {
-        "tags": [
-          "refunds"
-        ],
-        "summary": "List Refunds Endpoint",
-        "operationId": "list_refunds_endpoint_api_v1_refunds_get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RefundSummary"
-                  },
-                  "title": "Response List Refunds Endpoint Api V1 Refunds Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/webhooks/stripe": {
       "post": {
         "tags": [
-          "webhooks"
+          "Tenant RBAC & Users"
         ],
-        "summary": "Handle Stripe Webhook",
-        "operationId": "handle_stripe_webhook_api_v1_webhooks_stripe_post",
+        "summary": "Invite Tenant User",
+        "operationId": "invite_tenant_user_api_v1_tenants__tenant_id__users_post",
         "parameters": [
           {
-            "name": "stripe-signature",
-            "in": "header",
-            "required": false,
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TenantUserInvite"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantUserResponse"
                 }
-              ],
-              "title": "Stripe-Signature"
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/users/{user_id}": {
+      "delete": {
+        "tags": [
+          "Tenant RBAC & Users"
+        ],
+        "summary": "Revoke Tenant User",
+        "operationId": "revoke_tenant_user_api_v1_tenants__tenant_id__users__user_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
             }
           }
         ],
@@ -452,49 +375,114 @@
         }
       }
     },
-    "/api/v1/audit-logs": {
+    "/api/v1/tenants/{tenant_id}/config": {
       "get": {
         "tags": [
-          "audit-logs"
+          "Tenant Config & Quotas"
         ],
-        "summary": "List Audit Logs",
-        "operationId": "list_audit_logs_api_v1_audit_logs_get",
+        "summary": "Get Tenant Config",
+        "operationId": "get_tenant_config_api_v1_tenants__tenant_id__config_get",
         "parameters": [
           {
-            "name": "transaction_id",
-            "in": "query",
-            "required": false,
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantConfigResponse"
                 }
-              ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
+              }
+            }
           },
-          {
-            "name": "event_type",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
-              ],
-              "description": "Filter by event type",
-              "title": "Event Type"
-            },
-            "description": "Filter by event type"
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Tenant Config & Quotas"
+        ],
+        "summary": "Update Tenant Config",
+        "operationId": "update_tenant_config_api_v1_tenants__tenant_id__config_put",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TenantConfigUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantConfigResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/audit-logs": {
+      "get": {
+        "tags": [
+          "Tenant Audit Logs"
+        ],
+        "summary": "Get Tenant Audit Logs",
+        "operationId": "get_tenant_audit_logs_api_v1_tenants__tenant_id__audit_logs_get",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
           },
           {
             "name": "skip",
@@ -515,7 +503,7 @@
               "type": "integer",
               "maximum": 100,
               "minimum": 1,
-              "default": 50,
+              "default": 20,
               "title": "Limit"
             }
           }
@@ -526,11 +514,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AuditLogEntry"
-                  },
-                  "title": "Response List Audit Logs Api V1 Audit Logs Get"
+                  "$ref": "#/components/schemas/AuditLogListResponse"
                 }
               }
             }
@@ -548,16 +532,98 @@
         }
       }
     },
-    "/health": {
+    "/api/v1/health": {
       "get": {
+        "tags": [
+          "Health"
+        ],
         "summary": "Health Check",
-        "operationId": "health_check_health_get",
+        "operationId": "health_check_api_v1_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/readyz": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_readyz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_healthz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -567,13 +633,48 @@
   },
   "components": {
     "schemas": {
-      "AuditLogEntry": {
+      "AuditLogListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AuditLogResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "skip": {
+            "type": "integer",
+            "title": "Skip"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "skip",
+          "limit"
+        ],
+        "title": "AuditLogListResponse"
+      },
+      "AuditLogResponse": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "transaction_id": {
+          "tenant_id": {
+            "type": "string",
+            "title": "Tenant Id"
+          },
+          "actor_id": {
             "anyOf": [
               {
                 "type": "string"
@@ -582,259 +683,58 @@
                 "type": "null"
               }
             ],
-            "title": "Transaction Id"
+            "title": "Actor Id"
           },
-          "event_type": {
+          "action": {
             "type": "string",
-            "title": "Event Type"
+            "title": "Action"
           },
-          "ip_address": {
+          "entity_type": {
             "type": "string",
-            "title": "Ip Address"
+            "title": "Entity Type"
           },
-          "masked_payload": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Masked Payload"
-          },
-          "created_at": {
+          "entity_id": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
+            "title": "Entity Id"
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details"
+          },
+          "ip_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip Address"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "event_type",
-          "ip_address",
-          "masked_payload"
+          "tenant_id",
+          "action",
+          "entity_type",
+          "created_at"
         ],
-        "title": "AuditLogEntry"
-      },
-      "CartItem": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "quantity": {
-            "type": "integer",
-            "title": "Quantity",
-            "default": 1
-          },
-          "unit_price": {
-            "type": "number",
-            "title": "Unit Price"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "unit_price"
-        ],
-        "title": "CartItem"
-      },
-      "CheckoutSessionRequest": {
-        "properties": {
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount",
-            "description": "Amount in base currency"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "description": "Settlement/target currency",
-            "default": "USD"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "items": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/CartItem"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Items"
-          }
-        },
-        "type": "object",
-        "required": [
-          "amount",
-          "customer_email"
-        ],
-        "title": "CheckoutSessionRequest"
-      },
-      "CheckoutSessionResponse": {
-        "properties": {
-          "session_id": {
-            "type": "string",
-            "title": "Session Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "client_secret": {
-            "type": "string",
-            "title": "Client Secret"
-          },
-          "base_amount": {
-            "type": "number",
-            "title": "Base Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_amount": {
-            "type": "number",
-            "title": "Target Amount"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          }
-        },
-        "type": "object",
-        "required": [
-          "session_id",
-          "payment_intent_id",
-          "client_secret",
-          "base_amount",
-          "base_currency",
-          "target_amount",
-          "target_currency",
-          "exchange_rate"
-        ],
-        "title": "CheckoutSessionResponse"
-      },
-      "DigitalWalletPaymentRequest": {
-        "properties": {
-          "wallet_type": {
-            "type": "string",
-            "title": "Wallet Type",
-            "description": "apple_pay or google_pay"
-          },
-          "payment_token": {
-            "type": "string",
-            "title": "Payment Token"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "default": "USD"
-          },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
-          },
-          "customer_email": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Customer Email",
-            "default": "customer@example.com"
-          }
-        },
-        "type": "object",
-        "required": [
-          "wallet_type",
-          "payment_token",
-          "amount"
-        ],
-        "title": "DigitalWalletPaymentRequest"
-      },
-      "DigitalWalletPaymentResponse": {
-        "properties": {
-          "transaction_id": {
-            "type": "string",
-            "title": "Transaction Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "wallet_type": {
-            "type": "string",
-            "title": "Wallet Type"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          }
-        },
-        "type": "object",
-        "required": [
-          "transaction_id",
-          "payment_intent_id",
-          "wallet_type",
-          "amount",
-          "currency",
-          "status"
-        ],
-        "title": "DigitalWalletPaymentResponse"
-      },
-      "ExchangeRatesResponse": {
-        "properties": {
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "rates": {
-            "additionalProperties": {
-              "type": "number"
-            },
-            "type": "object",
-            "title": "Rates"
-          },
-          "timestamp": {
-            "type": "string",
-            "title": "Timestamp"
-          }
-        },
-        "type": "object",
-        "required": [
-          "base_currency",
-          "rates",
-          "timestamp"
-        ],
-        "title": "ExchangeRatesResponse"
+        "title": "AuditLogResponse"
       },
       "HTTPValidationError": {
         "properties": {
@@ -849,243 +749,477 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "RefundRequest": {
+      "LoginRequest": {
         "properties": {
-          "transaction_id": {
+          "email": {
             "type": "string",
-            "title": "Transaction Id"
+            "title": "Email"
           },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
-          },
-          "reason": {
+          "password": {
             "type": "string",
-            "title": "Reason"
-          },
-          "memo": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Memo"
+            "title": "Password"
           }
         },
         "type": "object",
         "required": [
-          "transaction_id",
-          "amount",
-          "reason"
+          "email",
+          "password"
         ],
-        "title": "RefundRequest"
+        "title": "LoginRequest"
       },
-      "RefundSummary": {
+      "TenantConfigResponse": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "transaction_id": {
+          "tenant_id": {
             "type": "string",
-            "title": "Transaction Id"
+            "title": "Tenant Id"
           },
-          "refund_amount": {
-            "type": "number",
-            "title": "Refund Amount"
+          "rate_limit_rpm": {
+            "type": "integer",
+            "title": "Rate Limit Rpm"
           },
-          "currency": {
+          "storage_quota_gb": {
+            "type": "integer",
+            "title": "Storage Quota Gb"
+          },
+          "feature_flags": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Feature Flags"
+          },
+          "updated_at": {
             "type": "string",
-            "title": "Currency"
-          },
-          "reason": {
-            "type": "string",
-            "title": "Reason"
-          },
-          "memo": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Memo"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Created At"
+            "format": "date-time",
+            "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "transaction_id",
-          "refund_amount",
-          "currency",
-          "reason",
-          "status"
+          "tenant_id",
+          "rate_limit_rpm",
+          "storage_quota_gb",
+          "feature_flags",
+          "updated_at"
         ],
-        "title": "RefundSummary"
+        "title": "TenantConfigResponse"
       },
-      "TransactionDetail": {
+      "TenantConfigUpdate": {
         "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
+          "rate_limit_rpm": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Limit Rpm",
+            "default": 1000
           },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
+          "storage_quota_gb": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Storage Quota Gb",
+            "default": 50
           },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "payment_method": {
-            "type": "string",
-            "title": "Payment Method"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "converted_amount": {
-            "type": "number",
-            "title": "Converted Amount"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "refunded_amount": {
-            "type": "number",
-            "title": "Refunded Amount"
-          },
-          "remaining_refundable_balance": {
-            "type": "number",
-            "title": "Remaining Refundable Balance"
-          },
-          "refunds": {
+          "feature_flags": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feature Flags"
+          }
+        },
+        "type": "object",
+        "title": "TenantConfigUpdate"
+      },
+      "TenantListResponse": {
+        "properties": {
+          "items": {
             "items": {
-              "$ref": "#/components/schemas/RefundSummary"
+              "$ref": "#/components/schemas/TenantResponse"
             },
             "type": "array",
-            "title": "Refunds"
+            "title": "Items"
           },
-          "created_at": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "skip": {
+            "type": "integer",
+            "title": "Skip"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "skip",
+          "limit"
+        ],
+        "title": "TenantListResponse"
+      },
+      "TenantOnboardRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "example": "Acme Corporation"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "example": "acme-corp"
+          },
+          "domain": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
+            "title": "Domain",
+            "example": "acme.com"
+          },
+          "admin_email": {
+            "type": "string",
+            "format": "email",
+            "title": "Admin Email",
+            "example": "admin@acme.com"
+          },
+          "admin_full_name": {
+            "type": "string",
+            "title": "Admin Full Name",
+            "example": "Acme Admin"
+          },
+          "admin_password": {
+            "type": "string",
+            "title": "Admin Password",
+            "example": "SecurePassword123!"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "slug",
+          "admin_email",
+          "admin_full_name",
+          "admin_password"
+        ],
+        "title": "TenantOnboardRequest"
+      },
+      "TenantOnboardResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Domain"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "admin_user_id": {
+            "type": "string",
+            "title": "Admin User Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "base_currency",
-          "target_currency",
-          "converted_amount",
-          "exchange_rate",
+          "name",
+          "slug",
           "status",
-          "refunded_amount",
-          "remaining_refundable_balance"
+          "admin_user_id",
+          "created_at"
         ],
-        "title": "TransactionDetail"
+        "title": "TenantOnboardResponse"
       },
-      "TransactionSummary": {
+      "TenantResponse": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "payment_intent_id": {
+          "name": {
             "type": "string",
-            "title": "Payment Intent Id"
+            "title": "Name"
           },
-          "customer_email": {
+          "slug": {
             "type": "string",
-            "title": "Customer Email"
+            "title": "Slug"
           },
-          "payment_method": {
-            "type": "string",
-            "title": "Payment Method"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
+          "domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Domain"
           },
           "status": {
             "type": "string",
             "title": "Status"
           },
           "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TenantResponse"
+      },
+      "TenantStatusUpdate": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "example": "Suspended"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "TenantStatusUpdate"
+      },
+      "TenantUserInvite": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "full_name": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
+            "title": "Full Name",
+            "default": "Tenant User"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "default": "User",
+            "example": "Tenant Admin"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "TenantUserInvite"
+      },
+      "TenantUserListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TenantUserResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "skip": {
+            "type": "integer",
+            "title": "Skip"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "skip",
+          "limit"
+        ],
+        "title": "TenantUserListResponse"
+      },
+      "TenantUserResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "tenant_id": {
+            "type": "string",
+            "title": "Tenant Id"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "currency",
-          "status"
+          "tenant_id",
+          "user_id",
+          "email",
+          "full_name",
+          "role",
+          "status",
+          "created_at"
         ],
-        "title": "TransactionSummary"
+        "title": "TenantUserResponse"
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "user"
+        ],
+        "title": "TokenResponse"
+      },
+      "UserResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "is_verified": {
+            "type": "boolean",
+            "title": "Is Verified"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "full_name",
+          "is_active",
+          "is_verified",
+          "created_at"
+        ],
+        "title": "UserResponse"
       },
       "ValidationError": {
         "properties": {
