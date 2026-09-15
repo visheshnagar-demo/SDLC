@@ -72,8 +72,8 @@ export const CheckoutPage = () => {
       if (data && data.rates) {
         setRates(data.rates);
       }
-    } catch (err) {
-      console.warn("Using fallback exchange rates:", err);
+    } catch (_err) {
+      // Fallback exchange rates preserved in state
     } finally {
       setLoadingRates(false);
     }

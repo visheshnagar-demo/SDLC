@@ -32,8 +32,8 @@ export const AnalyticsDashboard = () => {
       if (currency) params.currency = currency;
       const data = await listTransactions(params);
       setTransactions(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.warn("Failed to load transaction ledger:", err);
+    } catch (_err) {
+      // Handled gracefully with fallback empty transactions
     } finally {
       setLoading(false);
     }

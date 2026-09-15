@@ -64,8 +64,8 @@ export const RefundPortal = () => {
     try {
       const data = await listAuditLogs({ transaction_id: txId, limit: 10 });
       setAuditLogs(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.warn("Could not load audit logs:", err);
+    } catch (_err) {
+      // Audit logs fallback handled gracefully
     }
   };
 

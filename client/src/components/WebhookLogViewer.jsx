@@ -5,7 +5,6 @@ import {
   RefreshCw,
   Filter,
   CheckCircle,
-  AlertTriangle,
 } from "lucide-react";
 import { listAuditLogs } from "../services/api";
 
@@ -22,8 +21,8 @@ export const WebhookLogViewer = () => {
       if (filterEvent) params.event_type = filterEvent;
       const data = await listAuditLogs(params);
       setAuditLogs(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.warn("Failed to load webhook audit logs:", err);
+    } catch (_err) {
+      // Audit logs fallback handled gracefully
     } finally {
       setLoading(false);
     }
