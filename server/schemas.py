@@ -1,113 +1,112 @@
-from typing import Any, Optional
-from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
+from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, Field
 
 
-class CartItem(BaseModel):
+class KPIOverview(BaseModel):
+    cluster_name: str
+    sales_per_linear_ft: float
+    private_brand_share_pct: float
+    in_stock_rate_pct: float
+    shelf_capacity_utilization_pct: float
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class SKUItem(BaseModel):
+    id: str
+    sku_code: str
     name: str
-    quantity: int = 1
-    unit_price: float
+    category: str
+    weekly_unit_sales: int
+    sales_per_linear_ft: float
+    margin_pct: float
+    space_allocation_ft: float
+    is_private_brand: bool
+    status_badge: str
+
+    class Config:
+        from_attributes = True
 
 
-class CheckoutSessionRequest(BaseModel):
-    amount: float = Field(gt=0, description="Amount in base currency")
-    currency: str = Field(default="USD", description="Settlement/target currency")
-    customer_email: str
-    items: Optional[list[CartItem]] = Field(default_factory=list)
+class SKUCreate(BaseModel):
+    sku_code: str
+    name: str
+    category: str = "Snacks"
+    weekly_unit_sales: int = 0
+    sales_per_linear_ft: float = 0.0
+    margin_pct: float = 0.0
+    space_allocation_ft: float = 0.0
+    is_private_brand: bool = False
+    status_badge: str = Field(..., pattern="^(GROW|MAINTAIN|SWAP|REDUCE)$")
 
 
-class CheckoutSessionResponse(BaseModel):
-    session_id: str
-    payment_intent_id: str
-    client_secret: str
-    base_amount: float
-    base_currency: str
-    target_amount: float
-    target_currency: str
-    exchange_rate: float
+class SKUUpdate(BaseModel):
+    name: Optional[str] = None
+    category: Optional[str] = None
+    weekly_unit_sales: Optional[int] = None
+    sales_per_linear_ft: Optional[float] = None
+    margin_pct: Optional[float] = None
+    space_allocation_ft: Optional[float] = None
+    is_private_brand: Optional[bool] = None
+    status_badge: Optional[str] = Field(None, pattern="^(GROW|MAINTAIN|SWAP|REDUCE)$")
 
 
-class DigitalWalletPaymentRequest(BaseModel):
-    wallet_type: str = Field(description="apple_pay or google_pay")
-    payment_token: str
-    currency: str = "USD"
-    amount: float = Field(gt=0)
-    customer_email: Optional[str] = "customer@example.com"
-
-
-class DigitalWalletPaymentResponse(BaseModel):
-    transaction_id: str
-    payment_intent_id: str
-    wallet_type: str
-    amount: float
-    currency: str
-    status: str
-
-
-class ExchangeRatesResponse(BaseModel):
-    base_currency: str
-    rates: dict[str, float]
-    timestamp: str
-
-
-class RefundRequest(BaseModel):
-    transaction_id: str
-    amount: float = Field(gt=0)
-    reason: str
-    memo: Optional[str] = None
-
-
-class RefundSummary(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class ScenarioOption(BaseModel):
     id: str
-    transaction_id: str
-    refund_amount: float
-    currency: str
-    reason: str
-    memo: Optional[str] = None
+    code: str
+    title: str
+    description: str
+    projected_sales_growth_pct: float
+    projected_private_brand_share_pct: float
+    shelf_space_impact_pct: float
+    sku_actions_summary: Dict[str, int]
+    is_default: bool
+
+    class Config:
+        from_attributes = True
+
+
+class GuardrailCheck(BaseModel):
+    name: str
+    passed: bool
+    actual_value: str
+
+
+class ScenarioEvaluateRequest(BaseModel):
+    scenario_code: str
+    cluster_name: Optional[str] = "Small Town Value Cluster"
+
+
+class ScenarioEvaluationResponse(BaseModel):
+    scenario_code: str
+    scenario_title: str
+    projected_sales_growth_pct: float
+    projected_private_brand_share_pct: float
+    shelf_space_impact_pct: float
+    sku_actions_summary: Dict[str, int]
+    guardrails: List[GuardrailCheck]
+    can_submit: bool
+
+
+class ApprovalSubmitRequest(BaseModel):
+    scenario_code: str
+    cluster_name: Optional[str] = "Small Town Value Cluster"
+    manager_id: Optional[str] = "MGR-8842"
+    override_comments: Optional[str] = None
+
+
+class ApprovalSubmissionResponse(BaseModel):
+    audit_id: str
+    submitted_at: datetime
+    manager_id: str
+    scenario_applied: str
+    total_sku_actions: int
+    guardrails: List[GuardrailCheck]
     status: str
-    created_at: Optional[datetime] = None
+    message: str
 
-
-class TransactionSummary(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    currency: str
-    status: str
-    created_at: Optional[datetime] = None
-
-
-class TransactionDetail(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    base_currency: str
-    target_currency: str
-    converted_amount: float
-    exchange_rate: float
-    status: str
-    refunded_amount: float
-    remaining_refundable_balance: float
-    refunds: list[RefundSummary] = Field(default_factory=list)
-    created_at: Optional[datetime] = None
-
-
-class AuditLogEntry(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    transaction_id: Optional[str] = None
-    event_type: str
-    ip_address: str
-    masked_payload: dict[str, Any]
-    created_at: Optional[datetime] = None
+    class Config:
+        from_attributes = True
