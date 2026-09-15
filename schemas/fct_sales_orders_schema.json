@@ -1,0 +1,38 @@
+[
+  {
+    "name": "order_id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Unique business identifier for the sales order"
+  },
+  {
+    "name": "customer_email",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Cleansed and validated RFC-compliant customer email address"
+  },
+  {
+    "name": "amount",
+    "type": "NUMERIC",
+    "mode": "REQUIRED",
+    "description": "Valid sales amount strictly greater than zero"
+  },
+  {
+    "name": "order_date",
+    "type": "DATE",
+    "mode": "REQUIRED",
+    "description": "Date of the order transaction, used as partition key"
+  },
+  {
+    "name": "etl_loaded_at",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "Timestamp in UTC when record was ingested by the ETL pipeline"
+  },
+  {
+    "name": "etl_job_id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Correlation ID of the ETL batch execution"
+  }
+]

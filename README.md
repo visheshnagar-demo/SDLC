@@ -1,88 +1,51 @@
-# Project
+# SCRUM-287: Sales Data ETL Pipeline (PostgreSQL to Partitioned BigQuery)
 
-## Server
+## Overview
+This production-grade ETL pipeline extracts sales transaction data from the PostgreSQL `raw_sales_orders` table, applies data cleansing rules (filtering out records with missing/non-positive amounts or invalid email formats), and loads the curated records into Google BigQuery analytics table `fct_sales_orders` partitioned daily by `order_date` and clustered by `order_id` and `customer_email`.
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+## Key Features
+- **Data Cleansing**:
+  - Drops rows with `NULL`, empty, or negative sales `amount`.
+  - RFC 5322 regex validation for `customer_email`.
+  - Normalizes email casing and trims whitespaces.
+- **Dead-Letter Queue (DLQ)**: Stores rejected records with specific reason codes into `quarantine_sales_orders` for auditability.
+- **Partitioning & Clustering**: Day-level partitioning on `order_date` with clustering on `order_id` and `customer_email` in BigQuery table `sales_analytics.fct_sales_orders`.
+- **Auto-Boot Serverless Execution**: Packaged as a Cloud Run service (`app.py` / `Dockerfile`) that auto-runs the ETL task on container boot, alongside REST API endpoints (`/api/v1/etl/jobs/sales-orders/run`, `/api/v1/etl/jobs/sales-orders/status/{job_id}`).
+- **Orchestration**: Includes Airflow DAG (`dags/sales_orders_dag.py`) and standalone runner (`pipeline/run_sales_orders.py`).
 
-### Setup
+## Architecture & Schema
+- **Source**: PostgreSQL `raw_sales_orders` table
+- **Target**: BigQuery `upbeat-repeater-477110-q6.sales_analytics.fct_sales_orders`
+  - Partition field: `order_date` (DAY)
+  - Clustering fields: `order_id`, `customer_email`
 
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
-```
-
-2. Install dependencies:
-```bash
-cd server
-pip install -r requirements.txt
-cd ..
-```
-
-### Running Tests
-```bash
-cd server
-python -m pytest -v
-cd ..
-```
-
-### Starting the Development Server
-```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
+## Local Development & Testing
 
 ### 1. Environment Setup
 ```bash
-# Copy the example environment file
-cp .env.example .env
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
-### 2. Start the Backend (Terminal 1)
+### 2. Run Tests
 ```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+pytest
 ```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
 
-### 3. Start the Frontend (Terminal 2)
+### 3. Run Server Locally
 ```bash
-cd client
-npm install
-npm run dev
+uvicorn server.main:app --host 0.0.0.0 --port 8000 --reload
+# Or run auto-boot container entrypoint
+python app.py
 ```
-Frontend: `http://localhost:5173`
 
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
+### 4. Trigger Standalone Pipeline
+```bash
+python pipeline/run_sales_orders.py --date 2026-05-18
+```
 
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-
+## API Endpoints
+- `POST /api/v1/etl/jobs/sales-orders/run` — Trigger ETL pipeline batch run
+- `GET /api/v1/etl/jobs/sales-orders/status/{job_id}` — Query execution status and metric breakdown
+- `GET /api/v1/health` — Health check endpoint

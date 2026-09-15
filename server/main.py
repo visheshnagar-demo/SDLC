@@ -1,41 +1,39 @@
+"""Main application entrypoint for Sales ETL Pipeline Service."""
 import os
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
-from server.api.v1 import api_v1_router
-from server.database import init_db
-from server.config import settings
+from fastapi.middleware.cors import CORSMiddleware
+from server.api.etl_controller import router as etl_router
+from server.database import Base, engine
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    init_db()
-    yield
-
+# Create tables
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    lifespan=lifespan,
+    title="Sales Data ETL Pipeline Service",
+    description="PostgreSQL to BigQuery partitioned ETL pipeline microservice",
+    version="1.0.0",
 )
 
-allowed_origins_raw = os.getenv(
-    "ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000"
-)
-allowed_origins = [
-    origin.strip() for origin in allowed_origins_raw.split(",") if origin.strip()
-]
+# CORS configuration
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000")
+allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",") if origin.strip()]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=allowed_origins if allowed_origins else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(api_v1_router)
+app.include_router(etl_router)
 
 
-@app.get("/health")
-def health_check():
-    return {"status": "ok", "service": "payment-gateway-service"}
+@app.get("/")
+def root():
+    return {
+        "service": "Sales Data ETL Pipeline",
+        "version": "1.0.0",
+        "docs_url": "/docs",
+        "health_check": "/api/v1/health",
+    }
