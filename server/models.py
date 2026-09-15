@@ -1,143 +1,140 @@
 import uuid
-import datetime
-from sqlalchemy import (
-    Column,
-    String,
-    Float,
-    Boolean,
-    DateTime,
-    ForeignKey,
-    Text,
-)
-from sqlalchemy.orm import relationship
-from server.database import Base
+from datetime import datetime, timezone
 
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, String, Text
+from sqlalchemy.orm import declarative_base, relationship
 
-def generate_uuid() -> str:
-    return str(uuid.uuid4())
-
-
-def get_utc_now() -> datetime.datetime:
-    return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+Base = declarative_base()
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(String, primary_key=True, default=generate_uuid)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    role = Column(String, default="user", nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False)
-    is_verified = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
-    updated_at = Column(
-        DateTime,
-        default=get_utc_now,
-        onupdate=get_utc_now,
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    hashed_password = Column(String(255), nullable=True)
+    full_name = Column(String(255), nullable=False)
+    department = Column(String(100), nullable=True)
+    role = Column(
+        String(50), nullable=False, default="HOST"
+    )  # 'HOST', 'RECEPTIONIST', 'ADMIN'
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(
+        DateTime(timezone=True),
         nullable=False,
+        default=lambda: datetime.now(timezone.utc),
     )
-
-    transactions = relationship("Transaction", back_populates="user")
-    refunds = relationship("Refund", back_populates="actor")
-
-
-class CheckoutSession(Base):
-    __tablename__ = "checkout_sessions"
-
-    id = Column(String, primary_key=True, default=lambda: f"cs_{uuid.uuid4().hex[:16]}")
-    session_id = Column(String, unique=True, index=True, nullable=False)
-    payment_intent_id = Column(String, index=True, nullable=False)
-    client_secret = Column(String, nullable=False)
-    customer_email = Column(String, index=True, nullable=False)
-    amount = Column(Float, nullable=False)
-    currency = Column(String, nullable=False)
-    target_amount = Column(Float, nullable=False)
-    target_currency = Column(String, nullable=False)
-    exchange_rate = Column(Float, default=1.0, nullable=False)
-    items_json = Column(Text, default="[]", nullable=False)
-    status = Column(String, default="PENDING", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
-
-
-class Transaction(Base):
-    __tablename__ = "transactions"
-
-    id = Column(String, primary_key=True, default=lambda: f"tx_{uuid.uuid4().hex[:12]}")
-    payment_intent_id = Column(String, index=True, nullable=False)
-    user_id = Column(String, ForeignKey("users.id"), nullable=True)
-    customer_email = Column(String, index=True, nullable=False)
-    payment_method = Column(String, default="card", nullable=False)
-    amount = Column(Float, nullable=False)
-    base_currency = Column(String, default="USD", nullable=False)
-    target_currency = Column(String, default="USD", nullable=False)
-    converted_amount = Column(Float, nullable=False)
-    exchange_rate = Column(Float, default=1.0, nullable=False)
-    status = Column(String, default="COMPLETED", nullable=False)
-    refunded_amount = Column(Float, default=0.0, nullable=False)
-    remaining_refundable_balance = Column(Float, nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
     updated_at = Column(
-        DateTime,
-        default=get_utc_now,
-        onupdate=get_utc_now,
+        DateTime(timezone=True),
         nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
-    user = relationship("User", back_populates="transactions")
-    refunds = relationship(
-        "Refund", back_populates="transaction", cascade="all, delete-orphan"
+    visits = relationship("Visit", back_populates="host")
+    audit_logs = relationship("VisitAuditLog", back_populates="actor")
+
+
+class Visitor(Base):
+    __tablename__ = "visitors"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    full_name = Column(String(255), nullable=False)
+    email = Column(String(255), index=True, nullable=False)
+    phone = Column(String(50), nullable=False)
+    company = Column(String(255), nullable=True)
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
     )
-    audit_logs = relationship("AuditLog", back_populates="transaction")
-
-
-class Refund(Base):
-    __tablename__ = "refunds"
-
-    id = Column(
-        String, primary_key=True, default=lambda: f"ref_{uuid.uuid4().hex[:12]}"
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
-    transaction_id = Column(String, ForeignKey("transactions.id"), nullable=False)
-    actor_id = Column(String, ForeignKey("users.id"), nullable=True)
-    refund_amount = Column(Float, nullable=False)
-    currency = Column(String, default="USD", nullable=False)
-    reason = Column(String, nullable=False)
-    memo = Column(String, nullable=True)
-    status = Column(String, default="COMPLETED", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
 
-    transaction = relationship("Transaction", back_populates="refunds")
-    actor = relationship("User", back_populates="refunds")
-
-
-class AuditLog(Base):
-    __tablename__ = "audit_logs"
-
-    id = Column(
-        String, primary_key=True, default=lambda: f"log_{uuid.uuid4().hex[:12]}"
+    visits = relationship(
+        "Visit", back_populates="visitor", cascade="all, delete-orphan"
     )
-    transaction_id = Column(String, ForeignKey("transactions.id"), nullable=True)
-    event_type = Column(String, index=True, nullable=False)
-    ip_address = Column(String, default="127.0.0.1", nullable=False)
-    masked_payload = Column(Text, default="{}", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
-
-    transaction = relationship("Transaction", back_populates="audit_logs")
 
 
-class ExchangeRateCache(Base):
-    __tablename__ = "exchange_rate_caches"
+class Visit(Base):
+    __tablename__ = "visits"
 
-    id = Column(String, primary_key=True, default=generate_uuid)
-    base_currency = Column(String, index=True, nullable=False)
-    rates_json = Column(Text, nullable=False)
-    fetched_at = Column(DateTime, default=get_utc_now, nullable=False)
-    expires_at = Column(DateTime, nullable=False)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    visitor_id = Column(
+        String(36),
+        ForeignKey("visitors.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    host_id = Column(
+        String(36),
+        ForeignKey("users.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    purpose = Column(Text, nullable=False)
+    scheduled_start_time = Column(DateTime(timezone=True), nullable=False, index=True)
+    scheduled_end_time = Column(DateTime(timezone=True), nullable=True)
+    status = Column(
+        String(50),
+        nullable=False,
+        default="PENDING_APPROVAL",
+        index=True,
+    )  # 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'CHECKED_IN', 'CHECKED_OUT', 'CANCELLED'
+    pass_code = Column(String(32), unique=True, index=True, nullable=True)
+    approval_notes = Column(Text, nullable=True)
+    approved_at = Column(DateTime(timezone=True), nullable=True)
+    check_in_time = Column(DateTime(timezone=True), nullable=True)
+    check_out_time = Column(DateTime(timezone=True), nullable=True)
+    badge_id = Column(String(100), nullable=True)
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    visitor = relationship("Visitor", back_populates="visits")
+    host = relationship("User", back_populates="visits")
+    audit_logs = relationship(
+        "VisitAuditLog", back_populates="visit", cascade="all, delete-orphan"
+    )
 
 
-class WebhookEvent(Base):
-    __tablename__ = "webhook_events"
+class VisitAuditLog(Base):
+    __tablename__ = "visit_audit_logs"
 
-    id = Column(String, primary_key=True)
-    event_type = Column(String, nullable=False)
-    processed_at = Column(DateTime, default=get_utc_now, nullable=False)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    visit_id = Column(
+        String(36),
+        ForeignKey("visits.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    actor_id = Column(
+        String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    actor_role = Column(
+        String(50), nullable=False
+    )  # 'VISITOR', 'HOST', 'RECEPTIONIST', 'ADMIN', 'SYSTEM'
+    action = Column(
+        String(100), nullable=False
+    )  # 'REGISTERED', 'APPROVED', 'REJECTED', 'CHECKED_IN', 'CHECKED_OUT'
+    details = Column(JSON, nullable=True)
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+
+    visit = relationship("Visit", back_populates="audit_logs")
+    actor = relationship("User", back_populates="audit_logs")

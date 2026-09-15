@@ -1,113 +1,176 @@
-from typing import Any, Optional
-from pydantic import BaseModel, ConfigDict, Field
+import re
 from datetime import datetime
+from typing import Any
+
+from pydantic import BaseModel, Field, field_validator
+
+EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
-class CartItem(BaseModel):
-    name: str
-    quantity: int = 1
-    unit_price: float
+# User / Auth Schemas
+class UserBase(BaseModel):
+    email: str
+    full_name: str
+    department: str | None = None
+    role: str = "HOST"
+    is_active: bool = True
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        if not EMAIL_REGEX.match(v.strip()):
+            raise ValueError("Invalid email format")
+        return v.strip().lower()
 
 
-class CheckoutSessionRequest(BaseModel):
-    amount: float = Field(gt=0, description="Amount in base currency")
-    currency: str = Field(default="USD", description="Settlement/target currency")
-    customer_email: str
-    items: Optional[list[CartItem]] = Field(default_factory=list)
+class UserCreate(UserBase):
+    password: str
 
 
-class CheckoutSessionResponse(BaseModel):
-    session_id: str
-    payment_intent_id: str
-    client_secret: str
-    base_amount: float
-    base_currency: str
-    target_amount: float
-    target_currency: str
-    exchange_rate: float
-
-
-class DigitalWalletPaymentRequest(BaseModel):
-    wallet_type: str = Field(description="apple_pay or google_pay")
-    payment_token: str
-    currency: str = "USD"
-    amount: float = Field(gt=0)
-    customer_email: Optional[str] = "customer@example.com"
-
-
-class DigitalWalletPaymentResponse(BaseModel):
-    transaction_id: str
-    payment_intent_id: str
-    wallet_type: str
-    amount: float
-    currency: str
-    status: str
-
-
-class ExchangeRatesResponse(BaseModel):
-    base_currency: str
-    rates: dict[str, float]
-    timestamp: str
-
-
-class RefundRequest(BaseModel):
-    transaction_id: str
-    amount: float = Field(gt=0)
-    reason: str
-    memo: Optional[str] = None
-
-
-class RefundSummary(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class UserResponse(UserBase):
     id: str
-    transaction_id: str
-    refund_amount: float
-    currency: str
-    reason: str
-    memo: Optional[str] = None
-    status: str
-    created_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
-class TransactionSummary(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class HostSummary(BaseModel):
     id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    currency: str
-    status: str
-    created_at: Optional[datetime] = None
+    full_name: str
+    email: str
+    department: str | None = None
+
+    class Config:
+        from_attributes = True
 
 
-class TransactionDetail(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
+
+class TokenData(BaseModel):
+    email: str | None = None
+    role: str | None = None
+    user_id: str | None = None
+
+
+# Visitor Schemas
+class VisitorBase(BaseModel):
+    full_name: str
+    email: str
+    phone: str
+    company: str | None = None
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        if not EMAIL_REGEX.match(v.strip()):
+            raise ValueError("Invalid email format")
+        return v.strip().lower()
+
+
+class VisitorCreate(VisitorBase):
+    pass
+
+
+class VisitorResponse(VisitorBase):
     id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    base_currency: str
-    target_currency: str
-    converted_amount: float
-    exchange_rate: float
-    status: str
-    refunded_amount: float
-    remaining_refundable_balance: float
-    refunds: list[RefundSummary] = Field(default_factory=list)
-    created_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
-class AuditLogEntry(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+# Pre-Registration Schema
+class VisitorRegisterRequest(BaseModel):
+    full_name: str = Field(..., min_length=1, description="Visitor's full name")
+    email: str = Field(..., description="Visitor's email address")
+    phone: str = Field(..., min_length=1, description="Visitor's contact number")
+    company: str | None = Field(None, description="Visitor's organization")
+    purpose: str = Field(..., min_length=1, description="Reason for visit")
+    scheduled_start_time: datetime = Field(
+        ..., description="Scheduled arrival start datetime"
+    )
+    scheduled_end_time: datetime | None = Field(
+        None, description="Scheduled arrival end datetime"
+    )
+    host_id: str = Field(..., description="UUID of the host employee")
 
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        if not EMAIL_REGEX.match(v.strip()):
+            raise ValueError("Invalid email format")
+        return v.strip().lower()
+
+
+# Action Schemas
+class ApprovalActionRequest(BaseModel):
+    action: str = Field(..., description="'APPROVE' or 'REJECT'")
+    approval_notes: str | None = Field(None, description="Optional notes from host")
+
+
+class CheckInRequest(BaseModel):
+    badge_id: str | None = Field(None, description="Physical badge identifier")
+
+
+# Audit Log Schema
+class VisitAuditLogResponse(BaseModel):
     id: str
-    transaction_id: Optional[str] = None
-    event_type: str
-    ip_address: str
-    masked_payload: dict[str, Any]
-    created_at: Optional[datetime] = None
+    visit_id: str
+    actor_id: str | None = None
+    actor_role: str
+    action: str
+    details: Any | None = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# Visit Detail Schema
+class VisitResponse(BaseModel):
+    id: str
+    visitor_id: str
+    host_id: str
+    purpose: str
+    scheduled_start_time: datetime
+    scheduled_end_time: datetime | None = None
+    status: str
+    pass_code: str | None = None
+    approval_notes: str | None = None
+    approved_at: datetime | None = None
+    check_in_time: datetime | None = None
+    check_out_time: datetime | None = None
+    badge_id: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class VisitDetailResponse(VisitResponse):
+    visitor: VisitorResponse
+    host: HostSummary
+    audit_logs: list[VisitAuditLogResponse] = []
+
+    class Config:
+        from_attributes = True
+
+
+class PaginatedVisitResponse(BaseModel):
+    items: list[VisitDetailResponse]
+    total: int
+    skip: int
+    limit: int
