@@ -59,7 +59,7 @@ def register_visitor(payload: VisitorRegisterRequest, db: Session = Depends(get_
         purpose=payload.purpose,
         scheduled_start_time=payload.scheduled_start_time,
         scheduled_end_time=payload.scheduled_end_time,
-        status="PENDING_APPROVAL",
+        status="PENDING",
     )
     db.add(visit)
     db.flush()

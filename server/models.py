@@ -82,9 +82,9 @@ class Visit(Base):
     status = Column(
         String(50),
         nullable=False,
-        default="PENDING_APPROVAL",
+        default="PENDING",
         index=True,
-    )  # 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'CHECKED_IN', 'CHECKED_OUT', 'CANCELLED'
+    )  # 'PENDING', 'APPROVED', 'REJECTED', 'CHECKED_IN', 'CHECKED_OUT', 'CANCELLED'
     pass_code = Column(String(32), unique=True, index=True, nullable=True)
     approval_notes = Column(Text, nullable=True)
     approved_at = Column(DateTime(timezone=True), nullable=True)

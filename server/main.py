@@ -1,5 +1,14 @@
 import os
+import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
+
+# Ensure project root and server dir are in sys.path
+BASE_DIR = Path(__file__).resolve().parent
+ROOT_DIR = BASE_DIR.parent
+for p in (str(ROOT_DIR), str(BASE_DIR)):
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware

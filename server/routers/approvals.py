@@ -11,7 +11,6 @@ from server.models import User, Visit, VisitAuditLog
 from server.notifications import notify_visitor_decision
 from server.schemas import (
     ApprovalActionRequest,
-    PaginatedVisitResponse,
     VisitDetailResponse,
 )
 
@@ -29,7 +28,7 @@ def generate_unique_pass_code(db: Session) -> str:
     return f"VP-{int(datetime.now(timezone.utc).timestamp())}"
 
 
-@router.get("/pending", response_model=PaginatedVisitResponse)
+@router.get("/pending", response_model=list[VisitDetailResponse])
 def get_pending_approvals(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
@@ -38,7 +37,7 @@ def get_pending_approvals(
     db: Session = Depends(get_db),
 ):
     """List pending visit requests awaiting host approval."""
-    query = db.query(Visit).filter(Visit.status == "PENDING_APPROVAL")
+    query = db.query(Visit).filter(Visit.status.in_(["PENDING", "PENDING_APPROVAL"]))
 
     # If user is a HOST (and not ADMIN/RECEPTIONIST), restrict strictly to their own requests
     if current_user.role == "HOST":
@@ -46,10 +45,8 @@ def get_pending_approvals(
     elif host_id:
         query = query.filter(Visit.host_id == host_id)
 
-    total = query.count()
     items = query.order_by(desc(Visit.created_at)).offset(skip).limit(limit).all()
-
-    return PaginatedVisitResponse(items=items, total=total, skip=skip, limit=limit)
+    return items
 
 
 @router.post("/{visit_id}/action", response_model=VisitDetailResponse)
@@ -75,7 +72,7 @@ def handle_approval_action(
         )
 
     # Validate status
-    if visit.status != "PENDING_APPROVAL":
+    if visit.status not in ("PENDING", "PENDING_APPROVAL"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Cannot perform approval action on a visit with status '{visit.status}'",
@@ -84,7 +81,7 @@ def handle_approval_action(
     action_normalized = payload.action.strip().upper()
     now_utc = datetime.now(timezone.utc)
 
-    if action_normalized == "APPROVE":
+    if action_normalized in ("APPROVE", "APPROVED"):
         pass_code = generate_unique_pass_code(db)
         visit.status = "APPROVED"
         visit.pass_code = pass_code
@@ -114,7 +111,7 @@ def handle_approval_action(
             notes=payload.approval_notes,
         )
 
-    elif action_normalized == "REJECT":
+    elif action_normalized in ("REJECT", "REJECTED"):
         visit.status = "REJECTED"
         visit.approval_notes = payload.approval_notes
 

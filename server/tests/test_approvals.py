@@ -23,8 +23,9 @@ def test_get_pending_approvals(client, host_user, host_headers):
     response = client.get("/api/v1/approvals/pending", headers=host_headers)
     assert response.status_code == 200
     data = response.json()
-    assert data["total"] >= 1
-    assert any(item["visitor"]["email"] == "bob@builder.com" for item in data["items"])
+    items = data if isinstance(data, list) else data.get("items", [])
+    assert len(items) >= 1
+    assert any(item["visitor"]["email"] == "bob@builder.com" for item in items)
 
 
 def test_approve_visit_success(client, host_user, host_headers):

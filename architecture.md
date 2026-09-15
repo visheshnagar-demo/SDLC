@@ -50,7 +50,36 @@ graph TD
 - server/tests/test_visitors.py
 
 ## Frontend Modules (client/)
-- (no client/ files found yet)
+- client/eslint.config.js
+- client/postcss.config.js
+- client/src/App.jsx
+- client/src/App.test.jsx
+- client/src/components/ApprovalDetailDrawer.jsx
+- client/src/components/ApprovalQueueList.jsx
+- client/src/components/ApprovalQueueList.test.jsx
+- client/src/components/AuditHistoryDataTable.jsx
+- client/src/components/CheckInVerificationInspector.jsx
+- client/src/components/DigitalPassPreviewCard.jsx
+- client/src/components/DigitalPassPreviewCard.test.jsx
+- client/src/components/KPIMetricsBar.jsx
+- client/src/components/KPIMetricsBar.test.jsx
+- client/src/components/LiveVisitorRosterTable.jsx
+- client/src/components/ReceptionistQuickSearch.jsx
+- client/src/components/ReceptionistQuickSearch.test.jsx
+- client/src/components/TopNavBar.jsx
+- client/src/components/TopNavBar.test.jsx
+- client/src/components/VisitorRegistrationForm.jsx
+- client/src/components/VisitorRegistrationForm.test.jsx
+- client/src/main.jsx
+- client/src/pages/EmployeeApprovalView.jsx
+- client/src/pages/ReceptionistDashboardView.jsx
+- client/src/pages/VisitorHistoryView.jsx
+- client/src/pages/VisitorRegistrationView.jsx
+- client/src/services/api.js
+- client/src/services/api.test.js
+- client/src/setup.js
+- client/tailwind.config.js
+- client/vite.config.js
 
 ## API Endpoints
 - POST /api/v1/visitors/register
