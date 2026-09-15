@@ -33,6 +33,10 @@ class VelocityService:
         if reference_time is None:
             reference_time = datetime.now(timezone.utc)
 
+        # Standardize timezone awareness (if naive, attach UTC; if aware, keep UTC)
+        if reference_time.tzinfo is None:
+            reference_time = reference_time.replace(tzinfo=timezone.utc)
+
         window_start = reference_time - timedelta(hours=settings.VELOCITY_WINDOW_HOURS)
         account_id_str = str(account_id)
 

@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from server.app.models.ach_transfer import AchTransfer
+from server.app.services.velocity_service import VelocityService
 
 
 def test_health_check(client):
@@ -48,6 +49,21 @@ def test_normal_approval_exact_5000(client):
     assert data["requires_aml_review"] is False
 
 
+def test_normal_approval_small_amount(client):
+    # AC: Small transaction is approved normally
+    account_id = str(uuid.uuid4())
+    payload = {
+        "account_id": account_id,
+        "amount": 10.50,
+    }
+    response = client.post("/api/v1/ach/transfers/evaluate", json=payload)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["amount"] == 10.50
+    assert data["rolling_24h_total"] == 10.50
+    assert data["requires_aml_review"] is False
+
+
 def test_soft_limit_aml_flagging_over_5000(client):
     # AC: If cumulative rolling 24h sum > $5,000 and <= $10,000: Approve request and set requires_aml_review = true
     account_id = str(uuid.uuid4())
@@ -87,6 +103,34 @@ def test_soft_limit_edge_case_5000_01(client):
     data = response.json()
     assert data["rolling_24h_total"] == 5000.01
     assert data["requires_aml_review"] is True
+
+
+def test_soft_limit_multiple_transfers_sum_between_5000_and_10000(client):
+    # Multiple transfers incrementally crossing the $5,000 soft threshold
+    account_id = str(uuid.uuid4())
+
+    resp1 = client.post(
+        "/api/v1/ach/transfers/evaluate",
+        json={"account_id": account_id, "amount": 2000.00},
+    )
+    assert resp1.status_code == 201
+    assert resp1.json()["requires_aml_review"] is False
+
+    resp2 = client.post(
+        "/api/v1/ach/transfers/evaluate",
+        json={"account_id": account_id, "amount": 2000.00},
+    )
+    assert resp2.status_code == 201
+    assert resp2.json()["requires_aml_review"] is False
+
+    resp3 = client.post(
+        "/api/v1/ach/transfers/evaluate",
+        json={"account_id": account_id, "amount": 2000.00},
+    )
+    assert resp3.status_code == 201
+    data3 = resp3.json()
+    assert data3["rolling_24h_total"] == 6000.00
+    assert data3["requires_aml_review"] is True
 
 
 def test_hard_limit_edge_case_exact_10000(client):
@@ -146,6 +190,21 @@ def test_hard_limit_edge_case_10000_01(client):
     assert data["projected_24h_total"] == 10000.01
 
 
+def test_hard_limit_rejection_single_massive_transfer(client):
+    # Single large transfer > $10,000 is rejected immediately
+    account_id = str(uuid.uuid4())
+    response = client.post(
+        "/api/v1/ach/transfers/evaluate",
+        json={"account_id": account_id, "amount": 25000.00},
+    )
+    assert response.status_code == 429
+    data = response.json()
+    assert data["error_code"] == "VELOCITY_LIMIT_EXCEEDED"
+    assert data["attempted_amount"] == 25000.00
+    assert data["current_24h_total"] == 0.00
+    assert data["projected_24h_total"] == 25000.00
+
+
 def test_correlation_id_propagation_and_generation(client):
     # AC: Include correlation ID header in API response for audit tracing
     account_id = str(uuid.uuid4())
@@ -171,10 +230,14 @@ def test_correlation_id_propagation_and_generation(client):
     # Verify auto_cid is a valid UUID
     uuid.UUID(auto_cid)
 
-    # Test correlation ID on 429 rejection response
+
+def test_correlation_id_on_rejection(client):
+    # Verify correlation ID is preserved on 429 rejection
+    account_id = str(uuid.uuid4())
+    custom_cid = "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"
     resp_rejected = client.post(
         "/api/v1/ach/transfers/evaluate",
-        json={"account_id": account_id, "amount": 9000.00},
+        json={"account_id": account_id, "amount": 15000.00},
         headers={"X-Correlation-ID": custom_cid},
     )
     assert resp_rejected.status_code == 429
@@ -227,6 +290,63 @@ def test_24_hour_rolling_window_expiration(client, db_session):
     assert data["requires_aml_review"] is False
 
 
+def test_24_hour_rolling_window_exact_boundary(db_session):
+    # Directly test VelocityService.get_rolling_24h_sum with exact timestamps
+    account_id = str(uuid.uuid4())
+    ref_time = datetime(2026, 5, 18, 12, 0, 0, tzinfo=timezone.utc)
+
+    # Exactly 24h ago (should be included: created_at >= window_start)
+    tx_exact = AchTransfer(
+        account_id=account_id,
+        amount=Decimal("1500.00"),
+        direction="OUTBOUND",
+        transfer_type="ACH",
+        status="APPROVED",
+        correlation_id=str(uuid.uuid4()),
+        created_at=ref_time - timedelta(hours=24),
+    )
+    # 24h and 1 second ago (should be excluded)
+    tx_expired = AchTransfer(
+        account_id=account_id,
+        amount=Decimal("3000.00"),
+        direction="OUTBOUND",
+        transfer_type="ACH",
+        status="APPROVED",
+        correlation_id=str(uuid.uuid4()),
+        created_at=ref_time - timedelta(hours=24, seconds=1),
+    )
+    db_session.add_all([tx_exact, tx_expired])
+    db_session.commit()
+
+    total = VelocityService.get_rolling_24h_sum(
+        db_session, account_id, reference_time=ref_time
+    )
+    assert total == 1500.00
+
+
+def test_24_hour_rolling_window_naive_datetime_handling(db_session):
+    # Test VelocityService handles naive reference_time without error
+    account_id = str(uuid.uuid4())
+    ref_time_naive = datetime(2026, 5, 18, 12, 0, 0)  # naive datetime
+
+    tx = AchTransfer(
+        account_id=account_id,
+        amount=Decimal("1200.00"),
+        direction="OUTBOUND",
+        transfer_type="ACH",
+        status="APPROVED",
+        correlation_id=str(uuid.uuid4()),
+        created_at=ref_time_naive - timedelta(hours=5),
+    )
+    db_session.add(tx)
+    db_session.commit()
+
+    total = VelocityService.get_rolling_24h_sum(
+        db_session, account_id, reference_time=ref_time_naive
+    )
+    assert total == 1200.00
+
+
 def test_inbound_transfers_and_rejected_transfers_excluded(client, db_session):
     # AC: Only OUTBOUND APPROVED ACH transfers count towards velocity sum
     account_id = str(uuid.uuid4())
@@ -270,27 +390,78 @@ def test_inbound_transfers_and_rejected_transfers_excluded(client, db_session):
     assert data["requires_aml_review"] is False
 
 
-def test_invalid_payload_validation(client):
-    # AC: API input validation errors return HTTP 422
-    account_id = str(uuid.uuid4())
+def test_transfers_for_different_accounts_isolated(client, db_session):
+    # Ensure transfers from Account A do not affect Account B velocity limits
+    account_a = str(uuid.uuid4())
+    account_b = str(uuid.uuid4())
 
-    # Test negative amount
-    resp_negative = client.post(
+    resp_a = client.post(
+        "/api/v1/ach/transfers/evaluate",
+        json={"account_id": account_a, "amount": 4000.00},
+    )
+    assert resp_a.status_code == 201
+    assert resp_a.json()["rolling_24h_total"] == 4000.00
+
+    resp_b = client.post(
+        "/api/v1/ach/transfers/evaluate",
+        json={"account_id": account_b, "amount": 4000.00},
+    )
+    assert resp_b.status_code == 201
+    assert resp_b.json()["rolling_24h_total"] == 4000.00
+    assert resp_b.json()["requires_aml_review"] is False
+
+
+def test_non_ach_transfer_types_excluded(client, db_session):
+    # Non-ACH transfer types (e.g., WIRE) should not count towards ACH velocity limit
+    account_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+
+    wire_transfer = AchTransfer(
+        account_id=account_id,
+        amount=Decimal("7000.00"),
+        direction="OUTBOUND",
+        transfer_type="WIRE",
+        status="APPROVED",
+        requires_aml_review=False,
+        correlation_id=str(uuid.uuid4()),
+        created_at=now - timedelta(hours=1),
+    )
+    db_session.add(wire_transfer)
+    db_session.commit()
+
+    resp = client.post(
+        "/api/v1/ach/transfers/evaluate",
+        json={"account_id": account_id, "amount": 2000.00},
+    )
+    assert resp.status_code == 201
+    assert resp.json()["rolling_24h_total"] == 2000.00
+    assert resp.json()["requires_aml_review"] is False
+
+
+def test_invalid_payload_validation_negative_amount(client):
+    # AC: Negative amount returns HTTP 422
+    account_id = str(uuid.uuid4())
+    response = client.post(
         "/api/v1/ach/transfers/evaluate",
         json={"account_id": account_id, "amount": -100.00},
     )
-    assert resp_negative.status_code == 422
+    assert response.status_code == 422
 
-    # Test zero amount
-    resp_zero = client.post(
+
+def test_invalid_payload_validation_zero_amount(client):
+    # AC: Zero amount returns HTTP 422
+    account_id = str(uuid.uuid4())
+    response = client.post(
         "/api/v1/ach/transfers/evaluate",
         json={"account_id": account_id, "amount": 0.00},
     )
-    assert resp_zero.status_code == 422
+    assert response.status_code == 422
 
-    # Test invalid UUID
-    resp_invalid_uuid = client.post(
+
+def test_invalid_payload_validation_invalid_uuid(client):
+    # AC: Invalid UUID format returns HTTP 422
+    response = client.post(
         "/api/v1/ach/transfers/evaluate",
         json={"account_id": "invalid-uuid-format", "amount": 500.00},
     )
-    assert resp_invalid_uuid.status_code == 422
+    assert response.status_code == 422

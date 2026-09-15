@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class AchTransferEvaluateRequest(BaseModel):
@@ -25,6 +25,8 @@ class AchTransferEvaluateRequest(BaseModel):
 
 
 class AchTransferResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     transfer_id: UUID = Field(..., description="Unique transaction ID")
     account_id: UUID = Field(..., description="Customer account identifier")
     amount: float = Field(..., description="Transaction amount in USD")
@@ -39,9 +41,6 @@ class AchTransferResponse(BaseModel):
     created_at: datetime = Field(
         ..., description="Transaction creation timestamp (UTC)"
     )
-
-    class Config:
-        from_attributes = True
 
 
 class VelocityLimitExceededResponse(BaseModel):
