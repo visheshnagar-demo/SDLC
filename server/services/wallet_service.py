@@ -3,7 +3,10 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from server.models import Transaction
 from server.services.audit_service import create_audit_log
-from server.services.currency_service import convert_currency, SUPPORTED_CURRENCIES
+from server.services.currency_service import (
+    convert_currency,
+    SUPPORTED_CURRENCIES,
+)
 
 
 def process_digital_wallet_payment(

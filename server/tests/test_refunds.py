@@ -56,7 +56,11 @@ def test_partial_refund(client):
     # Partial refund 1: 30.00
     res1 = client.post(
         "/api/v1/refunds",
-        json={"transaction_id": tx_id, "amount": 30.0, "reason": "Dissatisfaction"},
+        json={
+            "transaction_id": tx_id,
+            "amount": 30.0,
+            "reason": "Dissatisfaction",
+        },
     )
     assert res1.status_code == 200
 
@@ -68,7 +72,11 @@ def test_partial_refund(client):
     # Partial refund 2: 70.00 (finishes it)
     res2 = client.post(
         "/api/v1/refunds",
-        json={"transaction_id": tx_id, "amount": 70.0, "reason": "Remaining balance"},
+        json={
+            "transaction_id": tx_id,
+            "amount": 70.0,
+            "reason": "Remaining balance",
+        },
     )
     assert res2.status_code == 200
 
@@ -94,7 +102,11 @@ def test_refund_exceeding_balance(client):
 
     res = client.post(
         "/api/v1/refunds",
-        json={"transaction_id": tx_id, "amount": 30.0, "reason": "Too much"},
+        json={
+            "transaction_id": tx_id,
+            "amount": 30.0,
+            "reason": "Too much",
+        },
     )
     assert res.status_code == 400
     assert "exceeds remaining balance" in res.json()["detail"].lower()
@@ -103,7 +115,11 @@ def test_refund_exceeding_balance(client):
 def test_refund_nonexistent_transaction(client):
     res = client.post(
         "/api/v1/refunds",
-        json={"transaction_id": "tx_nonexistent", "amount": 10.0, "reason": "Ghost tx"},
+        json={
+            "transaction_id": "tx_nonexistent",
+            "amount": 10.0,
+            "reason": "Ghost tx",
+        },
     )
     assert res.status_code == 400
     assert "not found" in res.json()["detail"].lower()

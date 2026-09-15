@@ -128,13 +128,13 @@ def list_transactions(
 
     return [
         TransactionSummary(
-            id=tx.id,
-            payment_intent_id=tx.payment_intent_id,
-            customer_email=tx.customer_email,
-            payment_method=tx.payment_method,
-            amount=tx.converted_amount,
-            currency=tx.target_currency,
-            status=tx.status,
+            id=str(tx.id),
+            payment_intent_id=str(tx.payment_intent_id),
+            customer_email=str(tx.customer_email),
+            payment_method=str(tx.payment_method),
+            amount=float(tx.converted_amount),
+            currency=str(tx.target_currency),
+            status=str(tx.status),
             created_at=tx.created_at,
         )
         for tx in transactions
@@ -155,31 +155,31 @@ def get_transaction(
 
     refund_summaries = [
         RefundSummary(
-            id=ref.id,
-            transaction_id=ref.transaction_id,
-            refund_amount=ref.refund_amount,
-            currency=ref.currency,
-            reason=ref.reason,
+            id=str(ref.id),
+            transaction_id=str(ref.transaction_id),
+            refund_amount=float(ref.refund_amount),
+            currency=str(ref.currency),
+            reason=str(ref.reason),
             memo=ref.memo,
-            status=ref.status,
+            status=str(ref.status),
             created_at=ref.created_at,
         )
         for ref in tx.refunds
     ]
 
     return TransactionDetail(
-        id=tx.id,
-        payment_intent_id=tx.payment_intent_id,
-        customer_email=tx.customer_email,
-        payment_method=tx.payment_method,
-        amount=tx.amount,
-        base_currency=tx.base_currency,
-        target_currency=tx.target_currency,
-        converted_amount=tx.converted_amount,
-        exchange_rate=tx.exchange_rate,
-        status=tx.status,
-        refunded_amount=tx.refunded_amount,
-        remaining_refundable_balance=tx.remaining_refundable_balance,
+        id=str(tx.id),
+        payment_intent_id=str(tx.payment_intent_id),
+        customer_email=str(tx.customer_email),
+        payment_method=str(tx.payment_method),
+        amount=float(tx.amount),
+        base_currency=str(tx.base_currency),
+        target_currency=str(tx.target_currency),
+        converted_amount=float(tx.converted_amount),
+        exchange_rate=float(tx.exchange_rate),
+        status=str(tx.status),
+        refunded_amount=float(tx.refunded_amount),
+        remaining_refundable_balance=float(tx.remaining_refundable_balance),
         refunds=refund_summaries,
         created_at=tx.created_at,
     )

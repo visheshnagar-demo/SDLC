@@ -26,13 +26,13 @@ def create_refund_endpoint(
         ip_address=ip_address,
     )
     return RefundSummary(
-        id=refund.id,
-        transaction_id=refund.transaction_id,
-        refund_amount=refund.refund_amount,
-        currency=refund.currency,
-        reason=refund.reason,
+        id=str(refund.id),
+        transaction_id=str(refund.transaction_id),
+        refund_amount=float(refund.refund_amount),
+        currency=str(refund.currency),
+        reason=str(refund.reason),
         memo=refund.memo,
-        status=refund.status,
+        status=str(refund.status),
         created_at=refund.created_at,
     )
 
@@ -53,13 +53,13 @@ def list_refunds_endpoint(
 
     return [
         RefundSummary(
-            id=ref.id,
-            transaction_id=ref.transaction_id,
-            refund_amount=ref.refund_amount,
-            currency=ref.currency,
-            reason=ref.reason,
+            id=str(ref.id),
+            transaction_id=str(ref.transaction_id),
+            refund_amount=float(ref.refund_amount),
+            currency=str(ref.currency),
+            reason=str(ref.reason),
             memo=ref.memo,
-            status=ref.status,
+            status=str(ref.status),
             created_at=ref.created_at,
         )
         for ref in refunds

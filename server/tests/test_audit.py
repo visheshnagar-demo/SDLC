@@ -19,7 +19,11 @@ def test_audit_logs_list_and_masking(client):
     # Issue refund to generate refund audit log
     client.post(
         "/api/v1/refunds",
-        json={"transaction_id": tx_id, "amount": 10.0, "reason": "Audit refund check"},
+        json={
+            "transaction_id": tx_id,
+            "amount": 10.0,
+            "reason": "Audit refund check",
+        },
     )
 
     # Fetch audit logs for this transaction

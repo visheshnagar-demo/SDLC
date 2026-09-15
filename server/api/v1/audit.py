@@ -38,10 +38,10 @@ def list_audit_logs(
 
         results.append(
             AuditLogEntry(
-                id=log.id,
-                transaction_id=log.transaction_id,
-                event_type=log.event_type,
-                ip_address=log.ip_address,
+                id=str(log.id),
+                transaction_id=str(log.transaction_id) if log.transaction_id else None,
+                event_type=str(log.event_type),
+                ip_address=str(log.ip_address),
                 masked_payload=payload_dict,
                 created_at=log.created_at,
             )
