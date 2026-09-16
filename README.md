@@ -86,3 +86,21 @@ Passwords are stored hashed with the app's own hashing utility (never in plainte
 | Frontend | 5173 | http://localhost:5173      |
 | API Docs | 8000 | http://localhost:8000/docs |
 
+## Sales Orders ETL Pipeline (PostgreSQL to BigQuery)
+
+### Overview
+Extracts sales data from `raw_sales_orders` in PostgreSQL, filters invalid records (missing/non-positive amounts, malformed email formats), and loads cleaned data into BigQuery partitioned table `dev_sales.fct_sales_orders_v1` partitioned by `order_date`.
+
+### Running ETL Locally / Standalone
+```bash
+python -m pipeline.run_sales_etl --source-table raw_sales_orders --target-dataset dev_sales --target-table fct_sales_orders_v1
+# or
+python -m server.pipeline.main --source-table raw_sales_orders --target-dataset dev_sales --target-table fct_sales_orders_v1
+```
+
+### Running Pipeline Tests
+```bash
+pytest tests/
+```
+
+
