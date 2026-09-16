@@ -1,19 +1,14 @@
 # Project Features
 
-## SCRUM-241 - Payment Gateway Service & Full-Stack UI with Stripe, Digital Wallets, Multi-Currency, Refund Portal & Analytics Dashboard
+## SCRUM-299 - Commercial Wire Maker-Checker System
 
 ### Feature Summary
-Enables customers to purchase products using cards or digital wallets in their chosen currency, allows operations admins to manage refunds, and gives finance analysts transaction insights and webhook logs via a React/Vite/Tailwind UI connected to FastAPI backend APIs.
+Enables commercial banking operations to enforce dual-control authorization on wire transfers exceeding $10,000, preventing internal fraud by requiring a Checker to approve wires initiated by a Maker.
 
 ### Key Features
-- Credit Card Processing via Stripe integration
-- Digital Wallet Support (Apple Pay, Google Pay)
-- Real-Time Multi-Currency Conversion
-- Automated Refund Processing Management
-- Webhook Event Handling for transaction lifecycle events
-- PCI-Compliant Audit Logging
-- REST APIs for payment initiation, checkout sessions, refund processing, and transaction status reporting
-- Customer Checkout Page with credit card form, express wallets, currency selector, and status feedback
-- Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
-- Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
-- Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+- Wire Transfer Initiation Form (Beneficiary Name, Account Number, Routing Number, Amount)
+- Automated Dual Control Thresholding (Amount > $10,000 sets status to PENDING; Amount <= $10,000 auto-approves)
+- Approval Queue Data Table for pending transfers
+- Dual-Control Rule Enforcement (403 Forbidden error if Maker attempts to approve their own wire)
+- User Switcher UI to easily toggle between Maker (User A) and Checker (User B) persona
+- Visual Error Feedback (red toast notifications for authorization violations)

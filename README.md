@@ -1,4 +1,78 @@
-# Project
+# Commercial Wire Maker-Checker System
+
+A full-stack banking application enforcing dual-control authorization on wire transfers exceeding $10,000 to prevent internal fraud.
+
+## Features
+
+- **Wire Initiation Form**: Allows Makers (e.g. "User A") to submit wire transfer requests.
+- **Automated Threshold Evaluation**: Wires $\le$ $10,000 are automatically `APPROVED`; wires > $10,000 transition to `PENDING` approval.
+- **Checker Approval Queue**: Displays pending high-value transfers.
+- **Maker-Checker Segregation**: Server-side enforcement preventing Makers from approving their own wire transfers (returns HTTP 403 Forbidden).
+- **User Switcher**: Header controls allowing seamless toggling between "User A (Maker)" and "User B (Checker)" personas.
+
+---
+
+### 1. Environment & Dependencies
+
+Navigate to the project root and set up a Python virtual environment:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r server/requirements.txt
+```
+
+### 2. Configuration
+
+Copy the example environment configuration:
+
+```bash
+cp server/.env.example .env
+```
+
+Key environment variables:
+- `DATABASE_URL`: SQLite connection string (default: `sqlite:///./wires.db`)
+- `ALLOWED_ORIGINS`: Allowed CORS origins for frontend integration (default: `http://localhost:5173,http://localhost:3000`)
+
+### 3. Running Unit Tests
+
+Run the test suite using `pytest`:
+
+```bash
+pytest server/tests
+```
+
+### 4. Running the Development Server
+
+Start the FastAPI server on port 8000:
+
+```bash
+python3 -m uvicorn server.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Interactive API documentation (Swagger UI) is available at:
+`http://localhost:8000/docs`
+
+---
+
+## Full-Stack Local Development
+
+To run the complete application (Backend + Frontend):
+
+1. **Start the Backend Service**:
+   ```bash
+   python3 -m uvicorn server.main:app --host 0.0.0.0 --port 8000 --reload
+   ```
+
+2. **Start the Frontend Application**:
+   Navigate to the `client/` directory and run:
+   ```bash
+   cd client
+   npm install
+   npm run dev
+   ```
+
+3. Open your browser at `http://localhost:5173` to access the Commercial Wire Dashboard.
 
 ## Server
 
