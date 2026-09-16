@@ -4,51 +4,42 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from fastapi.testclient import TestClient
 
-from server.database import Base, get_db, seed_data
-import server.models  # noqa: F401
+from server.database import Base, seed_data
 from server.main import app
+import server.models  # noqa: F401
 
-# In-memory SQLite for testing with StaticPool
-TEST_DATABASE_URL = "sqlite:///:memory:"
+SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///:memory:"
 
-test_engine = create_engine(
-    TEST_DATABASE_URL,
+engine = create_engine(
+    SQLALCHEMY_TEST_DATABASE_URL,
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-@pytest.fixture(scope="session", autouse=True)
-def setup_database():
-    Base.metadata.create_all(bind=test_engine)
+@pytest.fixture(autouse=True)
+def setup_test_database():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
-    try:
-        seed_data(db)
-    finally:
-        db.close()
+    seed_data(db)
+    db.close()
     yield
-    Base.metadata.drop_all(bind=test_engine)
 
 
 @pytest.fixture
-def db_session():
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+def client():
+    # Patch database engine/SessionLocal in server.database and server.middleware.tenant to use TestingSessionLocal
+    import server.database as db_module
+    import server.middleware.tenant as mw_module
 
+    orig_session_local = db_module.SessionLocal
+    db_module.SessionLocal = TestingSessionLocal
+    mw_module.SessionLocal = TestingSessionLocal
 
-@pytest.fixture
-def client(db_session):
-    def override_get_db():
-        try:
-            yield db_session
-        finally:
-            pass
+    with TestClient(app) as c:
+        yield c
 
-    app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as test_client:
-        yield test_client
-    app.dependency_overrides.clear()
+    db_module.SessionLocal = orig_session_local
+    mw_module.SessionLocal = orig_session_local

@@ -1,113 +1,148 @@
-from typing import Any, Optional
-from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
+from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, ConfigDict, Field
 
 
-class CartItem(BaseModel):
+class TenantCreateRequest(BaseModel):
+    name: str = Field(..., description="Organization or Tenant Name")
+    slug: str = Field(..., description="Unique URL slug or subdomain handle")
+    tier_id: Optional[str] = Field(None, description="Subscription tier UUID")
+    tier_name: Optional[str] = Field(
+        None, description="Subscription tier name (e.g. Starter, Pro, Enterprise)"
+    )
+    admin_email: Optional[str] = Field(None, description="Primary admin email address")
+    admin_first_name: Optional[str] = Field(
+        None, description="Primary admin first name"
+    )
+    admin_last_name: Optional[str] = Field(None, description="Primary admin last name")
+    custom_subdomain: Optional[str] = Field(
+        None, description="Custom subdomain (e.g. acme.yourplatform.com)"
+    )
+    settings: Optional[Dict[str, Any]] = Field(default_factory=dict)
+
+
+class TenantUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    slug: Optional[str] = None
+    admin_email: Optional[str] = None
+    admin_first_name: Optional[str] = None
+    admin_last_name: Optional[str] = None
+    settings: Optional[Dict[str, Any]] = None
+
+
+class TenantStatusUpdateRequest(BaseModel):
+    status: str = Field(..., description="Status: ACTIVE, SUSPENDED, CANCELLED")
+
+
+class DomainCreateRequest(BaseModel):
+    domain_name: str = Field(
+        ..., description="Fully qualified domain name or subdomain"
+    )
+    is_primary: bool = False
+
+
+class SubscriptionUpdateRequest(BaseModel):
+    tier_id: Optional[str] = None
+    tier_name: Optional[str] = None
+    custom_max_users: Optional[int] = None
+    custom_max_storage_gb: Optional[int] = None
+    custom_feature_flags: Optional[Dict[str, Any]] = None
+
+
+class DomainResponse(BaseModel):
+    id: str
+    tenant_id: str
+    domain_name: str
+    is_primary: bool
+    is_verified: bool
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TierResponse(BaseModel):
+    id: str
     name: str
-    quantity: int = 1
-    unit_price: float
+    display_name: str
+    max_users: int
+    max_storage_gb: int
+    feature_flags: Dict[str, Any]
+    is_active: bool
 
-
-class CheckoutSessionRequest(BaseModel):
-    amount: float = Field(gt=0, description="Amount in base currency")
-    currency: str = Field(default="USD", description="Settlement/target currency")
-    customer_email: str
-    items: Optional[list[CartItem]] = Field(default_factory=list)
-
-
-class CheckoutSessionResponse(BaseModel):
-    session_id: str
-    payment_intent_id: str
-    client_secret: str
-    base_amount: float
-    base_currency: str
-    target_amount: float
-    target_currency: str
-    exchange_rate: float
-
-
-class DigitalWalletPaymentRequest(BaseModel):
-    wallet_type: str = Field(description="apple_pay or google_pay")
-    payment_token: str
-    currency: str = "USD"
-    amount: float = Field(gt=0)
-    customer_email: Optional[str] = "customer@example.com"
-
-
-class DigitalWalletPaymentResponse(BaseModel):
-    transaction_id: str
-    payment_intent_id: str
-    wallet_type: str
-    amount: float
-    currency: str
-    status: str
-
-
-class ExchangeRatesResponse(BaseModel):
-    base_currency: str
-    rates: dict[str, float]
-    timestamp: str
-
-
-class RefundRequest(BaseModel):
-    transaction_id: str
-    amount: float = Field(gt=0)
-    reason: str
-    memo: Optional[str] = None
-
-
-class RefundSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+
+class TenantResponse(BaseModel):
     id: str
-    transaction_id: str
-    refund_amount: float
-    currency: str
-    reason: str
-    memo: Optional[str] = None
+    tenant_id: str
+    name: str
+    slug: str
     status: str
-    created_at: Optional[datetime] = None
+    tier_id: str
+    tier_name: Optional[str] = None
+    primary_domain: Optional[str] = None
+    admin_email: Optional[str] = None
+    admin_first_name: Optional[str] = None
+    admin_last_name: Optional[str] = None
+    settings: Dict[str, Any] = Field(default_factory=dict)
+    active_users_count: int = 1
+    storage_used_gb: int = 0
+    created_at: datetime
+    updated_at: datetime
 
-
-class TransactionSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+
+class TenantDetailResponse(TenantResponse):
+    tier: Optional[TierResponse] = None
+    domains: List[DomainResponse] = Field(default_factory=list)
+    custom_max_users: Optional[int] = None
+    custom_max_storage_gb: Optional[int] = None
+    custom_feature_flags: Optional[Dict[str, Any]] = None
+
+
+class PaginatedTenantList(BaseModel):
+    items: List[TenantResponse]
+    total: int
+    skip: int
+    limit: int
+
+
+class SubscriptionResponse(BaseModel):
+    tenant_id: str
+    tier_id: str
+    tier_name: str
+    max_users: int
+    max_storage_gb: int
+    feature_flags: Dict[str, Any]
+    custom_max_users: Optional[int] = None
+    custom_max_storage_gb: Optional[int] = None
+
+
+class TenantUsageResponse(BaseModel):
+    tenant_id: str
+    active_users: int
+    storage_used_gb: int
+    max_users: int
+    max_storage_gb: int
+    usage_percentage_users: float
+    usage_percentage_storage: float
+
+
+class AuditLogResponse(BaseModel):
     id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    currency: str
-    status: str
-    created_at: Optional[datetime] = None
+    tenant_id: str
+    actor_id: str
+    action: str
+    details: Dict[str, Any]
+    ip_address: Optional[str] = None
+    created_at: datetime
 
-
-class TransactionDetail(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    base_currency: str
-    target_currency: str
-    converted_amount: float
-    exchange_rate: float
-    status: str
-    refunded_amount: float
-    remaining_refundable_balance: float
-    refunds: list[RefundSummary] = Field(default_factory=list)
-    created_at: Optional[datetime] = None
 
-
-class AuditLogEntry(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    transaction_id: Optional[str] = None
-    event_type: str
-    ip_address: str
-    masked_payload: dict[str, Any]
-    created_at: Optional[datetime] = None
+class PaginatedAuditLogs(BaseModel):
+    items: List[AuditLogResponse]
+    total: int
+    skip: int
+    limit: int

@@ -1,143 +1,122 @@
 import uuid
-import datetime
-from sqlalchemy import (
-    Column,
-    String,
-    Float,
-    Boolean,
-    DateTime,
-    ForeignKey,
-    Text,
-)
+from datetime import datetime, timezone
+from sqlalchemy import Column, String, Integer, Boolean, JSON, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from server.database import Base
 
 
-def generate_uuid() -> str:
-    return str(uuid.uuid4())
+def utc_now():
+    return datetime.now(timezone.utc)
 
 
-def get_utc_now() -> datetime.datetime:
-    return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+class SubscriptionTier(Base):
+    __tablename__ = "subscription_tiers"
 
-
-class User(Base):
-    __tablename__ = "users"
-
-    id = Column(String, primary_key=True, default=generate_uuid)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    role = Column(String, default="user", nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False)
-    is_verified = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String(64), unique=True, nullable=False, index=True)
+    display_name = Column(String(128), nullable=False)
+    max_users = Column(Integer, nullable=False, default=10)
+    max_storage_gb = Column(Integer, nullable=False, default=5)
+    feature_flags = Column(JSON, nullable=False, default=dict)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
     updated_at = Column(
-        DateTime,
-        default=get_utc_now,
-        onupdate=get_utc_now,
+        DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now
+    )
+
+    tenants = relationship("Tenant", back_populates="tier")
+
+
+class Tenant(Base):
+    __tablename__ = "tenants"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = Column(String(64), unique=True, nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    slug = Column(String(64), unique=True, nullable=False, index=True)
+    status = Column(
+        String(32), nullable=False, default="ACTIVE"
+    )  # ACTIVE, SUSPENDED, CANCELLED, SOFT_DELETED
+    tier_id = Column(String(36), ForeignKey("subscription_tiers.id"), nullable=False)
+    admin_email = Column(String(255), nullable=True)
+    admin_first_name = Column(String(128), nullable=True)
+    admin_last_name = Column(String(128), nullable=True)
+    custom_subdomain = Column(String(255), nullable=True)
+    settings = Column(JSON, nullable=False, default=dict)
+    active_users_count = Column(Integer, nullable=False, default=1)
+    storage_used_gb = Column(Integer, nullable=False, default=0)
+    is_deleted = Column(Boolean, nullable=False, default=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
+    updated_at = Column(
+        DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now
+    )
+
+    tier = relationship("SubscriptionTier", back_populates="tenants")
+    domains = relationship(
+        "TenantDomain", back_populates="tenant", cascade="all, delete-orphan"
+    )
+    quotas = relationship(
+        "TenantQuota",
+        back_populates="tenant",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    audit_logs = relationship(
+        "TenantAuditLog", back_populates="tenant", cascade="all, delete-orphan"
+    )
+
+
+class TenantDomain(Base):
+    __tablename__ = "tenant_domains"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = Column(
+        String(36), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
+    )
+    domain_name = Column(String(255), unique=True, nullable=False, index=True)
+    is_primary = Column(Boolean, nullable=False, default=False)
+    is_verified = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
+    updated_at = Column(
+        DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now
+    )
+
+    tenant = relationship("Tenant", back_populates="domains")
+
+
+class TenantQuota(Base):
+    __tablename__ = "tenant_quotas"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = Column(
+        String(36),
+        ForeignKey("tenants.id", ondelete="CASCADE"),
+        unique=True,
         nullable=False,
     )
-
-    transactions = relationship("Transaction", back_populates="user")
-    refunds = relationship("Refund", back_populates="actor")
-
-
-class CheckoutSession(Base):
-    __tablename__ = "checkout_sessions"
-
-    id = Column(String, primary_key=True, default=lambda: f"cs_{uuid.uuid4().hex[:16]}")
-    session_id = Column(String, unique=True, index=True, nullable=False)
-    payment_intent_id = Column(String, index=True, nullable=False)
-    client_secret = Column(String, nullable=False)
-    customer_email = Column(String, index=True, nullable=False)
-    amount = Column(Float, nullable=False)
-    currency = Column(String, nullable=False)
-    target_amount = Column(Float, nullable=False)
-    target_currency = Column(String, nullable=False)
-    exchange_rate = Column(Float, default=1.0, nullable=False)
-    items_json = Column(Text, default="[]", nullable=False)
-    status = Column(String, default="PENDING", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
-
-
-class Transaction(Base):
-    __tablename__ = "transactions"
-
-    id = Column(String, primary_key=True, default=lambda: f"tx_{uuid.uuid4().hex[:12]}")
-    payment_intent_id = Column(String, index=True, nullable=False)
-    user_id = Column(String, ForeignKey("users.id"), nullable=True)
-    customer_email = Column(String, index=True, nullable=False)
-    payment_method = Column(String, default="card", nullable=False)
-    amount = Column(Float, nullable=False)
-    base_currency = Column(String, default="USD", nullable=False)
-    target_currency = Column(String, default="USD", nullable=False)
-    converted_amount = Column(Float, nullable=False)
-    exchange_rate = Column(Float, default=1.0, nullable=False)
-    status = Column(String, default="COMPLETED", nullable=False)
-    refunded_amount = Column(Float, default=0.0, nullable=False)
-    remaining_refundable_balance = Column(Float, nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    custom_max_users = Column(Integer, nullable=True)
+    custom_max_storage_gb = Column(Integer, nullable=True)
+    custom_feature_flags = Column(JSON, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
     updated_at = Column(
-        DateTime,
-        default=get_utc_now,
-        onupdate=get_utc_now,
-        nullable=False,
+        DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now
     )
 
-    user = relationship("User", back_populates="transactions")
-    refunds = relationship(
-        "Refund", back_populates="transaction", cascade="all, delete-orphan"
+    tenant = relationship("Tenant", back_populates="quotas")
+
+
+class TenantAuditLog(Base):
+    __tablename__ = "tenant_audit_logs"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = Column(
+        String(36), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
     )
-    audit_logs = relationship("AuditLog", back_populates="transaction")
+    actor_id = Column(String(128), nullable=False, default="system_admin")
+    action = Column(String(64), nullable=False)
+    details = Column(JSON, nullable=False, default=dict)
+    ip_address = Column(String(45), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
 
-
-class Refund(Base):
-    __tablename__ = "refunds"
-
-    id = Column(
-        String, primary_key=True, default=lambda: f"ref_{uuid.uuid4().hex[:12]}"
-    )
-    transaction_id = Column(String, ForeignKey("transactions.id"), nullable=False)
-    actor_id = Column(String, ForeignKey("users.id"), nullable=True)
-    refund_amount = Column(Float, nullable=False)
-    currency = Column(String, default="USD", nullable=False)
-    reason = Column(String, nullable=False)
-    memo = Column(String, nullable=True)
-    status = Column(String, default="COMPLETED", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
-
-    transaction = relationship("Transaction", back_populates="refunds")
-    actor = relationship("User", back_populates="refunds")
-
-
-class AuditLog(Base):
-    __tablename__ = "audit_logs"
-
-    id = Column(
-        String, primary_key=True, default=lambda: f"log_{uuid.uuid4().hex[:12]}"
-    )
-    transaction_id = Column(String, ForeignKey("transactions.id"), nullable=True)
-    event_type = Column(String, index=True, nullable=False)
-    ip_address = Column(String, default="127.0.0.1", nullable=False)
-    masked_payload = Column(Text, default="{}", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
-
-    transaction = relationship("Transaction", back_populates="audit_logs")
-
-
-class ExchangeRateCache(Base):
-    __tablename__ = "exchange_rate_caches"
-
-    id = Column(String, primary_key=True, default=generate_uuid)
-    base_currency = Column(String, index=True, nullable=False)
-    rates_json = Column(Text, nullable=False)
-    fetched_at = Column(DateTime, default=get_utc_now, nullable=False)
-    expires_at = Column(DateTime, nullable=False)
-
-
-class WebhookEvent(Base):
-    __tablename__ = "webhook_events"
-
-    id = Column(String, primary_key=True)
-    event_type = Column(String, nullable=False)
-    processed_at = Column(DateTime, default=get_utc_now, nullable=False)
+    tenant = relationship("Tenant", back_populates="audit_logs")
