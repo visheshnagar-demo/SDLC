@@ -1,41 +1,64 @@
-import os
+import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from server.api.v1 import api_v1_router
-from server.database import init_db
 from server.config import settings
+from server.database import init_db
+from server.api.v1.etl import router as etl_router
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger("server.main")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logger.info("Starting up Sales Orders ETL Service...")
     init_db()
     yield
+    logger.info("Shutting down Sales Orders ETL Service...")
 
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
+    version="1.0.0",
+    description="PostgreSQL to BigQuery Sales Orders ETL Pipeline Service",
     lifespan=lifespan,
 )
 
-allowed_origins_raw = os.getenv(
-    "ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000"
-)
-allowed_origins = [
-    origin.strip() for origin in allowed_origins_raw.split(",") if origin.strip()
-]
-
+# Mandatory CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(api_v1_router)
+# API Routers
+app.include_router(etl_router, prefix="/api/v1/etl")
 
 
-@app.get("/health")
+@app.get("/", tags=["General"])
+def root():
+    return {
+        "service": settings.PROJECT_NAME,
+        "version": "1.0.0",
+        "docs_url": "/docs",
+        "health_check": "/healthz",
+    }
+
+
+@app.get("/healthz", tags=["Health"])
+@app.get("/livez", tags=["Health"])
+@app.get("/health", tags=["Health"])
 def health_check():
-    return {"status": "ok", "service": "payment-gateway-service"}
+    return {
+        "status": "healthy",
+        "service": settings.PROJECT_NAME,
+        "database_url": settings.DATABASE_URL.split("@")[-1]
+        if "@" in settings.DATABASE_URL
+        else "configured",
+    }
