@@ -1,4 +1,81 @@
-# Project
+# Commercial Wire Maker-Checker System
+
+A full-stack commercial banking application for wire transfer management featuring threshold auto-approval and Maker-Checker segregation of duties.
+
+## Features
+- **Wire Transfer Initiation**: Submit wire transfers with beneficiary details, financial routing numbers, and amount.
+- **Automated Threshold Approval**:
+  - Wires $\le$ $10,000.00 are automatically set to `APPROVED`.
+  - Wires > $10,000.00 are set to `PENDING` and queued for dual-control approval.
+- **Segregation of Duties (Dual Control)**:
+  - Maker (`createdBy`) cannot approve their own wire transfer. Self-approval attempts return HTTP `403 Forbidden`.
+  - A distinct Checker (`approvedBy`) must authorize or reject pending transfers.
+- **Approval Queue**: View pending transfers in real-time.
+
+---
+
+### Requirements
+- Python 3.11+
+- Virtual environment (`venv`)
+
+### Installation & Local Setup
+
+1. **Navigate to the server directory:**
+   ```bash
+   cd server
+   ```
+
+2. **Create and activate virtual environment:**
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Environment Configuration:**
+   Copy `.env.example` or set environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+
+5. **Run Database Initialization & Server:**
+   ```bash
+   uvicorn server.main:app --host 0.0.0.0 --port 8000 --reload
+   ```
+
+6. **Run Unit Tests:**
+   ```bash
+   pytest server/tests/ -v
+   ```
+
+---
+
+## Full-Stack Local Development
+
+### Running Backend and Frontend Together
+
+1. **Start Backend Server:**
+   ```bash
+   cd server
+   python3 -m venv venv && source venv/bin/activate
+   pip install -r requirements.txt
+   uvicorn server.main:app --host 0.0.0.0 --port 8000
+   ```
+
+2. **Start Frontend Development Server:**
+   ```bash
+   cd client
+   npm install
+   npm run dev
+   ```
+
+- **Backend API**: `http://localhost:8000`
+- **Frontend App**: `http://localhost:5173`
+- **Interactive API Docs**: `http://localhost:8000/docs`
 
 ## Server
 
