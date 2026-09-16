@@ -208,7 +208,10 @@ export default function TenantTable({
                       <div className="flex justify-between text-[11px] text-slate-600">
                         <span className="flex items-center gap-1">
                           <Users className="w-3 h-3 text-slate-400" />
-                          {tenant.active_users_count || 1} users
+                          {tenant.active_users_count || 1}{" "}
+                          {(tenant.active_users_count || 1) === 1
+                            ? "user"
+                            : "users"}
                         </span>
                         <span className="flex items-center gap-1">
                           <HardDrive className="w-3 h-3 text-slate-400" />

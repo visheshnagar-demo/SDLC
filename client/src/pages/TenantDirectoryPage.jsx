@@ -138,7 +138,8 @@ export default function TenantDirectoryPage() {
               {activeRate}%
             </div>
             <div className="text-[11px] text-slate-500 mt-1">
-              {activeTenants} active environments
+              {activeTenants} active{" "}
+              {activeTenants === 1 ? "environment" : "environments"}
             </div>
           </div>
           <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
