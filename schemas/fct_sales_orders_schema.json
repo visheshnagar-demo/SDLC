@@ -1,0 +1,56 @@
+[
+  {
+    "name": "order_id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Unique sales order identifier"
+  },
+  {
+    "name": "customer_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Identifier of the customer"
+  },
+  {
+    "name": "customer_email",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Validated customer email address"
+  },
+  {
+    "name": "order_date",
+    "type": "DATE",
+    "mode": "REQUIRED",
+    "description": "Partitioning column (order placement date)"
+  },
+  {
+    "name": "amount",
+    "type": "NUMERIC",
+    "mode": "REQUIRED",
+    "description": "Validated sales amount"
+  },
+  {
+    "name": "currency",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "ISO currency code"
+  },
+  {
+    "name": "status",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Order fulfillment status"
+  },
+  {
+    "name": "source_created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Original record creation timestamp"
+  },
+  {
+    "name": "ingested_at",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "Pipeline ingestion timestamp (UTC)"
+  }
+]

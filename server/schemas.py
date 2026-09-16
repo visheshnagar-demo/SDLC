@@ -1,6 +1,71 @@
-from typing import Any, Optional
+from typing import Any, Optional, List
 from pydantic import BaseModel, ConfigDict, Field
-from datetime import datetime
+from datetime import datetime, date
+
+
+class PipelineMetrics(BaseModel):
+    extracted_count: int = 0
+    filtered_missing_amount: int = 0
+    filtered_invalid_email: int = 0
+    total_filtered: int = 0
+    loaded_count: int = 0
+
+
+class PipelineRunRequest(BaseModel):
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    batch_size: int = Field(default=1000, ge=1, le=50000)
+    force_reload: bool = False
+
+
+class PipelineRunResponse(BaseModel):
+    status: str
+    job_id: str
+    start_time: str
+    end_time: str
+    duration_seconds: float
+    metrics: PipelineMetrics
+
+
+class HealthResponse(BaseModel):
+    status: str
+    database_connected: bool
+    bigquery_accessible: bool
+
+
+class RawSalesOrderCreate(BaseModel):
+    order_id: Optional[str] = None
+    customer_id: Optional[str] = None
+    customer_email: Optional[str] = None
+    order_date: date
+    amount: Optional[float] = None
+    currency: Optional[str] = "USD"
+    status: Optional[str] = "completed"
+
+
+class RawSalesOrderRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    order_id: str
+    customer_id: Optional[str] = None
+    customer_email: Optional[str] = None
+    order_date: date
+    amount: Optional[float] = None
+    currency: Optional[str] = "USD"
+    status: Optional[str] = "completed"
+    created_at: datetime
+
+
+class FctSalesOrder(BaseModel):
+    order_id: str
+    customer_id: Optional[str] = None
+    customer_email: str
+    order_date: str
+    amount: float
+    currency: Optional[str] = "USD"
+    status: Optional[str] = "completed"
+    source_created_at: Optional[str] = None
+    ingested_at: str
 
 
 class CartItem(BaseModel):
@@ -13,7 +78,7 @@ class CheckoutSessionRequest(BaseModel):
     amount: float = Field(gt=0, description="Amount in base currency")
     currency: str = Field(default="USD", description="Settlement/target currency")
     customer_email: str
-    items: Optional[list[CartItem]] = Field(default_factory=list)
+    items: Optional[List[CartItem]] = Field(default_factory=list)
 
 
 class CheckoutSessionResponse(BaseModel):
@@ -98,7 +163,7 @@ class TransactionDetail(BaseModel):
     status: str
     refunded_amount: float
     remaining_refundable_balance: float
-    refunds: list[RefundSummary] = Field(default_factory=list)
+    refunds: List[RefundSummary] = Field(default_factory=list)
     created_at: Optional[datetime] = None
 
 

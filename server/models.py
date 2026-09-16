@@ -6,6 +6,7 @@ from sqlalchemy import (
     Float,
     Boolean,
     DateTime,
+    Date,
     ForeignKey,
     Text,
 )
@@ -19,6 +20,19 @@ def generate_uuid() -> str:
 
 def get_utc_now() -> datetime.datetime:
     return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+
+
+class RawSalesOrder(Base):
+    __tablename__ = "raw_sales_orders"
+
+    order_id = Column(String(64), primary_key=True, default=generate_uuid)
+    customer_id = Column(String(64), nullable=True, index=True)
+    customer_email = Column(String(255), nullable=True, index=True)
+    order_date = Column(Date, nullable=False, index=True)
+    amount = Column(Float, nullable=True)
+    currency = Column(String(3), default="USD", nullable=True)
+    status = Column(String(32), default="completed", nullable=True)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
 
 
 class User(Base):
