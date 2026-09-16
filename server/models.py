@@ -1,7 +1,14 @@
+import sys
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy import Column, String, Integer, Boolean, JSON, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
+
+if __name__ == "server.models":
+    sys.modules["models"] = sys.modules["server.models"]
+elif __name__ == "models":
+    sys.modules["server.models"] = sys.modules["models"]
+
 from server.database import Base
 
 

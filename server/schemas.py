@@ -1,6 +1,12 @@
+import sys
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, ConfigDict, Field
+
+if __name__ == "server.schemas":
+    sys.modules["schemas"] = sys.modules["server.schemas"]
+elif __name__ == "schemas":
+    sys.modules["server.schemas"] = sys.modules["schemas"]
 
 
 class TenantCreateRequest(BaseModel):

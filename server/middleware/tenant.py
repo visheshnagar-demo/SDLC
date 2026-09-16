@@ -7,9 +7,6 @@ from server.models import Tenant, TenantDomain
 
 class TenantRoutingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        # Exclude docs, openapi, healthz from strict tenant checks unless X-Tenant-ID explicitly passed
-        path = request.url.path
-
         tenant_id_header = request.headers.get("X-Tenant-ID") or request.headers.get(
             "x-tenant-id"
         )
@@ -24,9 +21,15 @@ class TenantRoutingMiddleware(BaseHTTPMiddleware):
                     .filter(
                         (Tenant.tenant_id == tenant_id_header)
                         | (Tenant.id == tenant_id_header)
+                        | (Tenant.slug == tenant_id_header)
                     )
                     .first()
                 )
+                if not tenant:
+                    return JSONResponse(
+                        status_code=403,
+                        content={"detail": "Tenant is suspended or inactive"},
+                    )
             elif (
                 host_header
                 and "." in host_header

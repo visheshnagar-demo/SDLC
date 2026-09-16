@@ -45,10 +45,28 @@ graph TD
 - server/services/tier_service.py
 - server/tests/__init__.py
 - server/tests/conftest.py
+- server/tests/test_qa_simulation.py
 - server/tests/test_tenants.py
 
 ## Frontend Modules (client/)
-- (no client/ files found yet)
+- client/eslint.config.js
+- client/postcss.config.js
+- client/src/App.jsx
+- client/src/App.test.jsx
+- client/src/components/layout/Navbar.jsx
+- client/src/components/tenants/AuditLogTimeline.jsx
+- client/src/components/tenants/CustomDomainsList.jsx
+- client/src/components/tenants/QuotaEditor.jsx
+- client/src/components/tenants/TenantOnboardingWizard.jsx
+- client/src/components/tenants/TenantTable.jsx
+- client/src/main.jsx
+- client/src/pages/TenantDetailPage.jsx
+- client/src/pages/TenantDirectoryPage.jsx
+- client/src/pages/TenantOnboardingPage.jsx
+- client/src/services/api.js
+- client/src/setup.js
+- client/tailwind.config.js
+- client/vite.config.js
 
 ## API Endpoints
 - POST /api/v1/tenants
