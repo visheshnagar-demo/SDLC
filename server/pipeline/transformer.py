@@ -14,7 +14,7 @@ class DataTransformer:
         Transforms a single validated sales order dict.
         """
         order_id = str(record.get("order_id", "")).strip()
-        
+
         customer_id = record.get("customer_id")
         if customer_id is not None:
             customer_id = str(customer_id).strip()
@@ -62,7 +62,7 @@ class DataTransformer:
             "currency": currency_val,
             "status": status_val,
             "source_created_at": source_created_at,
-            "ingested_at": ingested_at_val
+            "ingested_at": ingested_at_val,
         }
 
     @classmethod

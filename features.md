@@ -17,3 +17,14 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-290 - Build Sales Data ETL Pipeline (PostgreSQL to BigQuery)
+
+### Feature Summary
+An ETL data pipeline that extracts raw sales order data from PostgreSQL, filters out incomplete/invalid records, and loads cleaned sales records into a BigQuery analytics table partitioned by order date.
+
+### Key Features
+- PostgreSQL extraction from raw_sales_orders
+- Validation filtering for missing amounts and invalid emails
+- BigQuery target loading into fct_sales_orders partitioned by order date
+- Audit logging of record counts (extracted, filtered, loaded)

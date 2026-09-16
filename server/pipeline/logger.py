@@ -12,7 +12,7 @@ def setup_logger(name: str = "etl_pipeline") -> logging.Logger:
         handler = logging.StreamHandler(sys.stdout)
         formatter = logging.Formatter(
             "[%(levelname)s] %(asctime)s - %(name)s: %(message)s",
-            datefmt="%Y-%m-%dT%H:%M:%SZ"
+            datefmt="%Y-%m-%dT%H:%M:%SZ",
         )
         handler.setFormatter(formatter)
         logger.addHandler(handler)
@@ -26,6 +26,6 @@ def log_audit_event(event_type: str, details: Dict[str, Any]) -> None:
     payload = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "event_type": event_type,
-        "details": details
+        "details": details,
     }
     pipeline_logger.info(f"AUDIT_EVENT: {json.dumps(payload, default=str)}")

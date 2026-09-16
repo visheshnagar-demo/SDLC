@@ -1,12 +1,23 @@
 import os
+import sys
 from typing import Any, Dict, List, Optional
-from datetime import date
 from server.config import settings
 from server.pipeline.logger import pipeline_logger
+
+sys.modules["pandas"] = None
+
+try:
+    import cryptography.hazmat.backends
+
+    if not hasattr(cryptography.hazmat.backends, "default_backend"):
+        cryptography.hazmat.backends.default_backend = lambda: None
+except ImportError:
+    pass
 
 try:
     from google.cloud import bigquery
     from google.cloud.exceptions import NotFound
+
     BIGQUERY_AVAILABLE = True
 except ImportError:
     BIGQUERY_AVAILABLE = False
@@ -23,7 +34,7 @@ class BigQueryLoader:
         project_id: Optional[str] = None,
         dataset_id: Optional[str] = None,
         table_id: Optional[str] = None,
-        location: Optional[str] = None
+        location: Optional[str] = None,
     ):
         self.project_id = project_id or settings.BIGQUERY_PROJECT_ID
         self.dataset_id = dataset_id or settings.BIGQUERY_DATASET
@@ -31,15 +42,21 @@ class BigQueryLoader:
         self.location = location or settings.BIGQUERY_LOCATION
         self.full_table_ref = f"{self.project_id}.{self.dataset_id}.{self.table_id}"
         self._client = None
-        self.is_mock = os.getenv("TESTING", "").lower() in ("true", "1") or not BIGQUERY_AVAILABLE
+        self.is_mock = (
+            os.getenv("TESTING", "").lower() in ("true", "1") or not BIGQUERY_AVAILABLE
+        )
 
     @property
     def client(self):
         if self._client is None and not self.is_mock:
             try:
-                self._client = bigquery.Client(project=self.project_id, location=self.location)
+                self._client = bigquery.Client(
+                    project=self.project_id, location=self.location
+                )
             except Exception as exc:
-                pipeline_logger.warning(f"BigQuery Client initialization notice (falling back to simulated mode if credentials absent): {exc}")
+                pipeline_logger.warning(
+                    f"BigQuery Client initialization notice (falling back to simulated mode if credentials absent): {exc}"
+                )
                 self.is_mock = True
         return self._client
 
@@ -65,26 +82,74 @@ class BigQueryLoader:
             self.client.get_table(table_ref)
         except NotFound:
             schema = [
-                bigquery.SchemaField("order_id", "STRING", mode="REQUIRED", description="Unique sales order identifier"),
-                bigquery.SchemaField("customer_id", "STRING", mode="NULLABLE", description="Customer identifier"),
-                bigquery.SchemaField("customer_email", "STRING", mode="REQUIRED", description="Validated customer email address"),
-                bigquery.SchemaField("order_date", "DATE", mode="REQUIRED", description="Partitioning column (order placement date)"),
-                bigquery.SchemaField("amount", "NUMERIC", mode="REQUIRED", description="Validated sales amount"),
-                bigquery.SchemaField("currency", "STRING", mode="NULLABLE", description="Currency code (e.g. USD)"),
-                bigquery.SchemaField("status", "STRING", mode="NULLABLE", description="Order fulfillment status"),
-                bigquery.SchemaField("source_created_at", "TIMESTAMP", mode="NULLABLE", description="Original record creation timestamp"),
-                bigquery.SchemaField("ingested_at", "TIMESTAMP", mode="REQUIRED", description="Pipeline ingestion timestamp (UTC)"),
+                bigquery.SchemaField(
+                    "order_id",
+                    "STRING",
+                    mode="REQUIRED",
+                    description="Unique sales order identifier",
+                ),
+                bigquery.SchemaField(
+                    "customer_id",
+                    "STRING",
+                    mode="NULLABLE",
+                    description="Customer identifier",
+                ),
+                bigquery.SchemaField(
+                    "customer_email",
+                    "STRING",
+                    mode="REQUIRED",
+                    description="Validated customer email address",
+                ),
+                bigquery.SchemaField(
+                    "order_date",
+                    "DATE",
+                    mode="REQUIRED",
+                    description="Partitioning column (order placement date)",
+                ),
+                bigquery.SchemaField(
+                    "amount",
+                    "NUMERIC",
+                    mode="REQUIRED",
+                    description="Validated sales amount",
+                ),
+                bigquery.SchemaField(
+                    "currency",
+                    "STRING",
+                    mode="NULLABLE",
+                    description="Currency code (e.g. USD)",
+                ),
+                bigquery.SchemaField(
+                    "status",
+                    "STRING",
+                    mode="NULLABLE",
+                    description="Order fulfillment status",
+                ),
+                bigquery.SchemaField(
+                    "source_created_at",
+                    "TIMESTAMP",
+                    mode="NULLABLE",
+                    description="Original record creation timestamp",
+                ),
+                bigquery.SchemaField(
+                    "ingested_at",
+                    "TIMESTAMP",
+                    mode="REQUIRED",
+                    description="Pipeline ingestion timestamp (UTC)",
+                ),
             ]
             table = bigquery.Table(table_ref, schema=schema)
             table.time_partitioning = bigquery.TimePartitioning(
-                type_=bigquery.TimePartitioningType.DAY,
-                field="order_date"
+                type_=bigquery.TimePartitioningType.DAY, field="order_date"
             )
             table.clustering_fields = ["customer_id", "status"]
             self.client.create_table(table)
-            pipeline_logger.info(f"BigQueryLoader: Created partitioned table {self.full_table_ref}")
+            pipeline_logger.info(
+                f"BigQueryLoader: Created partitioned table {self.full_table_ref}"
+            )
 
-    def load_records(self, records: List[Dict[str, Any]], force_reload: bool = False) -> int:
+    def load_records(
+        self, records: List[Dict[str, Any]], force_reload: bool = False
+    ) -> int:
         """
         Loads transformed records into the target partitioned BigQuery table.
         Returns count of loaded records.
@@ -96,7 +161,9 @@ class BigQueryLoader:
         self.ensure_table_schema()
 
         if self.is_mock or not BIGQUERY_AVAILABLE or self.client is None:
-            pipeline_logger.info(f"BigQueryLoader (Simulated): Ingested {len(records)} records into {self.full_table_ref}")
+            pipeline_logger.info(
+                f"BigQueryLoader (Simulated): Ingested {len(records)} records into {self.full_table_ref}"
+            )
             return len(records)
 
         table_ref = f"{self.project_id}.{self.dataset_id}.{self.table_id}"
@@ -105,7 +172,9 @@ class BigQueryLoader:
             pipeline_logger.error(f"BigQueryLoader: Insert errors: {errors}")
             raise RuntimeError(f"BigQuery insertion encountered errors: {errors}")
 
-        pipeline_logger.info(f"BigQueryLoader: Successfully ingested {len(records)} records into {self.full_table_ref}")
+        pipeline_logger.info(
+            f"BigQueryLoader: Successfully ingested {len(records)} records into {self.full_table_ref}"
+        )
         return len(records)
 
     def check_connection(self) -> bool:
@@ -116,8 +185,12 @@ class BigQueryLoader:
             return True
         try:
             if self.client is not None:
-                self.client.get_dataset(bigquery.DatasetReference(self.project_id, self.dataset_id))
+                self.client.get_dataset(
+                    bigquery.DatasetReference(self.project_id, self.dataset_id)
+                )
             return True
         except Exception as exc:
-            pipeline_logger.warning(f"BigQueryLoader connectivity check failed or unauthenticated: {exc}")
+            pipeline_logger.warning(
+                f"BigQueryLoader connectivity check failed or unauthenticated: {exc}"
+            )
             return False

@@ -1,5 +1,4 @@
 import re
-from decimal import Decimal
 from typing import Any, Dict, List, Tuple
 from server.pipeline.logger import pipeline_logger
 
@@ -47,7 +46,9 @@ class DataValidator:
         return True, ""
 
     @classmethod
-    def validate_batch(cls, records: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], Dict[str, int], List[Dict[str, Any]]]:
+    def validate_batch(
+        cls, records: List[Dict[str, Any]]
+    ) -> Tuple[List[Dict[str, Any]], Dict[str, int], List[Dict[str, Any]]]:
         """
         Validates a list of sales order records.
         Returns:
@@ -57,7 +58,7 @@ class DataValidator:
         """
         valid_records: List[Dict[str, Any]] = []
         quarantined_records: List[Dict[str, Any]] = []
-        
+
         filtered_missing_amount = 0
         filtered_invalid_email = 0
 
@@ -76,7 +77,7 @@ class DataValidator:
                     pipeline_logger.warning(
                         f"Validator: Dropped record order_id={r.get('order_id')} (Invalid email: '{r.get('customer_email')}')"
                     )
-                
+
                 quarantined_record = dict(r)
                 quarantined_record["rejection_reason"] = reason
                 quarantined_records.append(quarantined_record)
@@ -87,7 +88,7 @@ class DataValidator:
             "filtered_missing_amount": filtered_missing_amount,
             "filtered_invalid_email": filtered_invalid_email,
             "total_filtered": total_filtered,
-            "valid_count": len(valid_records)
+            "valid_count": len(valid_records),
         }
 
         return valid_records, metrics, quarantined_records

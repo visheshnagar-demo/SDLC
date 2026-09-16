@@ -1,4 +1,13 @@
 import pytest
+
+try:
+    import cryptography.hazmat.backends
+
+    if not hasattr(cryptography.hazmat.backends, "default_backend"):
+        cryptography.hazmat.backends.default_backend = lambda: None
+except ImportError:
+    pass
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
