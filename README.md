@@ -1,4 +1,39 @@
-# Project
+# Commercial Wire Maker-Checker System
+
+A full-stack commercial wire transfer system with dual-approval workflow for wire transfers exceeding $10,000 to prevent internal fraud.
+
+## Features
+- **Wire Initiation Form**: Submit transfers with Beneficiary Name, Account Number, Routing Number, and Amount.
+- **Auto-Approval Threshold**: Transfers $\le \$10,000$ are automatically approved.
+- **Dual Approval Workflow**: Transfers $> \$10,000$ enter `PENDING` status.
+- **Segregation of Duties**: Enforces `createdBy != approvedBy`. Self-approval/rejection returns `HTTP 403 Forbidden`.
+- **Approval Queue**: View pending transfers and authorize or reject.
+
+### Requirements
+- Python 3.11+
+- Virtual environment
+
+### Setup
+```bash
+cd server
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### Running Tests
+```bash
+pytest
+```
+
+### Running Server
+```bash
+uvicorn server.main:app --reload --port 8000
+```
+
+## Full-Stack Local Development
+- Backend API runs on `http://localhost:8000`
+- Frontend React client runs on `http://localhost:5173`
 
 ## Server
 
