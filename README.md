@@ -1,88 +1,108 @@
-# Project
+# Sales Orders ETL Pipeline (PostgreSQL to Google BigQuery)
 
-## Server
+**Jira Issue**: [SCRUM-288](https://bfsi-na-ai-engineering-v4.atlassian.net/browse/SCRUM-288)  
+**Pipeline**: `postgres_to_bigquery_sales_etl`  
+**Target Table**: `dev_sales.fct_sales_orders_v1` (Partitioned by `order_date`)
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+---
 
-### Setup
+## 1. Overview
 
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+This production-grade ETL data pipeline extracts sales order transaction records from PostgreSQL (`raw_sales_orders`), validates data quality and cleanses invalid records (filtering out records with missing/non-positive amounts and invalid email formats), and loads the clean dataset into a partitioned BigQuery analytics table (`dev_sales.fct_sales_orders_v1`).
+
+### Architecture & Capabilities:
+- **Source**: PostgreSQL `raw_sales_orders` with batch extraction and exponential retry backoff.
+- **Cleansing & Validation**: Strict RFC-5322 email regex verification, positive numerical amount validation (`amount > 0` and non-null), and ISO-8601 date checking.
+- **Quarantine & Audit**: Dead-letter logging of rejected rows with standardized error codes (`ERR_MISSING_OR_INVALID_AMOUNT`, `ERR_INVALID_EMAIL_FORMAT`, `ERR_MISSING_ORDER_ID`, `ERR_INVALID_ORDER_DATE`).
+- **Target**: Google BigQuery `dev_sales.fct_sales_orders_v1` partitioned daily by `order_date` and clustered by `customer_id, status`.
+- **Packaging**: Containerized for Google Cloud Run Jobs (zero-idle overhead), standalone CLI, FastAPI REST service, and Apache Airflow DAG.
+
+---
+
+## 2. Directory Structure
+
+```
+├── Dockerfile                          # Cloud Run Job Docker container specification
+├── README.md                           # Documentation & execution runbook
+├── requirements.txt                    # Project dependencies
+├── dags/
+│   └── sales_orders_etl_dag.py         # Airflow / Cloud Composer DAG
+├── pipeline/
+│   └── run_sales_etl.py                # Cloud Run Job standalone runner script
+├── schemas/
+│   ├── fct_sales_orders_v1_schema.json # BigQuery JSON table schema
+│   └── sales_order_schema.json         # BigQuery field definitions
+├── server/
+│   ├── database.py                     # SQLAlchemy database session & engine manager
+│   ├── main.py                         # FastAPI REST application & health checks
+│   ├── models.py                       # SQLAlchemy & Pydantic data schemas
+│   ├── pipeline/
+│   │   ├── cleanser.py                 # Sales data cleansing & RFC validation logic
+│   │   ├── extractor.py                # PostgreSQL batch extractor with retries
+│   │   ├── loader.py                   # BigQuery partitioned table loader
+│   │   ├── main.py                     # ETL orchestration engine & CLI
+│   │   └── quarantine.py               # Quarantine manager & audit logger
+│   └── requirements.txt
+├── sql/
+│   └── ddl/
+│       └── fct_sales_orders_v1.sql     # BigQuery DDL with partitioning & clustering
+└── tests/
+    └── test_pipeline.py                # Comprehensive pytest suite (unit + E2E + API)
 ```
 
-2. Install dependencies:
+---
+
+## 3. Environment Configuration
+
+| Variable | Description | Default / Example |
+| :--- | :--- | :--- |
+| `POSTGRES_DB_URL` | PostgreSQL connection string | `postgresql://user:pass@localhost:5432/salesdb` |
+| `GCP_PROJECT_ID` | Google Cloud Project ID | `upbeat-repeater-477110-q6` |
+| `BIGQUERY_DATASET` | Target BigQuery dataset | `dev_sales` |
+| `BIGQUERY_TABLE` | Target BigQuery table | `fct_sales_orders_v1` |
+| `LOG_LEVEL` | Logging verbosity | `INFO` |
+
+---
+
+## 4. Local Execution & Testing
+
+### 4.1 Run Validation Tests
 ```bash
-cd server
-pip install -r requirements.txt
-cd ..
+pytest tests/ -v
 ```
 
-### Running Tests
+### 4.2 Run Pipeline via CLI
 ```bash
-cd server
-python -m pytest -v
-cd ..
+# Dry run mode
+python -m server.pipeline.main --dry-run
+
+# Full execution
+python -m server.pipeline.main --source-table raw_sales_orders --dataset dev_sales --table fct_sales_orders_v1
 ```
 
-### Starting the Development Server
+### 4.3 Run Standalone Job Entrypoint
 ```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+python -m pipeline.run_sales_etl
 ```
 
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
+### 4.4 Run FastAPI REST Service
 ```bash
-# Copy the example environment file
-cp .env.example .env
+uvicorn server.main:app --host 0.0.0.0 --port 8000 --reload
 ```
+- Health Check: `GET http://localhost:8000/health`
+- Pipeline Info: `GET http://localhost:8000/api/v1/pipeline/info`
+- Trigger ETL: `POST http://localhost:8000/api/v1/pipeline/run`
 
-### 2. Start the Backend (Terminal 1)
+---
+
+## 5. Deployment as Cloud Run Job
+
+Build and deploy the container image directly to Google Cloud Run Jobs:
 ```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+gcloud builds submit --tag gcr.io/upbeat-repeater-477110-q6/sales-etl:latest .
+gcloud run jobs create sales-etl-job \
+    --image gcr.io/upbeat-repeater-477110-q6/sales-etl:latest \
+    --region us-central1 \
+    --set-env-vars POSTGRES_DB_URL="postgresql://...",GCP_PROJECT_ID="upbeat-repeater-477110-q6"
+gcloud run jobs execute sales-etl-job --region us-central1
 ```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-
