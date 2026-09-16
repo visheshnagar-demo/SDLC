@@ -1,18 +1,38 @@
 import os
-import uuid
-import datetime
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
-from sqlalchemy.exc import IntegrityError
-import bcrypt
-
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:////tmp/app.db")
-
-connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
-engine = create_engine(DATABASE_URL, connect_args=connect_args)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.pool import StaticPool
+from server.config import settings
 
 Base = declarative_base()
+
+def get_engine_url() -> str:
+    # Use SQLite for testing or if TESTING is set
+    if os.getenv("TESTING", "").lower() in ("true", "1") or os.getenv("DATABASE_URL", "").startswith("sqlite"):
+        return os.getenv("DATABASE_URL", "sqlite:///:memory:")
+
+    # Check if psycopg2 is installed before attempting postgresql connection
+    try:
+        import psycopg2
+        return settings.get_database_url()
+    except ImportError:
+        return os.getenv("DATABASE_URL", "sqlite:///./sales_data.db")
+
+
+def create_app_engine():
+    url = get_engine_url()
+    if "sqlite" in url:
+        return create_engine(
+            url,
+            pool_pre_ping=True,
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool
+        )
+    return create_engine(url, pool_pre_ping=True)
+
+
+engine = create_app_engine()
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def get_db():
@@ -21,78 +41,3 @@ def get_db():
         yield db
     finally:
         db.close()
-
-
-def get_password_hash(password: str) -> str:
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
-
-
-def init_db():
-    from server import models  # noqa: F401
-
-    Base.metadata.create_all(bind=engine)
-    db = SessionLocal()
-    try:
-        seed_data(db)
-    finally:
-        db.close()
-
-
-def seed_data(db: Session):
-    from server.models import User, ExchangeRateCache
-
-    # Seed regular test user
-    try:
-        user = db.query(User).filter(User.email == "test@example.com").first()
-        if not user:
-            user = User(
-                id=str(uuid.uuid4()),
-                email="test@example.com",
-                hashed_password=get_password_hash("testpassword"),
-                role="user",
-                is_active=True,
-                is_verified=True,
-            )
-            db.add(user)
-            db.commit()
-    except IntegrityError:
-        db.rollback()
-
-    # Seed admin user
-    try:
-        admin = db.query(User).filter(User.email == "admin@example.com").first()
-        if not admin:
-            admin = User(
-                id=str(uuid.uuid4()),
-                email="admin@example.com",
-                hashed_password=get_password_hash("adminpassword"),
-                role="admin",
-                is_active=True,
-                is_verified=True,
-            )
-            db.add(admin)
-            db.commit()
-    except IntegrityError:
-        db.rollback()
-
-    # Seed initial exchange rates cache
-    try:
-        cache = (
-            db.query(ExchangeRateCache)
-            .filter(ExchangeRateCache.base_currency == "USD")
-            .first()
-        )
-        if not cache:
-            now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-            cache = ExchangeRateCache(
-                id=str(uuid.uuid4()),
-                base_currency="USD",
-                rates_json='{"USD": 1.0, "EUR": 0.925, "GBP": 0.79, "JPY": 155.0, "CAD": 1.36}',
-                fetched_at=now,
-                expires_at=now + datetime.timedelta(minutes=15),
-            )
-            db.add(cache)
-            db.commit()
-    except IntegrityError:
-        db.rollback()
