@@ -64,8 +64,24 @@ class SalesDataTransformer:
             return empty_df, metrics
 
         # 1. Clean column headers: strip whitespace and lowercase
+        clean_cols = [c.strip().lower() for c in df_raw.columns]
         df = df_raw.copy()
-        df.columns = [c.strip().lower() for c in df.columns]
+        df.columns = clean_cols
+
+        # Consolidate duplicate columns if header variations resulted in duplicates
+        if len(clean_cols) != len(set(clean_cols)):
+            combined_series = {}
+            unique_cols = list(dict.fromkeys(clean_cols))
+            for col_name in unique_cols:
+                cols = df[col_name]
+                if isinstance(cols, pd.DataFrame):
+                    s = cols.iloc[:, 0]
+                    for i in range(1, cols.shape[1]):
+                        s = s.combine_first(cols.iloc[:, i])
+                    combined_series[col_name] = s
+                else:
+                    combined_series[col_name] = cols
+            df = pd.DataFrame(combined_series, index=df.index)
 
         # Verify presence of mandatory columns
         missing_cols = [col for col in REQUIRED_COLUMNS if col not in df.columns]
