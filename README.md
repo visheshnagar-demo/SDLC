@@ -1,88 +1,88 @@
-# Project
+# Sales Order ETL Data Pipeline
 
-## Server
+Automated serverless batch ETL pipeline containerized for **Google Cloud Run Jobs**. Ingests raw sales order CSV files from Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/raw_sales_data.csv`), cleans and validates attributes, deduplicates records on primary key `order_id` (preserving the freshest state), and loads data into a partitioned BigQuery analytics table (`analytics.new_sales_orders`).
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+---
 
-### Setup
+## 1. Architecture Overview
 
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+- **Source**: Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/raw_sales_data.csv`)
+- **Compute**: Google Cloud Run Job (Python 3.11, Zero-idle containerized execution)
+- **Target**: BigQuery dataset `analytics`, table `new_sales_orders` (Partitioned by `order_date`, Clustered by `customer_id`, `order_status`)
+- **Observability**: Structured JSON logging to `stdout` compatible with Google Cloud Logging.
+
+```
+[ GCS Raw CSV Extract ]
+         │
+         ▼
+[ GCS Extractor (Schema Discovery & Ingestion) ]
+         │
+         ▼
+[ Transformation & Deduplication Engine ]
+   - Whitespace trimming
+   - Null normalization ("N/A", "null" -> None)
+   - Currency & numeric cleaning
+   - Timestamp parsing & `order_date` derivation
+   - Deduplication on `order_id` (keeps latest `created_at`)
+         │
+         ▼
+[ BigQuery Batch Loader ]
+   - Automated dataset & table verification
+   - Partitioning on `order_date`
+   - Clustering on `customer_id`, `order_status`
+         │
+         ▼
+[ BigQuery Table: analytics.new_sales_orders ]
 ```
 
-2. Install dependencies:
+---
+
+## 2. Configuration & Environment Variables
+
+| Variable | Default Value | Description |
+| :--- | :--- | :--- |
+| `GCS_SOURCE_URI` | `gs://sdlc-workspec-store/etl/data/raw_sales_data.csv` | Full GCS URI to source raw CSV file |
+| `GCP_PROJECT_ID` | `upbeat-repeater-477110-q6` | GCP Project ID housing BigQuery |
+| `BQ_DATASET` | `analytics` | BigQuery destination dataset |
+| `BQ_TABLE` | `new_sales_orders` | BigQuery destination table |
+| `BQ_WRITE_DISPOSITION` | `WRITE_APPEND` | Write mode (`WRITE_APPEND` or `WRITE_TRUNCATE`) |
+| `LOG_LEVEL` | `INFO` | Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
+| `DRY_RUN` | `false` | If `true`, extracts and transforms without loading to BigQuery |
+
+---
+
+## 3. Local Development & Testing
+
+### Installation
 ```bash
-cd server
 pip install -r requirements.txt
-cd ..
 ```
 
 ### Running Tests
 ```bash
-cd server
-python -m pytest -v
-cd ..
+pytest tests/ -v
 ```
 
-### Starting the Development Server
+### Running Pipeline Locally
 ```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+python -m server.main --source-uri gs://sdlc-workspec-store/etl/data/raw_sales_data.csv --dry-run
 ```
 
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
+---
 
-## Full-Stack Local Development
+## 4. Cloud Run Job Deployment
 
-To run both backend and frontend together locally:
+The pipeline is packaged into a Docker container designed to run as a Google Cloud Run Job:
 
-### 1. Environment Setup
 ```bash
-# Copy the example environment file
-cp .env.example .env
+# Build image
+docker build -t gcr.io/upbeat-repeater-477110-q6/sales-order-etl-job:latest .
+
+# Execute Cloud Run Job
+gcloud run jobs create sales-order-etl-job \
+  --image gcr.io/upbeat-repeater-477110-q6/sales-order-etl-job:latest \
+  --region us-central1 \
+  --env-vars-file env.deploy.json
+
+gcloud run jobs execute sales-order-etl-job --region us-central1
 ```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-
