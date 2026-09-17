@@ -39,21 +39,48 @@ try:
         allow_headers=["*"],
     )
 
-    LATEST_STATUS = {"status": "INITIALIZED", "message": "Service is ready"}
-
-    @app.get("/healthz")
-    @app.get("/status")
-    def get_status():
-        return LATEST_STATUS
+    LATEST_STATUS = {"status": "INITIALIZING", "message": "ETL pipeline starting..."}
 
     def _execute_etl_task():
         global LATEST_STATUS
+        LATEST_STATUS = {"status": "RUNNING", "message": "ETL pipeline is executing..."}
         try:
             pipeline = ETLPipeline()
             res = pipeline.run()
             LATEST_STATUS = res
         except Exception as exc:
             LATEST_STATUS = {"status": "FAILED", "error": str(exc)}
+
+    import threading
+    from contextlib import asynccontextmanager
+
+    @asynccontextmanager
+    async def lifespan(app_instance):
+        # Auto-boot: start ETL pipeline in a background thread on container startup
+        t = threading.Thread(target=_execute_etl_task, daemon=True, name="etl-auto-boot")
+        t.start()
+        yield
+
+    # Rebuild app with lifespan for auto-boot
+    app = FastAPI(
+        title="GCS to BigQuery Analytics ETL Service",
+        version="1.0.0",
+        description="Extracts data from GCS CSV and loads transformed records into BigQuery dataset analytics.",
+        lifespan=lifespan,
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins if origins else ["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    @app.get("/healthz")
+    @app.get("/status")
+    def get_status():
+        return LATEST_STATUS
 
     @app.post("/api/v1/etl/run")
     @app.post("/run")
