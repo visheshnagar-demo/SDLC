@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from server.models.tenant import Tenant, TenantConfiguration, TenantUser
@@ -97,9 +97,27 @@ class TenantService:
         return tenant
 
     @staticmethod
+    def verify_tenant_access(
+        db: Session, tenant_id: str, x_tenant_id: Optional[str] = None
+    ) -> Tenant:
+        """Verify multi-tenant data isolation and active status for all queries/APIs."""
+        if x_tenant_id and x_tenant_id != tenant_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Cross-tenant access forbidden. Header X-Tenant-ID does not match requested tenant_id.",
+            )
+        tenant = TenantService.get_tenant_by_id(db, tenant_id)
+        if str(tenant.status) in ("Suspended", "Archived"):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Tenant is {str(tenant.status).lower()}. Access blocked for all users and API operations.",
+            )
+        return tenant
+
+    @staticmethod
     def update_tenant(db: Session, tenant_id: str, tenant_in: TenantUpdate) -> Tenant:
         tenant = TenantService.get_tenant_by_id(db, tenant_id)
-        if tenant.status == "Archived":
+        if str(tenant.status) == "Archived":
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Archived tenants cannot be modified",
@@ -134,13 +152,13 @@ class TenantService:
         db: Session, tenant_id: str, status_in: TenantStatusUpdate
     ) -> Tenant:
         tenant = TenantService.get_tenant_by_id(db, tenant_id)
-        if tenant.status == "Archived" and status_in.status != "Active":
+        if str(tenant.status) == "Archived" and status_in.status != "Active":
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Archived tenants cannot be modified",
             )
 
-        tenant.status = status_in.status
+        setattr(tenant, "status", status_in.status)
         db.commit()
         db.refresh(tenant)
         return tenant
@@ -150,7 +168,7 @@ class TenantService:
         db: Session, tenant_id: str, config_in: TenantConfigUpdate
     ) -> TenantConfiguration:
         tenant = TenantService.get_tenant_by_id(db, tenant_id)
-        if tenant.status == "Archived":
+        if str(tenant.status) == "Archived":
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Archived tenants cannot be modified",
@@ -192,7 +210,7 @@ class TenantService:
     @staticmethod
     def delete_tenant(db: Session, tenant_id: str) -> Tenant:
         tenant = TenantService.get_tenant_by_id(db, tenant_id)
-        tenant.status = "Archived"
+        setattr(tenant, "status", "Archived")
         db.commit()
         db.refresh(tenant)
         return tenant
@@ -201,20 +219,16 @@ class TenantService:
     def create_tenant_user(
         db: Session, tenant_id: str, user_in: TenantUserCreate
     ) -> TenantUser:
-        tenant = TenantService.get_tenant_by_id(db, tenant_id)
-        if tenant.status in ("Suspended", "Archived"):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Tenant is {tenant.status.lower()}. Access blocked.",
-            )
+        tenant = TenantService.verify_tenant_access(db, tenant_id)
 
         current_user_count = (
             db.query(TenantUser).filter(TenantUser.tenant_id == tenant_id).count()
         )
-        if current_user_count >= tenant.max_users:
+        max_users_int = int(tenant.max_users) if tenant.max_users is not None else 10
+        if current_user_count >= max_users_int:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"User seat quota exhausted ({tenant.max_users} max seats allocated)",
+                detail=f"User seat quota exhausted ({max_users_int} max seats allocated)",
             )
 
         user = TenantUser(
@@ -232,11 +246,51 @@ class TenantService:
         return user
 
     @staticmethod
-    def get_tenant_users(db: Session, tenant_id: str) -> List[TenantUser]:
-        tenant = TenantService.get_tenant_by_id(db, tenant_id)
-        if tenant.status in ("Suspended", "Archived"):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Tenant is {tenant.status.lower()}. Access blocked.",
-            )
+    def get_tenant_users(
+        db: Session, tenant_id: str, x_tenant_id: Optional[str] = None
+    ) -> List[TenantUser]:
+        TenantService.verify_tenant_access(db, tenant_id, x_tenant_id)
         return db.query(TenantUser).filter(TenantUser.tenant_id == tenant_id).all()
+
+    @staticmethod
+    def get_quota_telemetry(db: Session, tenant_id: str) -> Dict[str, Any]:
+        tenant = TenantService.verify_tenant_access(db, tenant_id)
+        user_count = (
+            db.query(TenantUser).filter(TenantUser.tenant_id == tenant_id).count()
+        )
+        max_users_val = int(tenant.max_users) if tenant.max_users else 10
+        return {
+            "tenant_id": str(tenant.id),
+            "tier": str(tenant.tier),
+            "status": str(tenant.status),
+            "users": {
+                "current": user_count,
+                "max": max_users_val,
+                "percentage_used": round((user_count / max_users_val) * 100, 1)
+                if max_users_val > 0
+                else 0,
+            },
+            "storage_gb": {
+                "limit": int(tenant.storage_limit_gb) if tenant.storage_limit_gb else 5,
+            },
+            "rate_limit_rpm": {
+                "limit": int(tenant.rate_limit_rpm) if tenant.rate_limit_rpm else 100,
+            },
+        }
+
+    @staticmethod
+    def check_storage_quota(
+        db: Session, tenant_id: str, requested_gb: int
+    ) -> Dict[str, Any]:
+        tenant = TenantService.verify_tenant_access(db, tenant_id)
+        storage_limit = int(tenant.storage_limit_gb) if tenant.storage_limit_gb else 5
+        if requested_gb > storage_limit:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Storage quota exceeded. Requested {requested_gb} GB exceeds allocated {storage_limit} GB limit.",
+            )
+        return {
+            "status": "allowed",
+            "requested_gb": requested_gb,
+            "storage_limit_gb": storage_limit,
+        }

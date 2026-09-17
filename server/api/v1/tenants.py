@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, Query, status, Header, HTTPException
+from fastapi import APIRouter, Depends, Query, status, Header
 from sqlalchemy.orm import Session
 from server.database import get_db
 from server.schemas.tenant import (
@@ -116,9 +116,27 @@ def get_tenant_users(
     db: Session = Depends(get_db),
 ):
     """List users for a tenant organization (enforces row-level tenant data isolation)."""
-    if x_tenant_id and x_tenant_id != tenant_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cross-tenant access forbidden. Header X-Tenant-ID does not match requested tenant_id.",
-        )
-    return TenantService.get_tenant_users(db, tenant_id)
+    return TenantService.get_tenant_users(db, tenant_id, x_tenant_id)
+
+
+@router.get("/{tenant_id}/telemetry")
+def get_tenant_telemetry(
+    tenant_id: str,
+    x_tenant_id: Optional[str] = Header(None, alias="X-Tenant-ID"),
+    db: Session = Depends(get_db),
+):
+    """Fetch live quota telemetry consumption meters for user seats, storage, and rate limits."""
+    TenantService.verify_tenant_access(db, tenant_id, x_tenant_id)
+    return TenantService.get_quota_telemetry(db, tenant_id)
+
+
+@router.post("/{tenant_id}/storage/check")
+def check_storage_quota(
+    tenant_id: str,
+    requested_gb: int = Query(..., ge=1),
+    x_tenant_id: Optional[str] = Header(None, alias="X-Tenant-ID"),
+    db: Session = Depends(get_db),
+):
+    """Enforce storage quota limits for a tenant."""
+    TenantService.verify_tenant_access(db, tenant_id, x_tenant_id)
+    return TenantService.check_storage_quota(db, tenant_id, requested_gb)

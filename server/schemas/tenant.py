@@ -16,7 +16,6 @@ class TenantConfigUpdate(TenantConfigBase):
     @classmethod
     def validate_custom_domain(cls, v: Optional[str]) -> Optional[str]:
         if v is not None and v.strip() != "":
-            # Ensure domain format: e.g. portal.acme.com or acme.org (no spaces, protocols)
             domain_pattern = (
                 r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$"
             )
@@ -87,15 +86,6 @@ class TenantStatusUpdate(BaseModel):
         return v
 
 
-class TenantStatusResponse(BaseModel):
-    id: str
-    status: str
-    updated_at: datetime
-    sessions_revoked: bool
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class TenantResponse(TenantBase):
     id: str
     status: str
@@ -116,9 +106,9 @@ class TenantDetailResponse(TenantResponse):
 
 class TenantUserCreate(BaseModel):
     email: str
-    password: Optional[str] = "testpassword"
+    password: str
     full_name: Optional[str] = None
-    role: str = "tenant_user"
+    role: str = "user"
 
 
 class TenantUserResponse(BaseModel):

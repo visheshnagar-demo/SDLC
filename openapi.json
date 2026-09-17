@@ -510,6 +510,130 @@
         }
       }
     },
+    "/api/v1/tenants/{tenant_id}/telemetry": {
+      "get": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Get Tenant Telemetry",
+        "description": "Fetch live quota telemetry consumption meters for user seats, storage, and rate limits.",
+        "operationId": "get_tenant_telemetry_api_v1_tenants__tenant_id__telemetry_get",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "X-Tenant-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/storage/check": {
+      "post": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Check Storage Quota",
+        "description": "Enforce storage quota limits for a tenant.",
+        "operationId": "check_storage_quota_api_v1_tenants__tenant_id__storage_check_post",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "requested_gb",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Requested Gb"
+            }
+          },
+          {
+            "name": "X-Tenant-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -993,16 +1117,8 @@
             "title": "Email"
           },
           "password": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Password",
-            "default": "testpassword"
+            "type": "string",
+            "title": "Password"
           },
           "full_name": {
             "anyOf": [
@@ -1018,12 +1134,13 @@
           "role": {
             "type": "string",
             "title": "Role",
-            "default": "tenant_user"
+            "default": "user"
           }
         },
         "type": "object",
         "required": [
-          "email"
+          "email",
+          "password"
         ],
         "title": "TenantUserCreate"
       },

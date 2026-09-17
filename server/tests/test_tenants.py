@@ -47,7 +47,6 @@ def test_list_tenants_and_filtering(client):
 
 
 def test_get_tenant_detail(client):
-    # Get acme tenant
     list_res = client.get("/api/v1/tenants?search=acme")
     tenant_id = list_res.json()[0]["id"]
 
@@ -90,7 +89,6 @@ def test_update_tenant_config_invalid_domain(client):
 
 
 def test_update_tenant_config_duplicate_domain(client):
-    # Create second tenant
     client.post(
         "/api/v1/tenants",
         json={
@@ -102,15 +100,13 @@ def test_update_tenant_config_duplicate_domain(client):
     list_res = client.get("/api/v1/tenants?search=beta-corp")
     beta_id = list_res.json()[0]["id"]
 
-    # Try setting custom_domain to portal.acme.com which acme already uses
     dup_config = {"custom_domain": "portal.acme.com"}
     response = client.put(f"/api/v1/tenants/{beta_id}/configuration", json=dup_config)
     assert response.status_code == 409
     assert "already in use" in response.json()["detail"]
 
 
-def test_quota_management_and_user_creation_limits(client):
-    # Create a tenant with max_users = 2
+def test_quota_management_user_seats_and_storage(client):
     create_res = client.post(
         "/api/v1/tenants",
         json={
@@ -119,6 +115,7 @@ def test_quota_management_and_user_creation_limits(client):
             "admin_email": "admin@quota.com",
             "tier": "Free",
             "max_users": 2,
+            "storage_limit_gb": 5,
         },
     )
     assert create_res.status_code == 201
@@ -158,10 +155,54 @@ def test_quota_management_and_user_creation_limits(client):
     assert u3.status_code == 400
     assert "quota exhausted" in u3.json()["detail"].lower()
 
+    # Telemetry endpoint check
+    telem_res = client.get(f"/api/v1/tenants/{tenant_id}/telemetry")
+    assert telem_res.status_code == 200
+    telem_data = telem_res.json()
+    assert telem_data["users"]["current"] == 2
+    assert telem_data["users"]["max"] == 2
+
+    # Storage quota check pass (3GB <= 5GB limit)
+    st_pass = client.post(f"/api/v1/tenants/{tenant_id}/storage/check?requested_gb=3")
+    assert st_pass.status_code == 200
+    assert st_pass.json()["status"] == "allowed"
+
+    # Storage quota check exceed (10GB > 5GB limit)
+    st_fail = client.post(f"/api/v1/tenants/{tenant_id}/storage/check?requested_gb=10")
+    assert st_fail.status_code == 400
+    assert "quota exceeded" in st_fail.json()["detail"].lower()
+
 
 def test_multi_tenant_data_isolation(client):
-    list_res = client.get("/api/v1/tenants?search=quota-corp")
-    tenant_id = list_res.json()[0]["id"]
+    create_res = client.post(
+        "/api/v1/tenants",
+        json={
+            "name": "Isolation Test Corp",
+            "slug": "iso-corp",
+            "admin_email": "admin@iso.com",
+            "tier": "Pro",
+        },
+    )
+    assert create_res.status_code == 201
+    tenant_id = create_res.json()["id"]
+
+    # Add 2 users to iso-corp
+    client.post(
+        f"/api/v1/tenants/{tenant_id}/users",
+        json={
+            "email": "iso1@iso.com",
+            "password": "password123",
+            "full_name": "Iso One",
+        },
+    )
+    client.post(
+        f"/api/v1/tenants/{tenant_id}/users",
+        json={
+            "email": "iso2@iso.com",
+            "password": "password123",
+            "full_name": "Iso Two",
+        },
+    )
 
     # Getting users with matching header
     res_valid = client.get(
@@ -191,7 +232,7 @@ def test_status_transition_and_archived_tenant_lock(client):
     assert patch_suspend.status_code == 200
     assert patch_suspend.json()["status"] == "Suspended"
 
-    # User operations on suspended tenant blocked
+    # Accessing suspended tenant blocked
     res_users = client.get(f"/api/v1/tenants/{beta_id}/users")
     assert res_users.status_code == 403
 
@@ -203,7 +244,6 @@ def test_status_transition_and_archived_tenant_lock(client):
     assert patch_archive.status_code == 200
     assert patch_archive.json()["status"] == "Archived"
 
-    # Attempting to update or perform operations on Archived tenant returns 422
     res_update = client.put(
         f"/api/v1/tenants/{beta_id}",
         json={"name": "Beta Corp Updated"},

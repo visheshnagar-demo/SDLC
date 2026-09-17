@@ -1,8 +1,8 @@
 import os
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
-import jwt
 import bcrypt
+import jwt
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-key-change-in-production")
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
@@ -10,7 +10,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain password against a hashed password."""
+    """Verify a plain password against a hashed password using direct bcrypt."""
     try:
         password_bytes = plain_password.encode("utf-8")[:72]
         hashed_bytes = hashed_password.encode("utf-8")
@@ -20,7 +20,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def get_password_hash(password: str) -> str:
-    """Hash a plaintext password using bcrypt."""
+    """Hash a plaintext password using direct bcrypt."""
     password_bytes = password.encode("utf-8")[:72]
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(password_bytes, salt).decode("utf-8")
