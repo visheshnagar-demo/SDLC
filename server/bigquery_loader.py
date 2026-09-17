@@ -5,6 +5,7 @@ clustering, and idempotent batch loading via BigQuery Load Jobs.
 """
 
 import logging
+from decimal import Decimal
 from typing import Optional
 from google.cloud import bigquery
 from google.cloud.exceptions import GoogleCloudError
@@ -156,6 +157,15 @@ class BigQueryLoader:
         )
 
         try:
+            # Convert float64 columns to Decimal to match BigQuery NUMERIC
+            # (16-byte fixed-precision). Without this, PyArrow serializes
+            # float64 as 8-byte DOUBLE, causing:
+            #   "Got bytestring of length 8 (expected 16)"
+            for col in df.select_dtypes(include=["float64", "float32"]).columns:
+                df[col] = df[col].apply(
+                    lambda x: Decimal(str(round(x, 9))) if pd.notna(x) else None
+                )
+
             job = self.client.load_table_from_dataframe(
                 df,
                 self.table_ref,
