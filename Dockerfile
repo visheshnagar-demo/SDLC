@@ -17,7 +17,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy source code and configuration
 COPY server/ server/
-COPY schemas/ schemas/
 COPY sql/ sql/
 
 # Cloud Run Job execution entrypoint
