@@ -1,113 +1,160 @@
-from typing import Any, Optional
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Optional, List, Any, Dict
 from datetime import datetime
+from pydantic import BaseModel, ConfigDict, Field
 
 
-class CartItem(BaseModel):
+# --- Chip Schemas ---
+class ChipDefinitionBase(BaseModel):
     name: str
-    quantity: int = 1
-    unit_price: float
+    category: str
+    face_value: float
+    status: str = "active"
 
 
-class CheckoutSessionRequest(BaseModel):
-    amount: float = Field(gt=0, description="Amount in base currency")
-    currency: str = Field(default="USD", description="Settlement/target currency")
-    customer_email: str
-    items: Optional[list[CartItem]] = Field(default_factory=list)
+class ChipDefinitionCreate(ChipDefinitionBase):
+    pass
 
 
-class CheckoutSessionResponse(BaseModel):
-    session_id: str
-    payment_intent_id: str
-    client_secret: str
-    base_amount: float
-    base_currency: str
-    target_amount: float
-    target_currency: str
-    exchange_rate: float
-
-
-class DigitalWalletPaymentRequest(BaseModel):
-    wallet_type: str = Field(description="apple_pay or google_pay")
-    payment_token: str
-    currency: str = "USD"
-    amount: float = Field(gt=0)
-    customer_email: Optional[str] = "customer@example.com"
-
-
-class DigitalWalletPaymentResponse(BaseModel):
-    transaction_id: str
-    payment_intent_id: str
-    wallet_type: str
-    amount: float
-    currency: str
+class ChipDefinitionStatusUpdate(BaseModel):
     status: str
 
 
-class ExchangeRatesResponse(BaseModel):
-    base_currency: str
-    rates: dict[str, float]
-    timestamp: str
+class ChipDefinitionResponse(ChipDefinitionBase):
+    id: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    total_stock: int = 0
+    available_stock: int = 0
 
-
-class RefundRequest(BaseModel):
-    transaction_id: str
-    amount: float = Field(gt=0)
-    reason: str
-    memo: Optional[str] = None
-
-
-class RefundSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+
+class InventoryBatchCreate(BaseModel):
+    batch_number: str
+    total_quantity: int
+    status: str = "active"
+
+
+class InventoryBatchResponse(BaseModel):
     id: str
-    transaction_id: str
-    refund_amount: float
-    currency: str
-    reason: str
-    memo: Optional[str] = None
+    chip_id: str
+    batch_number: str
+    total_quantity: int
+    available_quantity: int
+    allocated_quantity: int
     status: str
-    created_at: Optional[datetime] = None
+    created_at: datetime
 
-
-class TransactionSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+
+# --- Account Schemas ---
+class AccountBase(BaseModel):
+    account_number: str
+    owner_name: str
+    owner_email: str
+    role: str = "user"
+    status: str = "active"
+
+
+class AccountCreate(AccountBase):
+    pass
+
+
+class AccountBalanceResponse(BaseModel):
     id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    currency: str
+    account_id: str
+    chip_id: str
+    balance: int
+    updated_at: datetime
+    chip_name: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AccountResponse(AccountBase):
+    id: str
+    created_at: datetime
+    balances: List[AccountBalanceResponse] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class BalanceBreakdownResponse(BaseModel):
+    account_id: str
+    account_number: str
+    owner_name: str
+    total_balance: int
+    balances: List[AccountBalanceResponse]
+
+
+# --- Transfer & Allocation Schemas ---
+class AllocateRequest(BaseModel):
+    target_account_id: str
+    chip_id: str
+    amount: int = Field(gt=0, description="Amount must be greater than 0")
+    reason: Optional[str] = "Inventory allocation"
+    actor_id: Optional[str] = None
+
+
+class TransferRequest(BaseModel):
+    source_account_id: str
+    destination_account_id: str
+    chip_id: str
+    amount: int = Field(gt=0, description="Amount must be greater than 0")
+    reason: Optional[str] = "Account transfer"
+    actor_id: Optional[str] = None
+
+
+class RedeemRequest(BaseModel):
+    account_id: str
+    chip_id: str
+    amount: int = Field(gt=0, description="Amount must be greater than 0")
+    reason: Optional[str] = "Chip redemption"
+    actor_id: Optional[str] = None
+
+
+class AdjustRequest(BaseModel):
+    account_id: str
+    chip_id: str
+    amount: int = Field(description="Adjustment amount (positive or negative)")
+    reason: str = "Manual adjustment"
+    actor_id: Optional[str] = None
+
+
+class TransactionResponse(BaseModel):
+    id: str
+    transaction_type: str
+    source_account_id: Optional[str] = None
+    destination_account_id: Optional[str] = None
+    chip_id: str
+    amount: int
     status: str
-    created_at: Optional[datetime] = None
+    reason: Optional[str] = None
+    created_at: datetime
 
-
-class TransactionDetail(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+
+# --- Audit Schemas ---
+class AuditLogResponse(BaseModel):
     id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    base_currency: str
-    target_currency: str
-    converted_amount: float
-    exchange_rate: float
-    status: str
-    refunded_amount: float
-    remaining_refundable_balance: float
-    refunds: list[RefundSummary] = Field(default_factory=list)
-    created_at: Optional[datetime] = None
+    actor_id: Optional[str] = None
+    action_type: str
+    entity_name: str
+    entity_id: Optional[str] = None
+    before_state: Optional[Dict[str, Any]] = None
+    after_state: Optional[Dict[str, Any]] = None
+    ip_address: Optional[str] = None
+    created_at: datetime
 
-
-class AuditLogEntry(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
-    transaction_id: Optional[str] = None
-    event_type: str
-    ip_address: str
-    masked_payload: dict[str, Any]
-    created_at: Optional[datetime] = None
+
+# --- Analytics Schemas ---
+class DashboardAnalyticsResponse(BaseModel):
+    total_circulation: int
+    active_accounts: int
+    low_stock_count: int
+    volume_24h: int
+    recent_transactions: List[TransactionResponse] = []

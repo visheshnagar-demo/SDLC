@@ -1,66 +1,51 @@
-import json
 import uuid
-import datetime
-from typing import Any
+from typing import Optional, Dict, Any, List
 from sqlalchemy.orm import Session
 from server.models import AuditLog
 
 
-SENSITIVE_KEYS = {
-    "card_number",
-    "pan",
-    "cvv",
-    "cvc",
-    "password",
-    "client_secret",
-    "payment_token",
-}
-
-
-def mask_value(key: str, val: Any) -> Any:
-    if not isinstance(val, str):
-        return val
-    lower_k = key.lower()
-    if any(s in lower_k for s in SENSITIVE_KEYS):
-        if len(val) <= 4:
-            return "***"
-        return f"****-****-****-{val[-4:]}"
-    return val
-
-
-def mask_payload(data: Any) -> Any:
-    if isinstance(data, dict):
-        masked = {}
-        for k, v in data.items():
-            if isinstance(v, (dict, list)):
-                masked[k] = mask_payload(v)
-            else:
-                masked[k] = mask_value(k, v)
-        return masked
-    elif isinstance(data, list):
-        return [mask_payload(item) for item in data]
-    return data
-
-
 def create_audit_log(
     db: Session,
-    event_type: str,
-    transaction_id: str | None = None,
-    ip_address: str = "127.0.0.1",
-    payload: dict[str, Any] | None = None,
+    action_type: str,
+    entity_name: str,
+    entity_id: Optional[str] = None,
+    actor_id: Optional[str] = None,
+    before_state: Optional[Dict[str, Any]] = None,
+    after_state: Optional[Dict[str, Any]] = None,
+    ip_address: Optional[str] = None,
 ) -> AuditLog:
-    masked = mask_payload(payload or {})
-    masked_json = json.dumps(masked)
-
     log_entry = AuditLog(
-        id=f"log_{uuid.uuid4().hex[:12]}",
-        transaction_id=transaction_id,
-        event_type=event_type,
+        id=str(uuid.uuid4()),
+        actor_id=actor_id,
+        action_type=action_type,
+        entity_name=entity_name,
+        entity_id=entity_id,
+        before_state=before_state,
+        after_state=after_state,
         ip_address=ip_address,
-        masked_payload=masked_json,
-        created_at=datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None),
     )
     db.add(log_entry)
-    db.commit()
-    db.refresh(log_entry)
+    # caller manages commit or flush
     return log_entry
+
+
+def get_audit_logs(
+    db: Session,
+    actor_id: Optional[str] = None,
+    action_type: Optional[str] = None,
+    entity_name: Optional[str] = None,
+    entity_id: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 20,
+) -> List[AuditLog]:
+    query = db.query(AuditLog)
+    if actor_id:
+        query = query.filter(AuditLog.actor_id == actor_id)
+    if action_type:
+        query = query.filter(AuditLog.action_type == action_type)
+    if entity_name:
+        query = query.filter(AuditLog.entity_name == entity_name)
+    if entity_id:
+        query = query.filter(AuditLog.entity_id == entity_id)
+
+    return query.order_by(AuditLog.created_at.desc()).offset(skip).limit(limit).all()
