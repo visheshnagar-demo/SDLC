@@ -1,16 +1,30 @@
+"""Configuration settings for Sales Order ETL Pipeline."""
+
 import os
-from pydantic import BaseModel
+from dataclasses import dataclass
 
 
-class Settings(BaseModel):
-    PROJECT_NAME: str = "Payment Gateway Service"
-    API_V1_STR: str = "/api/v1"
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:////tmp/app.db")
-    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "dev-secret-change-in-production")
-    ALLOWED_ORIGINS: list[str] = os.getenv(
-        "ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000"
-    ).split(",")
-    STRIPE_WEBHOOK_SECRET: str = os.getenv("STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+@dataclass(frozen=True)
+class PipelineConfig:
+    """Pipeline runtime configuration."""
+
+    project_id: str = os.getenv("GCP_PROJECT_ID", "upbeat-repeater-477110-q6")
+    source_gcs_uri: str = os.getenv("SOURCE_GCS_URI", "gs://sdlc-workspec-store/etl/data/raw_sales_data.csv")
+    destination_dataset: str = os.getenv("BIGQUERY_DATASET", "analytics")
+    destination_table: str = os.getenv("BIGQUERY_TABLE", "new_sales_orders")
+    log_level: str = os.getenv("LOG_LEVEL", "INFO")
+
+    @property
+    def full_destination_table_id(self) -> str:
+        """Returns the fully-qualified BigQuery table ID."""
+        return f"{self.project_id}.{self.destination_dataset}.{self.destination_table}"
+
+    @property
+    def dataset_table_id(self) -> str:
+        """Returns dataset.table formatted name."""
+        return f"{self.destination_dataset}.{self.destination_table}"
 
 
-settings = Settings()
+def get_config() -> PipelineConfig:
+    """Factory to retrieve configuration instance."""
+    return PipelineConfig()

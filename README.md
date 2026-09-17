@@ -1,88 +1,110 @@
-# Project
+# Daily Batch Sales Order ETL Pipeline (`SCRUM-300`)
 
-## Server
+A serverless, daily batch ETL data pipeline packaged as a Google Cloud Run Job. It extracts raw sales order CSV data from Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/raw_sales_data.csv`), cleans and validates records, deduplicates transactions keeping the latest by timestamp, and loads the sanitized dataset into a partitioned and clustered BigQuery table (`analytics.new_sales_orders`).
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+---
 
-### Setup
+## 1. Architecture Overview
 
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+- **Compute & Orchestration**: Ephemeral Google Cloud Run Job triggered on a daily schedule via Cloud Scheduler or manual invocation.
+- **Source**: Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/raw_sales_data.csv`).
+- **Processing Engine**: Python 3.11 with Pandas, PyArrow, and Pydantic validation.
+- **Destination Sink**: Google BigQuery partitioned table `analytics.new_sales_orders` (Day partitioned on `DATE(created_at)`, clustered on `customer_id`, `product_category`).
+- **Observability**: Structured JSON logging to stdout, automatically ingested by Cloud Logging.
+
+---
+
+## 2. Directory Layout
+
+```
+├── Dockerfile                                 # Container image definition for Cloud Run Job
+├── README.md                                  # Pipeline documentation and operational guide
+├── env.deploy.json                            # Deployment environment configuration
+├── requirements.txt                           # Python dependencies
+├── schemas/
+│   └── sales_order_schema.json               # BigQuery JSON schema definition
+├── sql/
+│   └── ddl/
+│       └── create_analytics_new_sales_orders.sql # BigQuery DDL
+├── server/
+│   ├── __init__.py
+│   ├── config.py                              # Configuration loader
+│   ├── extractor.py                           # GCS data ingestion client
+│   ├── loader.py                              # BigQuery table initialization & batch loader
+│   ├── main.py                                # CLI and batch execution entrypoint
+│   ├── models.py                              # Pydantic data models & telemetry schemas
+│   └── transformer.py                         # Data sanitization, deduplication, & validation
+└── tests/
+    ├── __init__.py
+    ├── test_extractor.py
+    ├── test_loader.py
+    ├── test_pipeline.py
+    └── test_transformer.py
 ```
 
-2. Install dependencies:
+---
+
+## 3. Configuration & Environment Variables
+
+| Variable | Default Value | Description |
+| :--- | :--- | :--- |
+| `GCP_PROJECT_ID` | `upbeat-repeater-477110-q6` | GCP Project ID |
+| `SOURCE_GCS_URI` | `gs://sdlc-workspec-store/etl/data/raw_sales_data.csv` | Input CSV path in GCS |
+| `BIGQUERY_DATASET` | `analytics` | BigQuery target dataset |
+| `BIGQUERY_TABLE` | `new_sales_orders` | BigQuery target table |
+| `LOG_LEVEL` | `INFO` | Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
+
+---
+
+## 4. Local Development & Testing
+
+### 4.1 Prerequisites
+- Python 3.11+
+- Virtual environment tool (`venv` or `uv`)
+
+### 4.2 Setup
 ```bash
-cd server
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cd ..
 ```
 
-### Running Tests
+### 4.3 Run Unit and Integration Tests
 ```bash
-cd server
-python -m pytest -v
-cd ..
+pytest tests/ -v
 ```
 
-### Starting the Development Server
+### 4.4 Local Pipeline Execution
 ```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+# Execute with default environment variables
+python -m server.main
+
+# Override parameters via CLI
+python -m server.main \
+  --source-uri "gs://sdlc-workspec-store/etl/data/raw_sales_data.csv" \
+  --destination-table "analytics.new_sales_orders" \
+  --project-id "upbeat-repeater-477110-q6" \
+  --batch-id "manual-run-001"
 ```
 
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
+---
 
-## Full-Stack Local Development
+## 5. Cloud Run Job Deployment
 
-To run both backend and frontend together locally:
+The container is packaged and deployed as a Cloud Run Job:
 
-### 1. Environment Setup
 ```bash
-# Copy the example environment file
-cp .env.example .env
+# Build and push container to Google Artifact Registry
+gcloud builds submit --tag us-central1-docker.pkg.dev/upbeat-repeater-477110-q6/sdlc-containers/sales-etl-job:latest .
+
+# Deploy Cloud Run Job
+gcloud run jobs create sales-etl-job \
+  --image us-central1-docker.pkg.dev/upbeat-repeater-477110-q6/sdlc-containers/sales-etl-job:latest \
+  --region us-central1 \
+  --memory 4Gi \
+  --cpu 2 \
+  --set-env-vars "GCP_PROJECT_ID=upbeat-repeater-477110-q6,SOURCE_GCS_URI=gs://sdlc-workspec-store/etl/data/raw_sales_data.csv,BIGQUERY_DATASET=analytics,BIGQUERY_TABLE=new_sales_orders"
+
+# Execute Cloud Run Job
+gcloud run jobs execute sales-etl-job --region us-central1 --wait
 ```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-
