@@ -1,88 +1,98 @@
-# Project
+# GCS to BigQuery Analytics ETL Data Pipeline
 
-## Server
+**Jira Issue**: SCRUM-310  
+**GCP Target Project**: `upbeat-repeater-477110-q6`  
+**Target BigQuery Dataset**: `analytics`  
+**Source Location**: `gs://sdlc-workspec-store/etl/data/my_file (1).csv`  
+**Target Tables**: `transformed_data`, `analytics_errors`  
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+---
 
-### Setup
+## 1. Overview
 
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+This production ETL pipeline automates the extraction, cleansing, transformation, and loading of raw CSV datasets from Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/my_file (1).csv`) into Google BigQuery (`upbeat-repeater-477110-q6:analytics.transformed_data`).
+
+### Key Features
+- **GCS Extractor**: Robust streaming extraction supporting URL-encoded paths and GCS authentication.
+- **Data Transformer**: Header sanitization, null normalization, timestamp standardization (ISO 8601 UTC), and dead-letter error record capture.
+- **BigQuery Loader**: High-throughput atomic BigQuery loads with automated dataset and table provisioning.
+- **Auto-Boot Serverless Container**: Cloud Run compatible container listening on port `8080` with auto-boot ETL trigger on startup.
+
+---
+
+## 2. Directory Structure
+
+```
+├── server/
+│   ├── main.py                     # CLI & FastAPI HTTP entrypoint
+│   ├── etl/
+│   │   ├── __init__.py
+│   │   ├── extractor.py            # GCS CSV extraction logic
+│   │   ├── transformer.py          # Data cleansing, schema validation & transformation
+│   │   ├── loader.py               # BigQuery batch ingestion & error logging
+│   │   └── pipeline.py             # End-to-end ETL orchestrator
+│   ├── schemas/
+│   │   ├── transformed_data_schema.json
+│   │   └── analytics_errors_schema.json
+│   ├── sql/
+│   │   └── ddl/
+│   │       └── create_analytics_tables.sql
+│   ├── tests/
+│   │   ├── test_extractor.py
+│   │   ├── test_transformer.py
+│   │   ├── test_loader.py
+│   │   └── test_pipeline.py
+│   └── requirements.txt
+├── dags/
+│   └── gcs_to_bigquery_analytics_dag.py
+├── pipeline/
+│   └── run_gcs_to_bigquery_analytics.py
+├── app.py                          # Auto-boot Cloud Run service
+├── Dockerfile                      # Production container image definition
+├── requirements.txt
+└── README.md
 ```
 
-2. Install dependencies:
+---
+
+## 3. Environment Configuration
+
+Create a `.env` file based on `.env.example`:
+
 ```bash
-cd server
-pip install -r requirements.txt
-cd ..
+GCP_PROJECT_ID=upbeat-repeater-477110-q6
+GCS_BUCKET_NAME=sdlc-workspec-store
+GCS_SOURCE_BLOB=etl/data/my_file (1).csv
+BQ_DATASET_ID=analytics
+BQ_TABLE_ID=transformed_data
+BQ_ERROR_TABLE_ID=analytics_errors
+WRITE_DISPOSITION=WRITE_APPEND
+PORT=8080
 ```
+
+---
+
+## 4. Local Execution & Testing
 
 ### Running Tests
 ```bash
-cd server
-python -m pytest -v
-cd ..
+pytest server/tests/ tests/ -v
 ```
 
-### Starting the Development Server
+### Running CLI Pipeline
 ```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+python -m server.main
 ```
 
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
+### Running HTTP Service
 ```bash
-# Copy the example environment file
-cp .env.example .env
+python app.py
+# or
+uvicorn server.main:app --host 0.0.0.0 --port 8080
 ```
 
-### 2. Start the Backend (Terminal 1)
+### Docker Container Run
 ```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+docker build -t gcs-bq-etl .
+docker run -p 8080:8080 -e GCP_PROJECT_ID=upbeat-repeater-477110-q6 gcs-bq-etl
 ```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-

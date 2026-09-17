@@ -1,0 +1,32 @@
+[
+  {
+    "name": "error_id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Unique error identifier"
+  },
+  {
+    "name": "raw_record",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Raw serialized record string"
+  },
+  {
+    "name": "error_message",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Details of validation or parsing failure"
+  },
+  {
+    "name": "_ingestion_timestamp",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "UTC timestamp of error logging"
+  },
+  {
+    "name": "_source_file",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Source GCS blob URI"
+  }
+]

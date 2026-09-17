@@ -1,0 +1,32 @@
+[
+  {
+    "name": "id",
+    "type": "INTEGER",
+    "mode": "REQUIRED",
+    "description": "Primary identifier"
+  },
+  {
+    "name": "status",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Record status"
+  },
+  {
+    "name": "payload",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Raw or parsed payload"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "Record creation time"
+  },
+  {
+    "name": "updated_at",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "Record last update time"
+  }
+]

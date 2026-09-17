@@ -1,0 +1,32 @@
+[
+  {
+    "name": "record_id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Unique record identifier"
+  },
+  {
+    "name": "data_payload",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "JSON serialized key-value attributes of the transformed record"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Record creation timestamp"
+  },
+  {
+    "name": "_ingestion_timestamp",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "UTC timestamp of ETL pipeline ingestion"
+  },
+  {
+    "name": "_source_file",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Source GCS blob URI"
+  }
+]
