@@ -1,0 +1,182 @@
+[
+  {
+    "record_id": "9b20e891-5c80-459d-b936-6ba8ca7c18c8",
+    "raw_payload": "{\"Rank\": \"1\", \"Peak\": \"1\", \"All Time Peak\": \"2\", \"Actual\\u00a0gross\": \"$780,000,000\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$780,000,000\", \"Artist\": \"Taylor Swift\", \"Tour title\": \"The Eras Tour \\u2020\", \"Year(s)\": \"2023\\u20132024\", \"Shows\": \"56\", \"Average gross\": \"$13,928,571\", \"Ref.\": \"[1]\"}",
+    "data_fields": "{\"rank\": \"1\", \"peak\": \"1\", \"all_time_peak\": \"2\", \"actual_gross\": \"$780,000,000\", \"adjusted_gross__in_2022_dollars_\": \"$780,000,000\", \"artist\": \"Taylor Swift\", \"tour_title\": \"The Eras Tour \\u2020\", \"year_s_\": \"2023\\u20132024\", \"shows\": \"56\", \"average_gross\": \"$13,928,571\", \"ref_\": \"[1]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  },
+  {
+    "record_id": "c27ddb01-3db4-49f8-9c30-b38918ec05b5",
+    "raw_payload": "{\"Rank\": \"2\", \"Peak\": \"1\", \"All Time Peak\": \"7[2]\", \"Actual\\u00a0gross\": \"$579,800,000\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$579,800,000\", \"Artist\": \"Beyonc\\u00e9\", \"Tour title\": \"Renaissance World Tour\", \"Year(s)\": \"2023\", \"Shows\": \"56\", \"Average gross\": \"$10,353,571\", \"Ref.\": \"[3]\"}",
+    "data_fields": "{\"rank\": \"2\", \"peak\": \"1\", \"all_time_peak\": \"7[2]\", \"actual_gross\": \"$579,800,000\", \"adjusted_gross__in_2022_dollars_\": \"$579,800,000\", \"artist\": \"Beyonc\\u00e9\", \"tour_title\": \"Renaissance World Tour\", \"year_s_\": \"2023\", \"shows\": \"56\", \"average_gross\": \"$10,353,571\", \"ref_\": \"[3]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  },
+  {
+    "record_id": "79405c97-56e7-4a3e-bc7d-759371ff7171",
+    "raw_payload": "{\"Rank\": \"3\", \"Peak\": \"1[4]\", \"All Time Peak\": \"2[5]\", \"Actual\\u00a0gross\": \"$411,000,000\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$560,622,615\", \"Artist\": \"Madonna\", \"Tour title\": \"Sticky & Sweet Tour \\u2021[4][a]\", \"Year(s)\": \"2008\\u20132009\", \"Shows\": \"85\", \"Average gross\": \"$4,835,294\", \"Ref.\": \"[6]\"}",
+    "data_fields": "{\"rank\": \"3\", \"peak\": \"1[4]\", \"all_time_peak\": \"2[5]\", \"actual_gross\": \"$411,000,000\", \"adjusted_gross__in_2022_dollars_\": \"$560,622,615\", \"artist\": \"Madonna\", \"tour_title\": \"Sticky & Sweet Tour \\u2021[4][a]\", \"year_s_\": \"2008\\u20132009\", \"shows\": \"85\", \"average_gross\": \"$4,835,294\", \"ref_\": \"[6]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  },
+  {
+    "record_id": "d40fa649-66d4-4224-9d0b-e6c5f6b0f938",
+    "raw_payload": "{\"Rank\": \"4\", \"Peak\": \"2[7]\", \"All Time Peak\": \"10[7]\", \"Actual\\u00a0gross\": \"$397,300,000\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$454,751,555\", \"Artist\": \"Pink\", \"Tour title\": \"Beautiful Trauma World Tour\", \"Year(s)\": \"2018\\u20132019\", \"Shows\": \"156\", \"Average gross\": \"$2,546,795\", \"Ref.\": \"[7]\"}",
+    "data_fields": "{\"rank\": \"4\", \"peak\": \"2[7]\", \"all_time_peak\": \"10[7]\", \"actual_gross\": \"$397,300,000\", \"adjusted_gross__in_2022_dollars_\": \"$454,751,555\", \"artist\": \"Pink\", \"tour_title\": \"Beautiful Trauma World Tour\", \"year_s_\": \"2018\\u20132019\", \"shows\": \"156\", \"average_gross\": \"$2,546,795\", \"ref_\": \"[7]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  },
+  {
+    "record_id": "6b4d2f2c-a416-47a3-82da-fce7254c7720",
+    "raw_payload": "{\"Rank\": \"5\", \"Peak\": \"2[4]\", \"All Time Peak\": \"\", \"Actual\\u00a0gross\": \"$345,675,146\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$402,844,849\", \"Artist\": \"Taylor Swift\", \"Tour title\": \"Reputation Stadium Tour\", \"Year(s)\": \"2018\", \"Shows\": \"53\", \"Average gross\": \"$6,522,173\", \"Ref.\": \"[8]\"}",
+    "data_fields": "{\"rank\": \"5\", \"peak\": \"2[4]\", \"all_time_peak\": \"\", \"actual_gross\": \"$345,675,146\", \"adjusted_gross__in_2022_dollars_\": \"$402,844,849\", \"artist\": \"Taylor Swift\", \"tour_title\": \"Reputation Stadium Tour\", \"year_s_\": \"2018\", \"shows\": \"53\", \"average_gross\": \"$6,522,173\", \"ref_\": \"[8]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  },
+  {
+    "record_id": "9d05658f-c33f-42e5-bebd-00a20258c5e9",
+    "raw_payload": "{\"Rank\": \"6\", \"Peak\": \"2[4]\", \"All Time Peak\": \"10[9]\", \"Actual\\u00a0gross\": \"$305,158,363\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$388,978,496\", \"Artist\": \"Madonna\", \"Tour title\": \"The MDNA Tour\", \"Year(s)\": \"2012\", \"Shows\": \"88\", \"Average gross\": \"$3,467,709\", \"Ref.\": \"[9]\"}",
+    "data_fields": "{\"rank\": \"6\", \"peak\": \"2[4]\", \"all_time_peak\": \"10[9]\", \"actual_gross\": \"$305,158,363\", \"adjusted_gross__in_2022_dollars_\": \"$388,978,496\", \"artist\": \"Madonna\", \"tour_title\": \"The MDNA Tour\", \"year_s_\": \"2012\", \"shows\": \"88\", \"average_gross\": \"$3,467,709\", \"ref_\": \"[9]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  },
+  {
+    "record_id": "01cf2dd9-d895-415b-b3d6-467f7ab7eaec",
+    "raw_payload": "{\"Rank\": \"7\", \"Peak\": \"2[10]\", \"All Time Peak\": \"\", \"Actual\\u00a0gross\": \"$280,000,000\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$381,932,682\", \"Artist\": \"Celine Dion\", \"Tour title\": \"Taking Chances World Tour\", \"Year(s)\": \"2008\\u20132009\", \"Shows\": \"131\", \"Average gross\": \"$2,137,405\", \"Ref.\": \"[11]\"}",
+    "data_fields": "{\"rank\": \"7\", \"peak\": \"2[10]\", \"all_time_peak\": \"\", \"actual_gross\": \"$280,000,000\", \"adjusted_gross__in_2022_dollars_\": \"$381,932,682\", \"artist\": \"Celine Dion\", \"tour_title\": \"Taking Chances World Tour\", \"year_s_\": \"2008\\u20132009\", \"shows\": \"131\", \"average_gross\": \"$2,137,405\", \"ref_\": \"[11]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  },
+  {
+    "record_id": "97b643a5-1179-4647-8105-b51c061f82e5",
+    "raw_payload": "{\"Rank\": \"7\", \"Peak\": \"\", \"All Time Peak\": \"\", \"Actual\\u00a0gross\": \"$257,600,000\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$257,600,000\", \"Artist\": \"Pink\", \"Tour title\": \"Summer Carnival \\u2020\", \"Year(s)\": \"2023\\u20132024\", \"Shows\": \"41\", \"Average gross\": \"$6,282,927\", \"Ref.\": \"[12]\"}",
+    "data_fields": "{\"rank\": \"7\", \"peak\": \"\", \"all_time_peak\": \"\", \"actual_gross\": \"$257,600,000\", \"adjusted_gross__in_2022_dollars_\": \"$257,600,000\", \"artist\": \"Pink\", \"tour_title\": \"Summer Carnival \\u2020\", \"year_s_\": \"2023\\u20132024\", \"shows\": \"41\", \"average_gross\": \"$6,282,927\", \"ref_\": \"[12]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  },
+  {
+    "record_id": "1972e0ca-3508-4986-98f0-6c4b1a63d328",
+    "raw_payload": "{\"Rank\": \"9\", \"Peak\": \"\", \"All Time Peak\": \"\", \"Actual\\u00a0gross\": \"$256,084,556\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$312,258,401\", \"Artist\": \"Beyonc\\u00e9\", \"Tour title\": \"The Formation World Tour\", \"Year(s)\": \"2016\", \"Shows\": \"49\", \"Average gross\": \"$5,226,215\", \"Ref.\": \"[13]\"}",
+    "data_fields": "{\"rank\": \"9\", \"peak\": \"\", \"all_time_peak\": \"\", \"actual_gross\": \"$256,084,556\", \"adjusted_gross__in_2022_dollars_\": \"$312,258,401\", \"artist\": \"Beyonc\\u00e9\", \"tour_title\": \"The Formation World Tour\", \"year_s_\": \"2016\", \"shows\": \"49\", \"average_gross\": \"$5,226,215\", \"ref_\": \"[13]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  },
+  {
+    "record_id": "9df25a23-4955-4a61-b45e-a00e23610fea",
+    "raw_payload": "{\"Rank\": \"10\", \"Peak\": \"\", \"All Time Peak\": \"\", \"Actual\\u00a0gross\": \"$250,400,000\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$309,141,878\", \"Artist\": \"Taylor Swift\", \"Tour title\": \"The 1989 World Tour\", \"Year(s)\": \"2015\", \"Shows\": \"85\", \"Average gross\": \"$2,945,882\", \"Ref.\": \"[14]\"}",
+    "data_fields": "{\"rank\": \"10\", \"peak\": \"\", \"all_time_peak\": \"\", \"actual_gross\": \"$250,400,000\", \"adjusted_gross__in_2022_dollars_\": \"$309,141,878\", \"artist\": \"Taylor Swift\", \"tour_title\": \"The 1989 World Tour\", \"year_s_\": \"2015\", \"shows\": \"85\", \"average_gross\": \"$2,945,882\", \"ref_\": \"[14]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  },
+  {
+    "record_id": "6ccb194b-1c3b-49f9-a7a1-edc73af95ec2",
+    "raw_payload": "{\"Rank\": \"11\", \"Peak\": \"\", \"All Time Peak\": \"\", \"Actual\\u00a0gross\": \"$229,100,000[b]\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$283,202,896\", \"Artist\": \"Beyonc\\u00e9\", \"Tour title\": \"The Mrs. Carter Show World Tour\", \"Year(s)\": \"2013\\u20132014\", \"Shows\": \"132\", \"Average gross\": \"$1,735,606\", \"Ref.\": \"[15][16]\"}",
+    "data_fields": "{\"rank\": \"11\", \"peak\": \"\", \"all_time_peak\": \"\", \"actual_gross\": \"$229,100,000[b]\", \"adjusted_gross__in_2022_dollars_\": \"$283,202,896\", \"artist\": \"Beyonc\\u00e9\", \"tour_title\": \"The Mrs. Carter Show World Tour\", \"year_s_\": \"2013\\u20132014\", \"shows\": \"132\", \"average_gross\": \"$1,735,606\", \"ref_\": \"[15][16]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  },
+  {
+    "record_id": "6253d4d3-c37e-4326-9a06-012c92c813f2",
+    "raw_payload": "{\"Rank\": \"12\", \"Peak\": \"\", \"All Time Peak\": \"14[17]\", \"Actual\\u00a0gross\": \"$227,400,000\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$295,301,479\", \"Artist\": \"Lady Gaga\", \"Tour title\": \"The Monster Ball Tour *\", \"Year(s)\": \"2009\\u20132011\", \"Shows\": \"203\", \"Average gross\": \"$1,118,227\", \"Ref.\": \"[18]\"}",
+    "data_fields": "{\"rank\": \"12\", \"peak\": \"\", \"all_time_peak\": \"14[17]\", \"actual_gross\": \"$227,400,000\", \"adjusted_gross__in_2022_dollars_\": \"$295,301,479\", \"artist\": \"Lady Gaga\", \"tour_title\": \"The Monster Ball Tour *\", \"year_s_\": \"2009\\u20132011\", \"shows\": \"203\", \"average_gross\": \"$1,118,227\", \"ref_\": \"[18]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  },
+  {
+    "record_id": "17b5c5b8-4842-4d93-8253-a6b748b742ba",
+    "raw_payload": "{\"Rank\": \"13\", \"Peak\": \"\", \"All Time Peak\": \"\", \"Actual\\u00a0gross\": \"$204,000,000\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$251,856,802\", \"Artist\": \"Katy Perry\", \"Tour title\": \"Prismatic World Tour\", \"Year(s)\": \"2014\\u20132015\", \"Shows\": \"151\", \"Average gross\": \"$1,350,993\", \"Ref.\": \"[19]\"}",
+    "data_fields": "{\"rank\": \"13\", \"peak\": \"\", \"all_time_peak\": \"\", \"actual_gross\": \"$204,000,000\", \"adjusted_gross__in_2022_dollars_\": \"$251,856,802\", \"artist\": \"Katy Perry\", \"tour_title\": \"Prismatic World Tour\", \"year_s_\": \"2014\\u20132015\", \"shows\": \"151\", \"average_gross\": \"$1,350,993\", \"ref_\": \"[19]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  },
+  {
+    "record_id": "175c1185-e3f9-440f-ac81-921b7eafd504",
+    "raw_payload": "{\"Rank\": \"14\", \"Peak\": \"1[20]\", \"All Time Peak\": \"\", \"Actual\\u00a0gross\": \"$200,000,000\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$299,676,265\", \"Artist\": \"Cher\", \"Tour title\": \"Living Proof: The Farewell Tour \\u2021[21][a]\", \"Year(s)\": \"2002\\u20132005\", \"Shows\": \"325\", \"Average gross\": \"$615,385\", \"Ref.\": \"[20]\"}",
+    "data_fields": "{\"rank\": \"14\", \"peak\": \"1[20]\", \"all_time_peak\": \"\", \"actual_gross\": \"$200,000,000\", \"adjusted_gross__in_2022_dollars_\": \"$299,676,265\", \"artist\": \"Cher\", \"tour_title\": \"Living Proof: The Farewell Tour \\u2021[21][a]\", \"year_s_\": \"2002\\u20132005\", \"shows\": \"325\", \"average_gross\": \"$615,385\", \"ref_\": \"[20]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  },
+  {
+    "record_id": "7ac12b7d-f8c4-4e8b-9850-640240f4a0cd",
+    "raw_payload": "{\"Rank\": \"15\", \"Peak\": \"2[c]\", \"All Time Peak\": \"\", \"Actual\\u00a0gross\": \"$194,000,000\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$281,617,035\", \"Artist\": \"Madonna\", \"Tour title\": \"Confessions Tour\", \"Year(s)\": \"2006\", \"Shows\": \"60\", \"Average gross\": \"$3,233,333\", \"Ref.\": \"[5]\"}",
+    "data_fields": "{\"rank\": \"15\", \"peak\": \"2[c]\", \"all_time_peak\": \"\", \"actual_gross\": \"$194,000,000\", \"adjusted_gross__in_2022_dollars_\": \"$281,617,035\", \"artist\": \"Madonna\", \"tour_title\": \"Confessions Tour\", \"year_s_\": \"2006\", \"shows\": \"60\", \"average_gross\": \"$3,233,333\", \"ref_\": \"[5]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  },
+  {
+    "record_id": "db94c8e3-e2f3-4178-9095-d4b19cd31f06",
+    "raw_payload": "{\"Rank\": \"16\", \"Peak\": \"\", \"All Time Peak\": \"\", \"Actual\\u00a0gross\": \"$184,000,000\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$227,452,347\", \"Artist\": \"Pink\", \"Tour title\": \"The Truth About Love Tour\", \"Year(s)\": \"2013\\u20132014\", \"Shows\": \"142\", \"Average gross\": \"$1,295,775\", \"Ref.\": \"[22]\"}",
+    "data_fields": "{\"rank\": \"16\", \"peak\": \"\", \"all_time_peak\": \"\", \"actual_gross\": \"$184,000,000\", \"adjusted_gross__in_2022_dollars_\": \"$227,452,347\", \"artist\": \"Pink\", \"tour_title\": \"The Truth About Love Tour\", \"year_s_\": \"2013\\u20132014\", \"shows\": \"142\", \"average_gross\": \"$1,295,775\", \"ref_\": \"[22]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  },
+  {
+    "record_id": "3d89456b-8667-40ce-8656-d13e285b073a",
+    "raw_payload": "{\"Rank\": \"17\", \"Peak\": \"\", \"All Time Peak\": \"\", \"Actual\\u00a0gross\": \"$170,000,000\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$213,568,571\", \"Artist\": \"Lady Gaga\", \"Tour title\": \"Born This Way Ball\", \"Year(s)\": \"2012\\u20132013\", \"Shows\": \"98\", \"Average gross\": \"$1,734,694\", \"Ref.\": \"[d]\"}",
+    "data_fields": "{\"rank\": \"17\", \"peak\": \"\", \"all_time_peak\": \"\", \"actual_gross\": \"$170,000,000\", \"adjusted_gross__in_2022_dollars_\": \"$213,568,571\", \"artist\": \"Lady Gaga\", \"tour_title\": \"Born This Way Ball\", \"year_s_\": \"2012\\u20132013\", \"shows\": \"98\", \"average_gross\": \"$1,734,694\", \"ref_\": \"[d]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  },
+  {
+    "record_id": "f9683f65-d5ca-4c43-bdb4-0592220b9679",
+    "raw_payload": "{\"Rank\": \"18\", \"Peak\": \"\", \"All Time Peak\": \"\", \"Actual\\u00a0gross\": \"$169,800,000\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$207,046,755\", \"Artist\": \"Madonna\", \"Tour title\": \"Rebel Heart Tour\", \"Year(s)\": \"2015\\u20132016\", \"Shows\": \"82\", \"Average gross\": \"$2,070,732\", \"Ref.\": \"[4]\"}",
+    "data_fields": "{\"rank\": \"18\", \"peak\": \"\", \"all_time_peak\": \"\", \"actual_gross\": \"$169,800,000\", \"adjusted_gross__in_2022_dollars_\": \"$207,046,755\", \"artist\": \"Madonna\", \"tour_title\": \"Rebel Heart Tour\", \"year_s_\": \"2015\\u20132016\", \"shows\": \"82\", \"average_gross\": \"$2,070,732\", \"ref_\": \"[4]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  },
+  {
+    "record_id": "05e1b0d5-1b50-44a0-abd6-b66dbbc0d0c8",
+    "raw_payload": "{\"Rank\": \"19\", \"Peak\": \"\", \"All Time Peak\": \"\", \"Actual\\u00a0gross\": \"$167,700,000[e]\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$204,486,106\", \"Artist\": \"Adele\", \"Tour title\": \"Adele Live 2016\", \"Year(s)\": \"2016\\u20132017\", \"Shows\": \"121\", \"Average gross\": \"$1,385,950\", \"Ref.\": \"[25]\"}",
+    "data_fields": "{\"rank\": \"19\", \"peak\": \"\", \"all_time_peak\": \"\", \"actual_gross\": \"$167,700,000[e]\", \"adjusted_gross__in_2022_dollars_\": \"$204,486,106\", \"artist\": \"Adele\", \"tour_title\": \"Adele Live 2016\", \"year_s_\": \"2016\\u20132017\", \"shows\": \"121\", \"average_gross\": \"$1,385,950\", \"ref_\": \"[25]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  },
+  {
+    "record_id": "fc4d0d2f-c183-46ea-a752-8de43aaa66c1",
+    "raw_payload": "{\"Rank\": \"20\", \"Peak\": \"\", \"All Time Peak\": \"\", \"Actual\\u00a0gross\": \"$150,000,000\", \"Adjusted\\u00a0gross (in 2022 dollars)\": \"$185,423,109\", \"Artist\": \"Taylor Swift\", \"Tour title\": \"The Red Tour\", \"Year(s)\": \"2013\\u20132014\", \"Shows\": \"86\", \"Average gross\": \"$1,744,186\", \"Ref.\": \"[26]\"}",
+    "data_fields": "{\"rank\": \"20\", \"peak\": \"\", \"all_time_peak\": \"\", \"actual_gross\": \"$150,000,000\", \"adjusted_gross__in_2022_dollars_\": \"$185,423,109\", \"artist\": \"Taylor Swift\", \"tour_title\": \"The Red Tour\", \"year_s_\": \"2013\\u20132014\", \"shows\": \"86\", \"average_gross\": \"$1,744,186\", \"ref_\": \"[26]\"}",
+    "ingestion_batch_id": "batch-run-55ef9fd2-1ccf-46ef-bf1a-fe33084bffc1",
+    "source_file_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "created_at": "2026-09-17T10:33:24.749365+00:00",
+    "updated_at": "2026-09-17T10:33:24.749365+00:00"
+  }
+]

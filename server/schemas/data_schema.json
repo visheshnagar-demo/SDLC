@@ -1,0 +1,44 @@
+[
+  {
+    "name": "record_id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Unique record UUID generated during transformation"
+  },
+  {
+    "name": "raw_payload",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Original raw row content preserved for lineage"
+  },
+  {
+    "name": "data_fields",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Parsed and sanitized key-value fields from CSV"
+  },
+  {
+    "name": "ingestion_batch_id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "UUID identifying the specific ETL job run"
+  },
+  {
+    "name": "source_file_path",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Source GCS path (gs://...)"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "Ingestion timestamp in UTC"
+  },
+  {
+    "name": "updated_at",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "Record modification timestamp in UTC"
+  }
+]
