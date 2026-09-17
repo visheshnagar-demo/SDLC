@@ -1,6 +1,6 @@
 """Unit and Integration Tests for Sales Order ETL Pipeline."""
 
-from datetime import date
+from datetime import date, datetime, timezone
 from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
@@ -138,6 +138,48 @@ class TestTransformationEngine:
         assert metrics["records_ingested"] == 5
         assert metrics["records_loaded"] == 2
         assert set(clean_df["order_id"]) == {"1001", "1002"}
+
+    def test_whitespace_and_null_representations(self, engine):
+        """Validates that whitespace is trimmed and all null representations become None."""
+        assert engine.sanitize_nulls("  N/A  ") is None
+        assert engine.sanitize_nulls("  null  ") is None
+        assert engine.sanitize_nulls("  NULL  ") is None
+        assert engine.sanitize_nulls("  None  ") is None
+        assert engine.sanitize_nulls("  nil  ") is None
+        assert engine.sanitize_nulls("  undefined  ") is None
+        assert engine.sanitize_nulls("   ") is None
+        assert engine.sanitize_nulls("") is None
+        assert engine.sanitize_nulls(None) is None
+        assert engine.sanitize_nulls(pd.NA) is None
+        assert engine.sanitize_nulls(float("nan")) is None
+        assert engine.sanitize_nulls("  John Doe  ") == "John Doe"
+
+        assert engine.clean_string("  N/A  ") is None
+        assert engine.clean_string("  null  ") is None
+        assert engine.clean_string("  NULL  ") is None
+        assert engine.clean_string("  None  ") is None
+        assert engine.clean_string("  ") is None
+        assert engine.clean_string("  Alice Smith  ") == "Alice Smith"
+        assert engine.clean_string(1001) == "1001"
+
+    def test_numeric_parsing(self, engine):
+        """Validates robust numeric parsing."""
+        assert engine.parse_numeric("$1,234.56") == 1234.56
+        assert engine.parse_numeric("  49.50  ") == 49.50
+        assert engine.parse_numeric(100) == 100.0
+        assert engine.parse_numeric(None) is None
+        assert engine.parse_numeric("N/A") is None
+        assert engine.parse_numeric("  ") is None
+        assert engine.parse_numeric("$ -") is None
+
+    def test_timestamp_parsing(self, engine):
+        """Validates robust timestamp parsing."""
+        ts = engine.parse_timestamp("2026-09-01T10:14:22Z")
+        assert ts is not None
+        assert ts.year == 2026
+        assert ts.tzinfo is not None or getattr(ts, "tz", None) is not None
+        assert engine.parse_timestamp("N/A") is None
+        assert engine.parse_timestamp(None) is None
 
     def test_empty_dataframe(self, engine):
         empty_df = pd.DataFrame()
