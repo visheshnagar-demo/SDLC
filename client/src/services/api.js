@@ -13,7 +13,6 @@ export const apiClient = axios.create({
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Standardized error payload extractions
     const message =
       error.response?.data?.detail ||
       error.message ||
@@ -25,6 +24,51 @@ apiClient.interceptors.response.use(
     );
   },
 );
+
+// --- Tenant Management API Endpoints ---
+
+export const getTenants = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/tenants", { params });
+  return response.data;
+};
+
+export const getTenantDetail = async (tenantId) => {
+  const response = await apiClient.get(`/api/v1/tenants/${tenantId}`);
+  return response.data;
+};
+
+export const createTenant = async (payload) => {
+  const response = await apiClient.post("/api/v1/tenants", payload);
+  return response.data;
+};
+
+export const updateTenant = async (tenantId, payload) => {
+  const response = await apiClient.put(`/api/v1/tenants/${tenantId}`, payload);
+  return response.data;
+};
+
+export const updateTenantStatus = async (tenantId, status, reason = "") => {
+  const response = await apiClient.patch(`/api/v1/tenants/${tenantId}/status`, {
+    status,
+    reason,
+  });
+  return response.data;
+};
+
+export const updateTenantConfig = async (tenantId, configPayload) => {
+  const response = await apiClient.put(
+    `/api/v1/tenants/${tenantId}/configuration`,
+    configPayload,
+  );
+  return response.data;
+};
+
+export const deleteTenant = async (tenantId) => {
+  const response = await apiClient.delete(`/api/v1/tenants/${tenantId}`);
+  return response.data;
+};
+
+// --- Legacy / Existing Payment Gateway Endpoints ---
 
 export const createCheckoutSession = async (payload) => {
   const response = await apiClient.post(
@@ -80,6 +124,13 @@ export const listAuditLogs = async (params = {}) => {
 
 export default {
   apiClient,
+  getTenants,
+  getTenantDetail,
+  createTenant,
+  updateTenant,
+  updateTenantStatus,
+  updateTenantConfig,
+  deleteTenant,
   createCheckoutSession,
   payWithDigitalWallet,
   getExchangeRates,
