@@ -2,6 +2,7 @@
 
 from datetime import date, datetime, timezone
 from unittest.mock import MagicMock, patch
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -140,7 +141,7 @@ class TestTransformationEngine:
         assert set(clean_df["order_id"]) == {"1001", "1002"}
 
     def test_whitespace_and_null_representations(self, engine):
-        """Validates that whitespace is trimmed and all null representations become None."""
+        """Validates that whitespace is trimmed and all null representations become None strictly."""
         assert engine.sanitize_nulls("  N/A  ") is None
         assert engine.sanitize_nulls("  null  ") is None
         assert engine.sanitize_nulls("  NULL  ") is None
@@ -152,15 +153,41 @@ class TestTransformationEngine:
         assert engine.sanitize_nulls(None) is None
         assert engine.sanitize_nulls(pd.NA) is None
         assert engine.sanitize_nulls(float("nan")) is None
+        assert engine.sanitize_nulls(np.nan) is None
         assert engine.sanitize_nulls("  John Doe  ") == "John Doe"
 
         assert engine.clean_string("  N/A  ") is None
         assert engine.clean_string("  null  ") is None
         assert engine.clean_string("  NULL  ") is None
         assert engine.clean_string("  None  ") is None
+        assert engine.clean_string("  nan  ") is None
+        assert engine.clean_string("  <NA>  ") is None
         assert engine.clean_string("  ") is None
+        assert engine.clean_string(None) is None
+        assert engine.clean_string(float("nan")) is None
+        assert engine.clean_string(np.nan) is None
+        assert engine.clean_string(pd.NA) is None
         assert engine.clean_string("  Alice Smith  ") == "Alice Smith"
         assert engine.clean_string(1001) == "1001"
+
+    def test_nan_to_none_in_dataframe_rows(self, engine):
+        """Validates that NaN, float('nan'), np.nan, pd.NA, and 'N/A' in DataFrames evaluate strictly to None."""
+        raw_df = pd.DataFrame({
+            "order_id": ["101", "102", "103", "104", "105"],
+            "customer_id": ["C1", "C2", "C3", "C4", "C5"],
+            "customer_email": [float("nan"), np.nan, pd.NA, "N/A", "user@test.com"],
+            "amount": [10.0, 20.0, 30.0, 40.0, 50.0],
+            "created_at": ["2026-09-01T10:00:00Z"] * 5,
+        })
+        clean_df, _ = engine.transform(raw_df)
+        assert len(clean_df) == 5
+
+        for i in range(4):
+            row = clean_df.iloc[i]
+            assert row["customer_email"] is None
+            assert type(row["customer_email"]) is type(None)
+
+        assert clean_df.iloc[4]["customer_email"] == "user@test.com"
 
     def test_numeric_parsing(self, engine):
         """Validates robust numeric parsing."""
@@ -169,6 +196,8 @@ class TestTransformationEngine:
         assert engine.parse_numeric(100) == 100.0
         assert engine.parse_numeric(None) is None
         assert engine.parse_numeric("N/A") is None
+        assert engine.parse_numeric(float("nan")) is None
+        assert engine.parse_numeric(np.nan) is None
         assert engine.parse_numeric("  ") is None
         assert engine.parse_numeric("$ -") is None
 
@@ -179,6 +208,8 @@ class TestTransformationEngine:
         assert ts.year == 2026
         assert ts.tzinfo is not None or getattr(ts, "tz", None) is not None
         assert engine.parse_timestamp("N/A") is None
+        assert engine.parse_timestamp(float("nan")) is None
+        assert engine.parse_timestamp(np.nan) is None
         assert engine.parse_timestamp(None) is None
 
     def test_empty_dataframe(self, engine):

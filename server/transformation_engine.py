@@ -6,8 +6,10 @@ and performs deterministic deduplication on primary key order_id.
 
 from datetime import datetime, timezone
 import logging
+import math
 import re
 from typing import Any, Dict, Optional, Tuple
+import numpy as np
 import pandas as pd
 
 logger = logging.getLogger("sales_order_etl.transformer")
@@ -29,9 +31,13 @@ NULL_VALUES = {
     "?",
     "??",
     "#n/a",
+    "#na",
     "#value!",
     "#ref!",
     "null\n",
+    "none\n",
+    "nan\n",
+    "n/a\n",
 }
 
 
@@ -39,39 +45,53 @@ class TransformationEngine:
     """Engine responsible for data cleaning, sanitization, and deduplication."""
 
     @staticmethod
+    def is_null_value(val: Any) -> bool:
+        """Determines whether a value is null, NaN, pd.NA, or a null-like placeholder."""
+        if val is None:
+            return True
+        try:
+            if pd.isna(val):
+                return True
+        except Exception:
+            pass
+        if isinstance(val, float) and (math.isnan(val) or val != val or str(val).lower() == "nan"):
+            return True
+        if isinstance(val, str):
+            val_clean = val.strip().lower()
+            return val_clean in NULL_VALUES or not val_clean
+        return False
+
+    @staticmethod
     def sanitize_nulls(val: Any) -> Any:
-        """Converts null-like string representations into None, and trims whitespace from strings."""
-        if val is None or pd.isna(val):
+        """Converts null-like string representations and NaNs into Python None, and trims whitespace from strings."""
+        if TransformationEngine.is_null_value(val):
             return None
         if isinstance(val, str):
-            val_clean = val.strip()
-            if val_clean.lower() in NULL_VALUES:
-                return None
-            return val_clean
+            return val.strip()
         return val
 
     @staticmethod
     def clean_string(val: Any) -> Optional[str]:
-        """Trims whitespace and converts null-like values into None.
+        """Trims whitespace and converts null-like values or NaNs into strictly Python None (NoneType).
 
         Returns stripped string or None.
         """
-        if val is None or pd.isna(val):
+        if TransformationEngine.is_null_value(val):
             return None
         val_str = str(val).strip()
-        if val_str.lower() in NULL_VALUES:
+        if not val_str or val_str.lower() in NULL_VALUES:
             return None
         return val_str
 
     @staticmethod
     def parse_numeric(val: Any) -> Optional[float]:
         """Parses monetary amount, stripping currency symbols and formatting."""
-        if val is None or pd.isna(val):
+        if TransformationEngine.is_null_value(val):
             return None
         if isinstance(val, (int, float)):
             return float(val)
         val_str = str(val).strip()
-        if val_str.lower() in NULL_VALUES:
+        if not val_str or val_str.lower() in NULL_VALUES:
             return None
         # Remove currency symbols ($, EUR, etc.) and commas
         cleaned = re.sub(r"[^\d.-]", "", val_str)
@@ -83,9 +103,11 @@ class TransformationEngine:
     @staticmethod
     def parse_timestamp(val: Any) -> Optional[pd.Timestamp]:
         """Parses a timestamp string or object into a timezone-aware UTC pd.Timestamp."""
-        if val is None or pd.isna(val):
+        if TransformationEngine.is_null_value(val):
             return None
         if isinstance(val, pd.Timestamp):
+            if pd.isna(val):
+                return None
             if val.tz is None:
                 return val.tz_localize("UTC")
             return val.tz_convert("UTC")
@@ -94,7 +116,7 @@ class TransformationEngine:
                 return pd.Timestamp(val, tz="UTC")
             return pd.Timestamp(val).tz_convert("UTC")
         val_str = str(val).strip()
-        if val_str.lower() in NULL_VALUES:
+        if not val_str or val_str.lower() in NULL_VALUES:
             return None
         try:
             ts = pd.to_datetime(val_str, utc=True)
@@ -243,8 +265,17 @@ class TransformationEngine:
         # Reorder to standard schema
         df = df[target_columns].copy()
 
-        # Final pass on all string columns to guarantee no null-like strings or trailing whitespace remain
-        for col in ["order_id", "customer_id", "customer_name", "customer_email", "product_category"]:
+        # Final pass on all string columns to guarantee strictly Python None (NoneType) for any null/NaN/placeholder
+        string_columns = [
+            "order_id",
+            "customer_id",
+            "customer_name",
+            "customer_email",
+            "product_category",
+            "currency",
+            "order_status",
+        ]
+        for col in string_columns:
             df[col] = df[col].apply(self.clean_string)
 
         records_loaded = len(df)
