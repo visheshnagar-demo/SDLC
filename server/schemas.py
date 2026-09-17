@@ -1,113 +1,153 @@
-from typing import Any, Optional
-from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
+from typing import Optional, List, Any, Dict
+from pydantic import BaseModel, ConfigDict, Field
 
 
-class CartItem(BaseModel):
+# Base Schema Config
+class ORMBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Auth Schemas
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+    role: Optional[str] = None
+    user_id: Optional[str] = None
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+# Chip Definition Schemas
+class ChipDefinitionCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    category: str = Field(..., min_length=1, max_length=50)
+    face_value: float = Field(..., ge=0)
+
+
+class ChipDefinitionUpdateStatus(BaseModel):
+    status: str = Field(..., pattern="^(ACTIVE|RETIRED|SUSPENDED)$")
+
+
+class InventoryBatchResponse(ORMBase):
+    id: str
+    chip_id: str
+    batch_number: str
+    total_quantity: int
+    available_quantity: int
+    allocated_quantity: int
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class ChipDefinitionResponse(ORMBase):
+    id: str
     name: str
-    quantity: int = 1
-    unit_price: float
-
-
-class CheckoutSessionRequest(BaseModel):
-    amount: float = Field(gt=0, description="Amount in base currency")
-    currency: str = Field(default="USD", description="Settlement/target currency")
-    customer_email: str
-    items: Optional[list[CartItem]] = Field(default_factory=list)
-
-
-class CheckoutSessionResponse(BaseModel):
-    session_id: str
-    payment_intent_id: str
-    client_secret: str
-    base_amount: float
-    base_currency: str
-    target_amount: float
-    target_currency: str
-    exchange_rate: float
-
-
-class DigitalWalletPaymentRequest(BaseModel):
-    wallet_type: str = Field(description="apple_pay or google_pay")
-    payment_token: str
-    currency: str = "USD"
-    amount: float = Field(gt=0)
-    customer_email: Optional[str] = "customer@example.com"
-
-
-class DigitalWalletPaymentResponse(BaseModel):
-    transaction_id: str
-    payment_intent_id: str
-    wallet_type: str
-    amount: float
-    currency: str
+    category: str
+    face_value: float
     status: str
+    created_at: datetime
+    updated_at: datetime
+    total_quantity: int = 0
+    available_quantity: int = 0
+    allocated_quantity: int = 0
+    batches: List[InventoryBatchResponse] = []
 
 
-class ExchangeRatesResponse(BaseModel):
-    base_currency: str
-    rates: dict[str, float]
-    timestamp: str
+class InventoryBatchCreate(BaseModel):
+    batch_number: str = Field(..., min_length=1, max_length=50)
+    total_quantity: int = Field(..., gt=0)
 
 
-class RefundRequest(BaseModel):
-    transaction_id: str
-    amount: float = Field(gt=0)
+# Account Schemas
+class AccountCreate(BaseModel):
+    account_number: str = Field(..., min_length=1, max_length=50)
+    owner_name: str = Field(..., min_length=1, max_length=150)
+    owner_email: str
+    role: str = "USER"
+    password: Optional[str] = "testpassword"
+
+
+class AccountBalanceResponse(ORMBase):
+    chip_id: str
+    chip_name: Optional[str] = None
+    balance: int
+    updated_at: datetime
+
+
+class AccountResponse(ORMBase):
+    id: str
+    account_number: str
+    owner_name: str
+    owner_email: str
+    role: str
+    status: str
+    created_at: datetime
+    balances: List[AccountBalanceResponse] = []
+
+
+# Transfer & Allocation Schemas
+class AllocationRequest(BaseModel):
+    account_id: str
+    chip_id: str
+    amount: int = Field(..., gt=0)
+    reason: str = Field(..., min_length=1, max_length=255)
+
+
+class TransferRequest(BaseModel):
+    source_account_id: str
+    destination_account_id: str
+    chip_id: str
+    amount: int = Field(..., gt=0)
+    reason: str = Field(..., min_length=1, max_length=255)
+
+
+class RedemptionRequest(BaseModel):
+    account_id: str
+    chip_id: str
+    amount: int = Field(..., gt=0)
+    reason: str = Field(..., min_length=1, max_length=255)
+
+
+class TransactionResponse(ORMBase):
+    id: str
+    transaction_type: str
+    source_account_id: Optional[str] = None
+    destination_account_id: Optional[str] = None
+    chip_id: str
+    amount: int
+    status: str
     reason: str
-    memo: Optional[str] = None
+    created_at: datetime
+    source_balance_after: Optional[int] = None
+    destination_balance_after: Optional[int] = None
 
 
-class RefundSummary(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+# Audit Log Schemas
+class AuditLogResponse(ORMBase):
     id: str
-    transaction_id: str
-    refund_amount: float
-    currency: str
-    reason: str
-    memo: Optional[str] = None
-    status: str
-    created_at: Optional[datetime] = None
+    actor_id: str
+    action_type: str
+    entity_name: str
+    entity_id: str
+    before_state: Optional[Dict[str, Any]] = None
+    after_state: Optional[Dict[str, Any]] = None
+    ip_address: Optional[str] = None
+    created_at: datetime
 
 
-class TransactionSummary(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    currency: str
-    status: str
-    created_at: Optional[datetime] = None
-
-
-class TransactionDetail(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    base_currency: str
-    target_currency: str
-    converted_amount: float
-    exchange_rate: float
-    status: str
-    refunded_amount: float
-    remaining_refundable_balance: float
-    refunds: list[RefundSummary] = Field(default_factory=list)
-    created_at: Optional[datetime] = None
-
-
-class AuditLogEntry(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    transaction_id: Optional[str] = None
-    event_type: str
-    ip_address: str
-    masked_payload: dict[str, Any]
-    created_at: Optional[datetime] = None
+# Analytics Schema
+class DashboardAnalyticsResponse(BaseModel):
+    total_circulation: int
+    active_accounts: int
+    low_stock_count: int
+    volume_24h: int
+    recent_transactions: List[TransactionResponse] = []

@@ -1,66 +1,70 @@
-import json
-import uuid
-import datetime
-from typing import Any
+from typing import List, Optional, Dict, Any
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-from server.models import AuditLog
+from sqlalchemy import func
+from server.models import AuditLog, Account, AccountBalance, InventoryBatch, Transaction
 
 
-SENSITIVE_KEYS = {
-    "card_number",
-    "pan",
-    "cvv",
-    "cvc",
-    "password",
-    "client_secret",
-    "payment_token",
-}
-
-
-def mask_value(key: str, val: Any) -> Any:
-    if not isinstance(val, str):
-        return val
-    lower_k = key.lower()
-    if any(s in lower_k for s in SENSITIVE_KEYS):
-        if len(val) <= 4:
-            return "***"
-        return f"****-****-****-{val[-4:]}"
-    return val
-
-
-def mask_payload(data: Any) -> Any:
-    if isinstance(data, dict):
-        masked = {}
-        for k, v in data.items():
-            if isinstance(v, (dict, list)):
-                masked[k] = mask_payload(v)
-            else:
-                masked[k] = mask_value(k, v)
-        return masked
-    elif isinstance(data, list):
-        return [mask_payload(item) for item in data]
-    return data
-
-
-def create_audit_log(
+def query_audit_logs(
     db: Session,
-    event_type: str,
-    transaction_id: str | None = None,
-    ip_address: str = "127.0.0.1",
-    payload: dict[str, Any] | None = None,
-) -> AuditLog:
-    masked = mask_payload(payload or {})
-    masked_json = json.dumps(masked)
+    user_id: Optional[str] = None,
+    action_type: Optional[str] = None,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    skip: int = 0,
+    limit: int = 20,
+) -> List[AuditLog]:
+    query = db.query(AuditLog)
 
-    log_entry = AuditLog(
-        id=f"log_{uuid.uuid4().hex[:12]}",
-        transaction_id=transaction_id,
-        event_type=event_type,
-        ip_address=ip_address,
-        masked_payload=masked_json,
-        created_at=datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None),
+    if user_id:
+        query = query.filter(AuditLog.actor_id == user_id)
+    if action_type:
+        query = query.filter(AuditLog.action_type == action_type)
+    if start_date:
+        query = query.filter(AuditLog.created_at >= start_date)
+    if end_date:
+        query = query.filter(AuditLog.created_at <= end_date)
+
+    return query.order_by(AuditLog.created_at.desc()).offset(skip).limit(limit).all()
+
+
+def get_dashboard_analytics(db: Session) -> Dict[str, Any]:
+    # Total circulation across all account balances
+    total_circulation = (
+        db.query(func.coalesce(func.sum(AccountBalance.balance), 0)).scalar() or 0
     )
-    db.add(log_entry)
-    db.commit()
-    db.refresh(log_entry)
-    return log_entry
+
+    # Active accounts count
+    active_accounts = db.query(Account).filter(Account.status == "ACTIVE").count()
+
+    # Low stock batch alerts (available_quantity < 1000)
+    low_stock_count = (
+        db.query(InventoryBatch)
+        .filter(
+            InventoryBatch.available_quantity < 1000,
+            InventoryBatch.status == "AVAILABLE",
+        )
+        .count()
+    )
+
+    # 24h Transaction volume
+    time_24h_ago = datetime.utcnow() - timedelta(hours=24)
+    volume_24h = (
+        db.query(func.coalesce(func.sum(Transaction.amount), 0))
+        .filter(Transaction.created_at >= time_24h_ago)
+        .scalar()
+        or 0
+    )
+
+    # Recent transactions
+    recent_transactions = (
+        db.query(Transaction).order_by(Transaction.created_at.desc()).limit(10).all()
+    )
+
+    return {
+        "total_circulation": int(total_circulation),
+        "active_accounts": int(active_accounts),
+        "low_stock_count": int(low_stock_count),
+        "volume_24h": int(volume_24h),
+        "recent_transactions": recent_transactions,
+    }
