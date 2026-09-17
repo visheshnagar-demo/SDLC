@@ -1,19 +1,13 @@
 # Project Features
 
-## SCRUM-241 - Payment Gateway Service & Full-Stack UI with Stripe, Digital Wallets, Multi-Currency, Refund Portal & Analytics Dashboard
+## SCRUM-304 - Tenant Management System
 
 ### Feature Summary
-Enables customers to purchase products using cards or digital wallets in their chosen currency, allows operations admins to manage refunds, and gives finance analysts transaction insights and webhook logs via a React/Vite/Tailwind UI connected to FastAPI backend APIs.
+A comprehensive Tenant Management System that allows system administrators to onboard new client organizations (tenants), manage subscription tiers and user seats/storage quotas, enforce multi-tenant data isolation, customize tenant branding/domains, and control tenant lifecycle statuses (Active, Suspended, Archived).
 
 ### Key Features
-- Credit Card Processing via Stripe integration
-- Digital Wallet Support (Apple Pay, Google Pay)
-- Real-Time Multi-Currency Conversion
-- Automated Refund Processing Management
-- Webhook Event Handling for transaction lifecycle events
-- PCI-Compliant Audit Logging
-- REST APIs for payment initiation, checkout sessions, refund processing, and transaction status reporting
-- Customer Checkout Page with credit card form, express wallets, currency selector, and status feedback
-- Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
-- Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
-- Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+- Tenant Lifecycle & Onboarding Management (unique slugs, contact info, subscription tier)
+- Tenant Provisioning & Status Control (Active, Suspended, Archived with immediate session revocation)
+- Subscription Tiers & Quota Management (user seats, storage GB, API rate limits)
+- Multi-Tenant Data Isolation & Security (strict row-level tenant_id filtering across APIs/DB)
+- Tenant Configuration & Branding Customization (custom domains, logos, primary theme colors, SAML settings)

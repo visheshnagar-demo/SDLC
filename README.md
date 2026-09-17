@@ -1,4 +1,60 @@
-# Project
+# Tenant Management System (SCRUM-304)
+
+Comprehensive multi-tenant management backend built with FastAPI, SQLAlchemy 2.x, and Pydantic.
+
+## Features
+- **Tenant Lifecycle & Onboarding**: Register new tenants with unique slugs, contact info, and subscription tiers (Free, Pro, Enterprise).
+- **Tenant Provisioning & Status Control**: Transition statuses (Active, Suspended, Archived) with immediate session revocation.
+- **Subscription Tiers & Quota Management**: Enforce user seat quotas, storage limits, and API rate limits per tier.
+- **Multi-Tenant Data Isolation**: Row-level tenant_id filtering and header/token verification.
+- **Tenant Configuration & Branding**: Custom domain CNAME mapping, logo URL, primary theme color, and SAML SSO configuration.
+
+### Prerequisites
+- Python 3.11+
+- Virtual environment (`venv`)
+
+### Installation & Run
+
+1. Navigate to the server directory:
+   ```bash
+   cd server
+   ```
+
+2. Create and activate virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Set environment variables (optional):
+   ```bash
+   cp .env.example .env
+   ```
+
+5. Run the development server:
+   ```bash
+   uvicorn main:app --reload --port 8000
+   ```
+
+### Running Tests
+
+Execute pytest from the `server` directory:
+```bash
+pytest
+```
+
+## Full-Stack Local Development
+
+- **Backend API**: Runs on `http://localhost:8000`
+- **Frontend Dev Server**: Runs on `http://localhost:5173`
+- **Test Credentials**:
+  - Regular User: `test@example.com` / `testpassword`
+  - Admin User: `admin@example.com` / `adminpassword`
 
 ## Server
 
