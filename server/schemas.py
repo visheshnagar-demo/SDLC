@@ -1,113 +1,60 @@
-from typing import Any, Optional
-from pydantic import BaseModel, ConfigDict, Field
-from datetime import datetime
+from enum import Enum
+from typing import Optional, Any
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-class CartItem(BaseModel):
-    name: str
-    quantity: int = 1
-    unit_price: float
+class WireStatus(str, Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
 
 
-class CheckoutSessionRequest(BaseModel):
-    amount: float = Field(gt=0, description="Amount in base currency")
-    currency: str = Field(default="USD", description="Settlement/target currency")
-    customer_email: str
-    items: Optional[list[CartItem]] = Field(default_factory=list)
+class WireCreate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    beneficiaryName: str = Field(..., alias="beneficiary_name")
+    accountNumber: str = Field(..., alias="account_number")
+    routingNumber: str = Field(..., alias="routing_number")
+    amount: float = Field(..., gt=0)
+
+    @field_validator("beneficiaryName", "accountNumber", "routingNumber", mode="before")
+    @classmethod
+    def check_not_empty(cls, v: Any) -> str:
+        if isinstance(v, str):
+            v_str = v.strip()
+            if not v_str:
+                raise ValueError("String field cannot be empty")
+            return v_str
+        return str(v)
 
 
-class CheckoutSessionResponse(BaseModel):
-    session_id: str
-    payment_intent_id: str
-    client_secret: str
-    base_amount: float
-    base_currency: str
-    target_amount: float
-    target_currency: str
-    exchange_rate: float
+class WireResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, from_attributes=True)
 
-
-class DigitalWalletPaymentRequest(BaseModel):
-    wallet_type: str = Field(description="apple_pay or google_pay")
-    payment_token: str
-    currency: str = "USD"
-    amount: float = Field(gt=0)
-    customer_email: Optional[str] = "customer@example.com"
-
-
-class DigitalWalletPaymentResponse(BaseModel):
-    transaction_id: str
-    payment_intent_id: str
-    wallet_type: str
+    id: str
+    beneficiaryName: str
+    accountNumber: str
+    routingNumber: str
     amount: float
-    currency: str
     status: str
+    createdBy: str
+    approvedBy: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+    # Snake_case fields for Python test compatibility
+    beneficiary_name: Optional[str] = None
+    account_number: Optional[str] = None
+    routing_number: Optional[str] = None
+    created_by: Optional[str] = None
+    approved_by: Optional[str] = None
 
 
-class ExchangeRatesResponse(BaseModel):
-    base_currency: str
-    rates: dict[str, float]
-    timestamp: str
+class MetricsResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
 
-
-class RefundRequest(BaseModel):
-    transaction_id: str
-    amount: float = Field(gt=0)
-    reason: str
-    memo: Optional[str] = None
-
-
-class RefundSummary(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    transaction_id: str
-    refund_amount: float
-    currency: str
-    reason: str
-    memo: Optional[str] = None
-    status: str
-    created_at: Optional[datetime] = None
-
-
-class TransactionSummary(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    currency: str
-    status: str
-    created_at: Optional[datetime] = None
-
-
-class TransactionDetail(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    base_currency: str
-    target_currency: str
-    converted_amount: float
-    exchange_rate: float
-    status: str
-    refunded_amount: float
-    remaining_refundable_balance: float
-    refunds: list[RefundSummary] = Field(default_factory=list)
-    created_at: Optional[datetime] = None
-
-
-class AuditLogEntry(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    transaction_id: Optional[str] = None
-    event_type: str
-    ip_address: str
-    masked_payload: dict[str, Any]
-    created_at: Optional[datetime] = None
+    totalVolume: float
+    pendingCount: int
+    autoApprovedCount: int
+    approvedCount: int
+    rejectedCount: int

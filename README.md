@@ -1,4 +1,68 @@
-# Project
+# SCRUM-299: Commercial Wire Maker-Checker System
+
+A dual-control wire transfer application for commercial banking operations, enforcing segregation of duties and dual authorization for wire transfers over $10,000 USD.
+
+## Features
+
+- **Wire Transfer Initiation**: Form accepting Beneficiary Name, Account Number, Routing Number, and Amount ($ USD).
+- **Automated Dual Control Thresholding**:
+  - Amount > $10,000 USD → Status set to `PENDING` (requires Checker authorization).
+  - Amount <= $10,000 USD → Status automatically set to `APPROVED`.
+- **Pending Approval Queue**: Real-time queue for Checkers to review high-value transfers.
+- **Segregation of Duties (Dual Control)**: Backend enforces same-user approval prevention (HTTP 403 Forbidden if Maker attempts self-approval).
+- **Wire Rejection Workflow**: Allows Checkers to reject pending wires.
+- **User Persona Switcher**: Seamlessly toggle between `User A` (Maker) and `User B` (Checker).
+
+## Tech Stack
+
+- **Backend**: Python 3.11, FastAPI, SQLAlchemy 2.x, Pydantic v2, SQLite
+- **Frontend**: React 18, Vite, Tailwind CSS, Axios, Lucide React
+
+### 1. Requirements
+
+- Python 3.11+
+- Virtual environment (`venv`)
+
+### 2. Installation & Running
+
+```bash
+# Navigate to server directory
+cd server
+
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run backend development server
+uvicorn server.main:app --reload --port 8000
+```
+
+The API will be available at `http://localhost:8000/api/wires`.
+
+### 3. Running Backend Tests
+
+```bash
+cd server
+pytest
+```
+
+## Full-Stack Local Development
+
+1. Start Backend Server on Port 8000:
+   ```bash
+   cd server
+   uvicorn server.main:app --reload --port 8000
+   ```
+2. Start Frontend Dev Server on Port 5173:
+   ```bash
+   cd client
+   npm install
+   npm run dev
+   ```
+3. Open `http://localhost:5173` in your browser.
 
 ## Server
 
