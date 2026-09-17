@@ -1,37 +1,24 @@
 import React from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-import Navbar from "./components/Navbar";
-import CheckoutPage from "./pages/CheckoutPage";
-import RefundPortalPage from "./pages/RefundPortalPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Navbar from "./components/layout/Navbar";
+import DashboardPage from "./pages/DashboardPage";
+import InventoryPage from "./pages/InventoryPage";
+import TransfersPage from "./pages/TransfersPage";
+import AuditPage from "./pages/AuditPage";
 
 export function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+      <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-cyan-500 selection:text-slate-950">
         <Navbar />
-        <main className="flex-1">
+        <main className="max-w-7xl mx-auto px-6 py-8">
           <Routes>
-            <Route path="/" element={<Navigate to="/checkout" replace />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/refunds" element={<RefundPortalPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="*" element={<Navigate to="/checkout" replace />} />
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/inventory" element={<InventoryPage />} />
+            <Route path="/transfers" element={<TransfersPage />} />
+            <Route path="/audit" element={<AuditPage />} />
           </Routes>
         </main>
-        <footer className="bg-slate-900 text-slate-400 border-t border-slate-800 py-6 text-center text-xs">
-          <div className="max-w-7xl mx-auto px-4">
-            <p>
-              © {new Date().getFullYear()} PayGateway Service. PCI-DSS Level 1
-              Merchant Security.
-            </p>
-          </div>
-        </footer>
       </div>
     </Router>
   );

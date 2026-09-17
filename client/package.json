@@ -1,5 +1,5 @@
 {
-  "name": "payment-gateway-client",
+  "name": "chips-management-client",
   "private": true,
   "version": "1.0.0",
   "type": "module",
