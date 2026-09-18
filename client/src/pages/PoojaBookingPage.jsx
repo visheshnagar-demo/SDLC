@@ -20,7 +20,7 @@ export default function PoojaBookingPage() {
       default_price: 501,
       duration_minutes: 60,
       description:
-        "Sacred fire ritual invoking Lord Ganesha for remover of all obstacles.",
+        "Sacred fire ritual invoking Lord Ganesha for removal of all obstacles.",
     },
     {
       id: "P02",
