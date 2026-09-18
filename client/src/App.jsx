@@ -6,35 +6,32 @@ import {
   Navigate,
 } from "react-router-dom";
 import Navbar from "./components/Navbar";
-import CheckoutPage from "./pages/CheckoutPage";
-import RefundPortalPage from "./pages/RefundPortalPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
+import DevoteesPage from "./pages/DevoteesPage";
+import PoojaBookingPage from "./pages/PoojaBookingPage";
+import DonationsPage from "./pages/DonationsPage";
+import InventoryPage from "./pages/InventoryPage";
+import FinancePage from "./pages/FinancePage";
 
-export function App() {
+export default function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+      <div className="min-h-screen bg-amber-50/40 text-orange-950 font-sans flex flex-col">
         <Navbar />
-        <main className="flex-1">
+        <main className="flex-1 pb-12">
           <Routes>
-            <Route path="/" element={<Navigate to="/checkout" replace />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/refunds" element={<RefundPortalPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="*" element={<Navigate to="/checkout" replace />} />
+            <Route path="/" element={<Navigate to="/devotees" replace />} />
+            <Route path="/devotees" element={<DevoteesPage />} />
+            <Route path="/poojas" element={<PoojaBookingPage />} />
+            <Route path="/donations" element={<DonationsPage />} />
+            <Route path="/inventory" element={<InventoryPage />} />
+            <Route path="/finance" element={<FinancePage />} />
+            <Route path="*" element={<Navigate to="/devotees" replace />} />
           </Routes>
         </main>
-        <footer className="bg-slate-900 text-slate-400 border-t border-slate-800 py-6 text-center text-xs">
-          <div className="max-w-7xl mx-auto px-4">
-            <p>
-              © {new Date().getFullYear()} PayGateway Service. PCI-DSS Level 1
-              Merchant Security.
-            </p>
-          </div>
+        <footer className="bg-orange-950 text-amber-200/80 text-center py-4 text-xs border-t border-orange-800">
+          Ganesh Temple Management System • Siddhivinayak Temple Trust © 2026
         </footer>
       </div>
     </Router>
   );
 }
-
-export default App;

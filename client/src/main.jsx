@@ -13,39 +13,28 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
-  componentDidCatch(_error, _errorInfo) {
-    // Error logged for boundary tracking
+  componentDidCatch(error, errorInfo) {
+    console.error("Uncaught error in application:", error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div
-          style={{
-            padding: "2rem",
-            textAlign: "center",
-            fontFamily: "sans-serif",
-          }}
-        >
-          <h2>Something went wrong.</h2>
-          <p style={{ color: "#666" }}>
-            {this.state.error?.message ||
-              "An unexpected rendering error occurred."}
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              marginTop: "1rem",
-              padding: "0.5rem 1rem",
-              backgroundColor: "#4F46E5",
-              color: "#fff",
-              border: "none",
-              borderRadius: "0.375rem",
-              cursor: "pointer",
-            }}
-          >
-            Reload Page
-          </button>
+        <div className="p-8 bg-amber-50 min-h-screen text-orange-950 font-serif flex items-center justify-center">
+          <div className="max-w-md bg-white p-6 rounded-xl shadow-lg border border-orange-200 text-center space-y-4">
+            <h2 className="text-xl font-bold text-orange-900">
+              Something went wrong
+            </h2>
+            <p className="text-xs text-orange-700">
+              An unexpected error occurred in the Temple Management application.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-orange-800 text-white font-bold rounded-lg text-xs"
+            >
+              Reload Page
+            </button>
+          </div>
         </div>
       );
     }
