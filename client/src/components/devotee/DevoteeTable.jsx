@@ -32,7 +32,8 @@ export default function DevoteeTable({
             Devotee Directory
           </h2>
           <span className="bg-orange-100 text-orange-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-            {filteredDevotees.length} Devotees
+            {filteredDevotees.length}{" "}
+            {filteredDevotees.length === 1 ? "Devotee" : "Devotees"}
           </span>
         </div>
 
@@ -138,7 +139,10 @@ export default function DevoteeTable({
                   <td className="p-3.5">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                       <Users className="w-3 h-3 mr-1" />
-                      {devotee.family_members?.length || 0} Members
+                      {devotee.family_members?.length || 0}{" "}
+                      {(devotee.family_members?.length || 0) === 1
+                        ? "Member"
+                        : "Members"}
                     </span>
                   </td>
                   <td className="p-3.5 text-right">
