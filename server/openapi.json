@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Flowers Management System API",
-    "description": "RESTful API for managing flower inventory, orders, suppliers, categories, and analytics.",
+    "description": "API for managing flower catalog, inventory, suppliers, orders, and sales analytics.",
     "version": "1.0.0"
   },
   "paths": {
@@ -12,8 +12,48 @@
           "Flowers"
         ],
         "summary": "List Flowers",
+        "description": "List all flower records with optional filtering, search, and pagination.",
         "operationId": "list_flowers_api_v1_flowers_get",
         "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
           {
             "name": "category_id",
             "in": "query",
@@ -47,56 +87,13 @@
             }
           },
           {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Search"
-            }
-          },
-          {
             "name": "low_stock_only",
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "null"
-                }
-              ],
+              "type": "boolean",
               "default": false,
               "title": "Low Stock Only"
-            }
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 100,
-              "title": "Limit"
             }
           }
         ],
@@ -132,6 +129,7 @@
           "Flowers"
         ],
         "summary": "Create Flower",
+        "description": "Create a new flower catalog record.",
         "operationId": "create_flower_api_v1_flowers_post",
         "requestBody": {
           "required": true,
@@ -173,6 +171,7 @@
           "Flowers"
         ],
         "summary": "Get Flower",
+        "description": "Retrieve detailed information for a specific flower.",
         "operationId": "get_flower_api_v1_flowers__id__get",
         "parameters": [
           {
@@ -213,6 +212,7 @@
           "Flowers"
         ],
         "summary": "Update Flower",
+        "description": "Update flower attributes including pricing, stock level, or freshness date.",
         "operationId": "update_flower_api_v1_flowers__id__put",
         "parameters": [
           {
@@ -263,466 +263,8 @@
           "Flowers"
         ],
         "summary": "Delete Flower",
+        "description": "Delete a flower catalog entry.",
         "operationId": "delete_flower_api_v1_flowers__id__delete",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Id"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/orders": {
-      "get": {
-        "tags": [
-          "Orders"
-        ],
-        "summary": "List Orders",
-        "operationId": "list_orders_api_v1_orders_get",
-        "parameters": [
-          {
-            "name": "status_filter",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Status Filter"
-            }
-          },
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Search"
-            }
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 100,
-              "title": "Limit"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/OrderResponse"
-                  },
-                  "title": "Response List Orders Api V1 Orders Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Orders"
-        ],
-        "summary": "Create Order",
-        "operationId": "create_order_api_v1_orders_post",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/OrderCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrderResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/orders/{id}": {
-      "get": {
-        "tags": [
-          "Orders"
-        ],
-        "summary": "Get Order",
-        "operationId": "get_order_api_v1_orders__id__get",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrderResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/orders/{id}/status": {
-      "patch": {
-        "tags": [
-          "Orders"
-        ],
-        "summary": "Update Order Status",
-        "operationId": "update_order_status_api_v1_orders__id__status_patch",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/OrderStatusUpdate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrderResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/suppliers": {
-      "get": {
-        "tags": [
-          "Suppliers"
-        ],
-        "summary": "List Suppliers",
-        "operationId": "list_suppliers_api_v1_suppliers_get",
-        "parameters": [
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Search"
-            }
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 100,
-              "title": "Limit"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SupplierResponse"
-                  },
-                  "title": "Response List Suppliers Api V1 Suppliers Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Suppliers"
-        ],
-        "summary": "Create Supplier",
-        "operationId": "create_supplier_api_v1_suppliers_post",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SupplierCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SupplierResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/suppliers/{id}": {
-      "get": {
-        "tags": [
-          "Suppliers"
-        ],
-        "summary": "Get Supplier",
-        "operationId": "get_supplier_api_v1_suppliers__id__get",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SupplierResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Suppliers"
-        ],
-        "summary": "Update Supplier",
-        "operationId": "update_supplier_api_v1_suppliers__id__put",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SupplierUpdate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SupplierResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Suppliers"
-        ],
-        "summary": "Delete Supplier",
-        "operationId": "delete_supplier_api_v1_suppliers__id__delete",
         "parameters": [
           {
             "name": "id",
@@ -757,6 +299,7 @@
           "Categories"
         ],
         "summary": "List Categories",
+        "description": "List all flower categories.",
         "operationId": "list_categories_api_v1_categories_get",
         "parameters": [
           {
@@ -765,6 +308,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "minimum": 0,
               "default": 0,
               "title": "Skip"
             }
@@ -775,6 +319,8 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
               "default": 100,
               "title": "Limit"
             }
@@ -812,6 +358,7 @@
           "Categories"
         ],
         "summary": "Create Category",
+        "description": "Add a new flower category.",
         "operationId": "create_category_api_v1_categories_post",
         "requestBody": {
           "required": true,
@@ -853,6 +400,7 @@
           "Categories"
         ],
         "summary": "Get Category",
+        "description": "Retrieve details for a specific category.",
         "operationId": "get_category_api_v1_categories__id__get",
         "parameters": [
           {
@@ -893,6 +441,7 @@
           "Categories"
         ],
         "summary": "Update Category",
+        "description": "Update a flower category.",
         "operationId": "update_category_api_v1_categories__id__put",
         "parameters": [
           {
@@ -943,6 +492,7 @@
           "Categories"
         ],
         "summary": "Delete Category",
+        "description": "Remove a category.",
         "operationId": "delete_category_api_v1_categories__id__delete",
         "parameters": [
           {
@@ -972,12 +522,455 @@
         }
       }
     },
+    "/api/v1/suppliers": {
+      "get": {
+        "tags": [
+          "Suppliers"
+        ],
+        "summary": "List Suppliers",
+        "description": "List all flower wholesale suppliers.",
+        "operationId": "list_suppliers_api_v1_suppliers_get",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SupplierResponse"
+                  },
+                  "title": "Response List Suppliers Api V1 Suppliers Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Suppliers"
+        ],
+        "summary": "Create Supplier",
+        "description": "Add a new flower supplier profile.",
+        "operationId": "create_supplier_api_v1_suppliers_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupplierCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/suppliers/{id}": {
+      "get": {
+        "tags": [
+          "Suppliers"
+        ],
+        "summary": "Get Supplier",
+        "description": "Get supplier details.",
+        "operationId": "get_supplier_api_v1_suppliers__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Suppliers"
+        ],
+        "summary": "Update Supplier",
+        "description": "Update supplier contact information.",
+        "operationId": "update_supplier_api_v1_suppliers__id__put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupplierUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Suppliers"
+        ],
+        "summary": "Delete Supplier",
+        "description": "Remove a supplier profile.",
+        "operationId": "delete_supplier_api_v1_suppliers__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orders": {
+      "get": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "List Orders",
+        "description": "List all orders with status filtering and pagination.",
+        "operationId": "list_orders_api_v1_orders_get",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrderResponse"
+                  },
+                  "title": "Response List Orders Api V1 Orders Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Place Order",
+        "description": "Place a new customer/staff order with atomic inventory deduction.",
+        "operationId": "place_order_api_v1_orders_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orders/{id}": {
+      "get": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Get Order",
+        "description": "Retrieve order details including line items and total amounts.",
+        "operationId": "get_order_api_v1_orders__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orders/{id}/status": {
+      "patch": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Update Order Status",
+        "description": "Update order status (Pending, Processing, Completed, Cancelled).",
+        "operationId": "update_order_status_api_v1_orders__id__status_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderStatusUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/analytics/dashboard": {
       "get": {
         "tags": [
-          "Analytics"
+          "Analytics & Dashboard"
         ],
         "summary": "Get Dashboard Analytics",
+        "description": "Retrieve summary KPI metrics, low-stock warnings, and revenue analytics.",
         "operationId": "get_dashboard_analytics_api_v1_analytics_dashboard_get",
         "responses": {
           "200": {
@@ -985,7 +978,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DashboardAnalytics"
+                  "$ref": "#/components/schemas/DashboardAnalyticsResponse"
                 }
               }
             }
@@ -995,8 +988,8 @@
     },
     "/": {
       "get": {
-        "summary": "Read Root",
-        "operationId": "read_root__get",
+        "summary": "Root",
+        "operationId": "root__get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1011,8 +1004,8 @@
     },
     "/health": {
       "get": {
-        "summary": "Health Check",
-        "operationId": "health_check_health_get",
+        "summary": "Health",
+        "operationId": "health_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1032,7 +1025,6 @@
         "properties": {
           "name": {
             "type": "string",
-            "maxLength": 255,
             "minLength": 1,
             "title": "Name"
           },
@@ -1054,11 +1046,39 @@
         ],
         "title": "CategoryCreate"
       },
+      "CategoryPopularity": {
+        "properties": {
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "category_name": {
+            "type": "string",
+            "title": "Category Name"
+          },
+          "flower_count": {
+            "type": "integer",
+            "title": "Flower Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category_name",
+          "flower_count"
+        ],
+        "title": "CategoryPopularity"
+      },
       "CategoryResponse": {
         "properties": {
           "name": {
             "type": "string",
-            "maxLength": 255,
             "minLength": 1,
             "title": "Name"
           },
@@ -1078,22 +1098,22 @@
             "title": "Id"
           },
           "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
           "name",
-          "id"
+          "id",
+          "created_at",
+          "updated_at"
         ],
         "title": "CategoryResponse"
       },
@@ -1102,9 +1122,7 @@
           "name": {
             "anyOf": [
               {
-                "type": "string",
-                "maxLength": 255,
-                "minLength": 1
+                "type": "string"
               },
               {
                 "type": "null"
@@ -1127,59 +1145,68 @@
         "type": "object",
         "title": "CategoryUpdate"
       },
-      "DashboardAnalytics": {
+      "DashboardAnalyticsResponse": {
         "properties": {
-          "total_revenue": {
-            "type": "number",
-            "title": "Total Revenue"
-          },
-          "total_orders": {
+          "total_species": {
             "type": "integer",
-            "title": "Total Orders"
+            "title": "Total Species"
           },
-          "total_flowers_in_stock": {
+          "total_stock": {
             "type": "integer",
-            "title": "Total Flowers In Stock"
+            "title": "Total Stock"
           },
           "low_stock_count": {
             "type": "integer",
             "title": "Low Stock Count"
+          },
+          "daily_revenue": {
+            "type": "number",
+            "title": "Daily Revenue"
           },
           "top_selling_flowers": {
             "items": {
               "$ref": "#/components/schemas/TopSellingFlower"
             },
             "type": "array",
-            "title": "Top Selling Flowers",
-            "default": []
+            "title": "Top Selling Flowers"
+          },
+          "category_breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryPopularity"
+            },
+            "type": "array",
+            "title": "Category Breakdown"
+          },
+          "low_stock_alerts": {
+            "items": {
+              "$ref": "#/components/schemas/FlowerResponse"
+            },
+            "type": "array",
+            "title": "Low Stock Alerts"
           }
         },
         "type": "object",
         "required": [
-          "total_revenue",
-          "total_orders",
-          "total_flowers_in_stock",
-          "low_stock_count"
+          "total_species",
+          "total_stock",
+          "low_stock_count",
+          "daily_revenue",
+          "top_selling_flowers",
+          "category_breakdown",
+          "low_stock_alerts"
         ],
-        "title": "DashboardAnalytics"
+        "title": "DashboardAnalyticsResponse"
       },
       "FlowerCreate": {
         "properties": {
           "name": {
             "type": "string",
-            "maxLength": 255,
             "minLength": 1,
             "title": "Name"
           },
           "species": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "minLength": 1,
             "title": "Species"
           },
           "color": {
@@ -1203,20 +1230,20 @@
             "type": "integer",
             "minimum": 0.0,
             "title": "Stock Quantity",
-            "description": "Stock quantity must be non-negative"
+            "description": "Stock quantity must be non-negative",
+            "default": 0
           },
           "low_stock_threshold": {
             "type": "integer",
             "minimum": 0.0,
             "title": "Low Stock Threshold",
-            "description": "Low stock threshold must be non-negative",
-            "default": 10
+            "description": "Low stock alert threshold",
+            "default": 20
           },
           "freshness_date": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -1235,17 +1262,6 @@
             ],
             "title": "Care Instructions"
           },
-          "category_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Category Id"
-          },
           "supplier_id": {
             "anyOf": [
               {
@@ -1256,13 +1272,24 @@
               }
             ],
             "title": "Supplier Id"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
           }
         },
         "type": "object",
         "required": [
           "name",
-          "price_per_stem",
-          "stock_quantity"
+          "species",
+          "price_per_stem"
         ],
         "title": "FlowerCreate"
       },
@@ -1270,19 +1297,12 @@
         "properties": {
           "name": {
             "type": "string",
-            "maxLength": 255,
             "minLength": 1,
             "title": "Name"
           },
           "species": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "minLength": 1,
             "title": "Species"
           },
           "color": {
@@ -1306,20 +1326,20 @@
             "type": "integer",
             "minimum": 0.0,
             "title": "Stock Quantity",
-            "description": "Stock quantity must be non-negative"
+            "description": "Stock quantity must be non-negative",
+            "default": 0
           },
           "low_stock_threshold": {
             "type": "integer",
             "minimum": 0.0,
             "title": "Low Stock Threshold",
-            "description": "Low stock threshold must be non-negative",
-            "default": 10
+            "description": "Low stock alert threshold",
+            "default": 20
           },
           "freshness_date": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -1338,17 +1358,6 @@
             ],
             "title": "Care Instructions"
           },
-          "category_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Category Id"
-          },
           "supplier_id": {
             "anyOf": [
               {
@@ -1360,43 +1369,30 @@
             ],
             "title": "Supplier Id"
           },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
           "id": {
             "type": "string",
             "title": "Id"
           },
           "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
           },
           "updated_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Updated At"
-          },
-          "category": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/CategoryResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
           },
           "supplier": {
             "anyOf": [
@@ -1407,14 +1403,26 @@
                 "type": "null"
               }
             ]
+          },
+          "category": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CategoryResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
         "required": [
           "name",
+          "species",
           "price_per_stem",
-          "stock_quantity",
-          "id"
+          "id",
+          "created_at",
+          "updated_at"
         ],
         "title": "FlowerResponse"
       },
@@ -1423,9 +1431,7 @@
           "name": {
             "anyOf": [
               {
-                "type": "string",
-                "maxLength": 255,
-                "minLength": 1
+                "type": "string"
               },
               {
                 "type": "null"
@@ -1458,8 +1464,7 @@
           "price_per_stem": {
             "anyOf": [
               {
-                "type": "number",
-                "minimum": 0.0
+                "type": "number"
               },
               {
                 "type": "null"
@@ -1470,8 +1475,7 @@
           "stock_quantity": {
             "anyOf": [
               {
-                "type": "integer",
-                "minimum": 0.0
+                "type": "integer"
               },
               {
                 "type": "null"
@@ -1482,8 +1486,7 @@
           "low_stock_threshold": {
             "anyOf": [
               {
-                "type": "integer",
-                "minimum": 0.0
+                "type": "integer"
               },
               {
                 "type": "null"
@@ -1494,8 +1497,7 @@
           "freshness_date": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -1514,17 +1516,6 @@
             ],
             "title": "Care Instructions"
           },
-          "category_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Category Id"
-          },
           "supplier_id": {
             "anyOf": [
               {
@@ -1535,6 +1526,17 @@
               }
             ],
             "title": "Supplier Id"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
           }
         },
         "type": "object",
@@ -1556,14 +1558,8 @@
       "OrderCreate": {
         "properties": {
           "customer_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "minLength": 1,
             "title": "Customer Name"
           },
           "customer_email": {
@@ -1605,12 +1601,12 @@
             },
             "type": "array",
             "minItems": 1,
-            "title": "Items",
-            "description": "Order must contain at least one item"
+            "title": "Items"
           }
         },
         "type": "object",
         "required": [
+          "customer_name",
           "items"
         ],
         "title": "OrderCreate"
@@ -1623,9 +1619,9 @@
           },
           "quantity": {
             "type": "integer",
-            "minimum": 1.0,
+            "exclusiveMinimum": 0.0,
             "title": "Quantity",
-            "description": "Quantity must be at least 1"
+            "description": "Quantity must be greater than zero"
           },
           "unit_price": {
             "anyOf": [
@@ -1669,19 +1665,20 @@
             "type": "number",
             "title": "Unit Price"
           },
-          "line_total": {
+          "subtotal": {
             "type": "number",
-            "title": "Line Total"
+            "title": "Subtotal"
           },
-          "flower": {
+          "flower_name": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/FlowerResponse"
+                "type": "string"
               },
               {
                 "type": "null"
               }
-            ]
+            ],
+            "title": "Flower Name"
           }
         },
         "type": "object",
@@ -1691,7 +1688,7 @@
           "flower_id",
           "quantity",
           "unit_price",
-          "line_total"
+          "subtotal"
         ],
         "title": "OrderItemResponse"
       },
@@ -1706,14 +1703,7 @@
             "title": "Order Number"
           },
           "customer_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
             "title": "Customer Name"
           },
           "customer_email": {
@@ -1758,35 +1748,21 @@
             "title": "Notes"
           },
           "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
           },
           "updated_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Updated At"
           },
-          "order_items": {
+          "items": {
             "items": {
               "$ref": "#/components/schemas/OrderItemResponse"
             },
             "type": "array",
-            "title": "Order Items",
+            "title": "Items",
             "default": []
           }
         },
@@ -1794,8 +1770,11 @@
         "required": [
           "id",
           "order_number",
+          "customer_name",
           "status",
-          "total_amount"
+          "total_amount",
+          "created_at",
+          "updated_at"
         ],
         "title": "OrderResponse"
       },
@@ -1803,8 +1782,8 @@
         "properties": {
           "status": {
             "type": "string",
-            "minLength": 1,
-            "title": "Status"
+            "title": "Status",
+            "description": "Order status: Pending, Processing, Completed, Cancelled"
           }
         },
         "type": "object",
@@ -1817,9 +1796,9 @@
         "properties": {
           "name": {
             "type": "string",
-            "maxLength": 255,
             "minLength": 1,
-            "title": "Name"
+            "title": "Name",
+            "description": "Supplier company name"
           },
           "contact_person": {
             "anyOf": [
@@ -1876,9 +1855,9 @@
         "properties": {
           "name": {
             "type": "string",
-            "maxLength": 255,
             "minLength": 1,
-            "title": "Name"
+            "title": "Name",
+            "description": "Supplier company name"
           },
           "contact_person": {
             "anyOf": [
@@ -1929,34 +1908,22 @@
             "title": "Id"
           },
           "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
           },
           "updated_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
           "name",
-          "id"
+          "id",
+          "created_at",
+          "updated_at"
         ],
         "title": "SupplierResponse"
       },
@@ -1965,9 +1932,7 @@
           "name": {
             "anyOf": [
               {
-                "type": "string",
-                "maxLength": 255,
-                "minLength": 1
+                "type": "string"
               },
               {
                 "type": "null"
@@ -2029,36 +1994,25 @@
             "type": "string",
             "title": "Flower Id"
           },
-          "name": {
+          "flower_name": {
             "type": "string",
-            "title": "Name"
+            "title": "Flower Name"
           },
-          "species": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Species"
-          },
-          "total_sold": {
+          "total_quantity_sold": {
             "type": "integer",
-            "title": "Total Sold"
+            "title": "Total Quantity Sold"
           },
-          "revenue_generated": {
+          "total_revenue": {
             "type": "number",
-            "title": "Revenue Generated"
+            "title": "Total Revenue"
           }
         },
         "type": "object",
         "required": [
           "flower_id",
-          "name",
-          "total_sold",
-          "revenue_generated"
+          "flower_name",
+          "total_quantity_sold",
+          "total_revenue"
         ],
         "title": "TopSellingFlower"
       },

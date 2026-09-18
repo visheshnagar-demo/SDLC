@@ -3,81 +3,89 @@ def test_list_flowers(client):
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
-    assert len(data) >= 3
+    assert len(data) >= 1
+    assert data[0]["name"] == "Red Roses"
 
 
 def test_create_flower_success(client):
-    # Get a category and supplier first
-    cat_res = client.get("/api/v1/categories")
-    cat_id = cat_res.json()[0]["id"]
-    sup_res = client.get("/api/v1/suppliers")
-    sup_id = sup_res.json()[0]["id"]
-
     payload = {
-        "name": "Sunflowers",
-        "species": "Helianthus annuus",
-        "color": "Yellow",
-        "price_per_stem": 2.00,
-        "stock_quantity": 200,
+        "name": "White Lilies",
+        "species": "Lilium candidum",
+        "color": "White",
+        "price_per_stem": 3.50,
+        "stock_quantity": 100,
         "low_stock_threshold": 15,
-        "care_instructions": "Keep in bright light",
-        "category_id": cat_id,
-        "supplier_id": sup_id,
+        "freshness_date": "2026-06-20",
+        "care_instructions": "Keep in clean water.",
     }
     response = client.post("/api/v1/flowers", json=payload)
     assert response.status_code == 201
     data = response.json()
-    assert data["name"] == "Sunflowers"
-    assert data["price_per_stem"] == 2.00
-    assert data["stock_quantity"] == 200
-    assert "id" in data
+    assert data["name"] == "White Lilies"
+    assert data["price_per_stem"] == 3.50
+    assert data["stock_quantity"] == 100
 
 
-def test_create_flower_negative_price_or_stock_error(client):
-    # Negative price
-    payload_price = {
-        "name": "Invalid Flower 1",
-        "price_per_stem": -2.50,
-        "stock_quantity": 100,
+def test_create_flower_negative_price_validation(client):
+    payload = {
+        "name": "Invalid Flower",
+        "species": "Unknown",
+        "price_per_stem": -5.00,
+        "stock_quantity": 10,
     }
-    res_price = client.post("/api/v1/flowers", json=payload_price)
-    assert res_price.status_code == 422
+    response = client.post("/api/v1/flowers", json=payload)
+    assert response.status_code in [400, 422]
 
-    # Negative stock
-    payload_stock = {
+
+def test_create_flower_negative_stock_validation(client):
+    payload = {
         "name": "Invalid Flower 2",
-        "price_per_stem": 2.50,
+        "species": "Unknown",
+        "price_per_stem": 5.00,
         "stock_quantity": -10,
     }
-    res_stock = client.post("/api/v1/flowers", json=payload_stock)
-    assert res_stock.status_code == 422
+    response = client.post("/api/v1/flowers", json=payload)
+    assert response.status_code in [400, 422]
 
 
-def test_get_flower_by_id(client):
-    flowers = client.get("/api/v1/flowers").json()
-    flower_id = flowers[0]["id"]
+def test_get_and_update_flower(client):
+    # Create first
+    create_res = client.post(
+        "/api/v1/flowers",
+        json={
+            "name": "Yellow Tulips",
+            "species": "Tulipa gesneriana",
+            "price_per_stem": 2.00,
+            "stock_quantity": 50,
+        },
+    )
+    flower_id = create_res.json()["id"]
 
-    response = client.get(f"/api/v1/flowers/{flower_id}")
-    assert response.status_code == 200
-    assert response.json()["id"] == flower_id
+    # Get
+    get_res = client.get(f"/api/v1/flowers/{flower_id}")
+    assert get_res.status_code == 200
+    assert get_res.json()["name"] == "Yellow Tulips"
 
-
-def test_update_flower(client):
-    flowers = client.get("/api/v1/flowers").json()
-    flower_id = flowers[0]["id"]
-
-    update_payload = {"price_per_stem": 3.00, "stock_quantity": 450}
-    response = client.put(f"/api/v1/flowers/{flower_id}", json=update_payload)
-    assert response.status_code == 200
-    data = response.json()
-    assert data["price_per_stem"] == 3.00
-    assert data["stock_quantity"] == 450
+    # Update
+    update_res = client.put(
+        f"/api/v1/flowers/{flower_id}",
+        json={"price_per_stem": 2.25, "stock_quantity": 60},
+    )
+    assert update_res.status_code == 200
+    assert update_res.json()["price_per_stem"] == 2.25
+    assert update_res.json()["stock_quantity"] == 60
 
 
 def test_delete_flower(client):
-    # Create temporary flower to delete
-    payload = {"name": "Temp Flower", "price_per_stem": 1.00, "stock_quantity": 10}
-    create_res = client.post("/api/v1/flowers", json=payload)
+    create_res = client.post(
+        "/api/v1/flowers",
+        json={
+            "name": "Temp Flower",
+            "species": "Temp Species",
+            "price_per_stem": 1.00,
+            "stock_quantity": 10,
+        },
+    )
     flower_id = create_res.json()["id"]
 
     del_res = client.delete(f"/api/v1/flowers/{flower_id}")

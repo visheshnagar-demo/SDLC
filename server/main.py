@@ -4,37 +4,33 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from server.database import init_db, seed_data, SessionLocal
-from server.routers import flowers, orders, suppliers, categories, analytics
+from server.routers import flowers, categories, suppliers, orders, analytics
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Initialize DB tables and seed data
+    # Initialize DB schema
     init_db()
+    # Seed initial data
     db = SessionLocal()
     try:
         seed_data(db)
     finally:
         db.close()
     yield
-    # Shutdown logic if any
-    pass
 
 
 app = FastAPI(
     title="Flowers Management System API",
-    description="RESTful API for managing flower inventory, orders, suppliers, categories, and analytics.",
     version="1.0.0",
+    description="API for managing flower catalog, inventory, suppliers, orders, and sales analytics.",
     lifespan=lifespan,
 )
 
-# Configure CORS
-raw_origins = os.getenv(
+# CORS Configuration
+ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000"
-)
-ALLOWED_ORIGINS = [
-    origin.strip() for origin in raw_origins.split(",") if origin.strip()
-]
+).split(",")
 
 app.add_middleware(
     CORSMiddleware,
@@ -46,21 +42,17 @@ app.add_middleware(
 
 # Include Routers
 app.include_router(flowers.router)
-app.include_router(orders.router)
-app.include_router(suppliers.router)
 app.include_router(categories.router)
+app.include_router(suppliers.router)
+app.include_router(orders.router)
 app.include_router(analytics.router)
 
 
 @app.get("/")
-def read_root():
-    return {
-        "message": "Welcome to Flowers Management System API",
-        "version": "1.0.0",
-        "docs_url": "/docs",
-    }
+def root():
+    return {"message": "Flowers Management System API is running", "docs": "/docs"}
 
 
 @app.get("/health")
-def health_check():
-    return {"status": "ok"}
+def health():
+    return {"status": "healthy"}

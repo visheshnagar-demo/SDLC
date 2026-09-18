@@ -1,13 +1,12 @@
 import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./flowers.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:////tmp/app.db")
 
-# SQLite specific connect_args
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 
-engine = create_engine(DATABASE_URL, connect_args=connect_args, echo=False)
+engine = create_engine(DATABASE_URL, connect_args=connect_args, pool_pre_ping=True)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -25,76 +24,58 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
 
-def seed_data(db: Session):
+def seed_data(db):
     from server.models import Category, Supplier, Flower
+    import uuid
 
-    # Check if data already exists
-    if db.query(Category).first():
-        return
-
-    try:
-        # Seed Categories
-        cat_roses = Category(
-            name="Roses", description="Various species and colors of roses"
+    # Seed initial categories if none exist
+    if not db.query(Category).first():
+        cat1 = Category(
+            id=str(uuid.uuid4()), name="Roses", description="Various rose species"
         )
-        cat_lilies = Category(name="Lilies", description="Fragrant lily varieties")
-        cat_orchids = Category(name="Orchids", description="Exotic orchid species")
-        db.add_all([cat_roses, cat_lilies, cat_orchids])
-        db.flush()
-
-        # Seed Suppliers
-        supplier_1 = Supplier(
-            name="Floral Wholesalers Inc.",
-            contact_person="Alice Smith",
-            email="alice@floralwholesalers.com",
-            phone="555-0192",
-            address="123 Garden Way, Floral City",
+        cat2 = Category(
+            id=str(uuid.uuid4()), name="Lilies", description="Fresh lily varieties"
         )
-        supplier_2 = Supplier(
-            name="Global Botanical Co.",
-            contact_person="Bob Jones",
-            email="bob@globalbotanical.com",
-            phone="555-0144",
-            address="456 Blossom Lane, Greenfield",
+        cat3 = Category(
+            id=str(uuid.uuid4()), name="Tulips", description="Colorful spring tulips"
         )
-        db.add_all([supplier_1, supplier_2])
-        db.flush()
-
-        # Seed Flowers
-        flower_1 = Flower(
-            name="Red Roses",
-            species="Rosa rubiginosa",
-            color="Red",
-            price_per_stem=2.50,
-            stock_quantity=500,
-            low_stock_threshold=20,
-            care_instructions="Trim stems at 45 degrees, keep in cool water.",
-            category_id=cat_roses.id,
-            supplier_id=supplier_1.id,
-        )
-        flower_2 = Flower(
-            name="White Lilies",
-            species="Lilium candidum",
-            color="White",
-            price_per_stem=3.75,
-            stock_quantity=150,
-            low_stock_threshold=15,
-            care_instructions="Remove anthers to avoid pollen stains.",
-            category_id=cat_lilies.id,
-            supplier_id=supplier_1.id,
-        )
-        flower_3 = Flower(
-            name="Purple Orchids",
-            species="Phalaenopsis",
-            color="Purple",
-            price_per_stem=5.00,
-            stock_quantity=10,  # Below threshold of 12 -> Low stock alert
-            low_stock_threshold=12,
-            care_instructions="Provide indirect sunlight and moderate humidity.",
-            category_id=cat_orchids.id,
-            supplier_id=supplier_2.id,
-        )
-        db.add_all([flower_1, flower_2, flower_3])
+        db.add_all([cat1, cat2, cat3])
         db.commit()
-    except Exception:
-        db.rollback()
+
+    # Seed initial supplier if none exist
+    if not db.query(Supplier).first():
+        supplier = Supplier(
+            id=str(uuid.uuid4()),
+            name="Floral Wholesalers Inc.",
+            contact_person="Jane Doe",
+            email="contact@floralwholesalers.com",
+            phone="555-0199",
+            address="123 Blossom Way, Spring City",
+        )
+        db.add(supplier)
+        db.commit()
+
+    # Seed initial flower if none exist
+    if not db.query(Flower).first():
+        cat = db.query(Category).filter(Category.name == "Roses").first()
+        supp = (
+            db.query(Supplier)
+            .filter(Supplier.name == "Floral Wholesalers Inc.")
+            .first()
+        )
+        if cat and supp:
+            flower = Flower(
+                id=str(uuid.uuid4()),
+                name="Red Roses",
+                species="Rosa rubiginosa",
+                color="Red",
+                price_per_stem=2.50,
+                stock_quantity=500,
+                low_stock_threshold=20,
+                freshness_date="2026-06-15",
+                care_instructions="Keep in cool water, trim stems diagonally.",
+                supplier_id=supp.id,
+                category_id=cat.id,
+            )
+            db.add(flower)
+            db.commit()
