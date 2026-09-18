@@ -1,113 +1,194 @@
-from typing import Any, Optional
-from pydantic import BaseModel, ConfigDict, Field
-from datetime import datetime
+from datetime import datetime, date
+from typing import List, Optional
+from pydantic import BaseModel, Field, ConfigDict
 
 
-class CartItem(BaseModel):
-    name: str
-    quantity: int = 1
+# --- CATEGORY SCHEMAS ---
+class CategoryBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    description: Optional[str] = None
+
+
+class CategoryCreate(CategoryBase):
+    pass
+
+
+class CategoryUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = None
+
+
+class CategoryResponse(CategoryBase):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# --- SUPPLIER SCHEMAS ---
+class SupplierBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=150)
+    contact_person: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+
+
+class SupplierCreate(SupplierBase):
+    pass
+
+
+class SupplierUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=150)
+    contact_person: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+
+
+class SupplierResponse(SupplierBase):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# --- FLOWER SCHEMAS ---
+class FlowerBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=150)
+    species: str = Field(..., min_length=1, max_length=150)
+    color: str = Field(..., min_length=1, max_length=50)
+    price_per_stem: float = Field(
+        ..., ge=0.0, description="Price per stem must be non-negative"
+    )
+    stock_quantity: int = Field(
+        ..., ge=0, description="Stock quantity must be non-negative"
+    )
+    low_stock_threshold: int = Field(
+        20, ge=0, description="Low stock threshold must be non-negative"
+    )
+    freshness_date: Optional[date] = None
+    care_instructions: Optional[str] = None
+    category_id: Optional[str] = None
+    supplier_id: Optional[str] = None
+
+
+class FlowerCreate(FlowerBase):
+    pass
+
+
+class FlowerUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1)
+    species: Optional[str] = Field(None, min_length=1)
+    color: Optional[str] = Field(None, min_length=1)
+    price_per_stem: Optional[float] = Field(None, ge=0.0)
+    stock_quantity: Optional[int] = Field(None, ge=0)
+    low_stock_threshold: Optional[int] = Field(None, ge=0)
+    freshness_date: Optional[date] = None
+    care_instructions: Optional[str] = None
+    category_id: Optional[str] = None
+    supplier_id: Optional[str] = None
+
+
+class FlowerResponse(FlowerBase):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+    category: Optional[CategoryResponse] = None
+    supplier: Optional[SupplierResponse] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# --- ORDER ITEM SCHEMAS ---
+class OrderItemCreate(BaseModel):
+    flower_id: str
+    quantity: int = Field(..., gt=0, description="Quantity must be greater than zero")
+
+
+class OrderItemResponse(BaseModel):
+    id: str
+    order_id: str
+    flower_id: str
+    quantity: int
     unit_price: float
+    subtotal: float
+    flower_name: Optional[str] = None
 
-
-class CheckoutSessionRequest(BaseModel):
-    amount: float = Field(gt=0, description="Amount in base currency")
-    currency: str = Field(default="USD", description="Settlement/target currency")
-    customer_email: str
-    items: Optional[list[CartItem]] = Field(default_factory=list)
-
-
-class CheckoutSessionResponse(BaseModel):
-    session_id: str
-    payment_intent_id: str
-    client_secret: str
-    base_amount: float
-    base_currency: str
-    target_amount: float
-    target_currency: str
-    exchange_rate: float
-
-
-class DigitalWalletPaymentRequest(BaseModel):
-    wallet_type: str = Field(description="apple_pay or google_pay")
-    payment_token: str
-    currency: str = "USD"
-    amount: float = Field(gt=0)
-    customer_email: Optional[str] = "customer@example.com"
-
-
-class DigitalWalletPaymentResponse(BaseModel):
-    transaction_id: str
-    payment_intent_id: str
-    wallet_type: str
-    amount: float
-    currency: str
-    status: str
-
-
-class ExchangeRatesResponse(BaseModel):
-    base_currency: str
-    rates: dict[str, float]
-    timestamp: str
-
-
-class RefundRequest(BaseModel):
-    transaction_id: str
-    amount: float = Field(gt=0)
-    reason: str
-    memo: Optional[str] = None
-
-
-class RefundSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+
+# --- ORDER SCHEMAS ---
+class OrderCreate(BaseModel):
+    customer_name: str = Field(..., min_length=1)
+    customer_email: Optional[str] = None
+    customer_phone: Optional[str] = None
+    items: List[OrderItemCreate] = Field(
+        ..., min_items=1, description="Order must contain at least one item"
+    )
+    notes: Optional[str] = None
+
+
+class OrderStatusUpdate(BaseModel):
+    status: str = Field(..., pattern="^(Pending|Processing|Completed|Cancelled)$")
+
+
+class OrderResponse(BaseModel):
     id: str
-    transaction_id: str
-    refund_amount: float
-    currency: str
-    reason: str
-    memo: Optional[str] = None
+    order_number: str
+    customer_name: str
+    customer_email: Optional[str] = None
+    customer_phone: Optional[str] = None
     status: str
-    created_at: Optional[datetime] = None
+    total_amount: float
+    notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    items: List[OrderItemResponse] = []
 
-
-class TransactionSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+
+# --- ALERT SCHEMAS ---
+class StockAlert(BaseModel):
+    flower_id: str
+    flower_name: str
+    species: str
+    current_stock: int
+    low_stock_threshold: int
+    alert_level: str
+    supplier_name: Optional[str] = None
+    supplier_contact: Optional[str] = None
+
+
+# --- DASHBOARD & ANALYTICS SCHEMAS ---
+class TopSellingFlower(BaseModel):
     id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    currency: str
-    status: str
-    created_at: Optional[datetime] = None
+    name: str
+    species: str
+    quantity_sold: int
+    total_revenue: float
 
 
-class TransactionDetail(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    base_currency: str
-    target_currency: str
-    converted_amount: float
-    exchange_rate: float
-    status: str
-    refunded_amount: float
-    remaining_refundable_balance: float
-    refunds: list[RefundSummary] = Field(default_factory=list)
-    created_at: Optional[datetime] = None
+class TopSellingCategory(BaseModel):
+    id: Optional[str] = None
+    name: str
+    quantity_sold: int
+    total_revenue: float
 
 
-class AuditLogEntry(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    transaction_id: Optional[str] = None
-    event_type: str
-    ip_address: str
-    masked_payload: dict[str, Any]
-    created_at: Optional[datetime] = None
+class DashboardAnalytics(BaseModel):
+    total_flowers: int
+    total_species: int
+    total_stock: int
+    low_stock_count: int
+    total_orders: int
+    total_revenue: float
+    daily_revenue: float
+    top_selling_flowers: List[TopSellingFlower] = []
+    top_selling_categories: List[TopSellingCategory] = []
+    low_stock_items: List[FlowerResponse] = []
+    stock_alerts: List[StockAlert] = []
+    recent_orders: List[OrderResponse] = []

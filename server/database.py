@@ -1,15 +1,16 @@
 import os
 import uuid
-import datetime
+from datetime import date
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
-from sqlalchemy.exc import IntegrityError
-import bcrypt
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:////tmp/app.db")
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./flowers.db")
 
-connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
-engine = create_engine(DATABASE_URL, connect_args=connect_args)
+connect_args = {}
+if "sqlite" in SQLALCHEMY_DATABASE_URL:
+    connect_args["check_same_thread"] = False
+
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
@@ -23,76 +24,92 @@ def get_db():
         db.close()
 
 
-def get_password_hash(password: str) -> str:
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
-
-
 def init_db():
-    from server import models  # noqa: F401
-
     Base.metadata.create_all(bind=engine)
-    db = SessionLocal()
-    try:
-        seed_data(db)
-    finally:
-        db.close()
 
 
 def seed_data(db: Session):
-    from server.models import User, ExchangeRateCache
+    from server import models
 
-    # Seed regular test user
-    try:
-        user = db.query(User).filter(User.email == "test@example.com").first()
-        if not user:
-            user = User(
-                id=str(uuid.uuid4()),
-                email="test@example.com",
-                hashed_password=get_password_hash("testpassword"),
-                role="user",
-                is_active=True,
-                is_verified=True,
-            )
-            db.add(user)
-            db.commit()
-    except IntegrityError:
-        db.rollback()
-
-    # Seed admin user
-    try:
-        admin = db.query(User).filter(User.email == "admin@example.com").first()
-        if not admin:
-            admin = User(
-                id=str(uuid.uuid4()),
-                email="admin@example.com",
-                hashed_password=get_password_hash("adminpassword"),
-                role="admin",
-                is_active=True,
-                is_verified=True,
-            )
-            db.add(admin)
-            db.commit()
-    except IntegrityError:
-        db.rollback()
-
-    # Seed initial exchange rates cache
-    try:
-        cache = (
-            db.query(ExchangeRateCache)
-            .filter(ExchangeRateCache.base_currency == "USD")
-            .first()
+    # Check if category exists
+    if db.query(models.Category).first() is None:
+        cat_roses = models.Category(
+            id=str(uuid.uuid4()),
+            name="Roses",
+            description="Classic rose varieties in various colors",
         )
-        if not cache:
-            now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-            cache = ExchangeRateCache(
-                id=str(uuid.uuid4()),
-                base_currency="USD",
-                rates_json='{"USD": 1.0, "EUR": 0.925, "GBP": 0.79, "JPY": 155.0, "CAD": 1.36}',
-                fetched_at=now,
-                expires_at=now + datetime.timedelta(minutes=15),
-            )
-            db.add(cache)
-            db.commit()
-    except IntegrityError:
-        db.rollback()
+        cat_lilies = models.Category(
+            id=str(uuid.uuid4()),
+            name="Lilies",
+            description="Fragrant and elegant lily species",
+        )
+        cat_tulips = models.Category(
+            id=str(uuid.uuid4()),
+            name="Tulips",
+            description="Vibrant spring tulip blooms",
+        )
+        db.add_all([cat_roses, cat_lilies, cat_tulips])
+        db.commit()
+
+        # Suppliers
+        sup1 = models.Supplier(
+            id=str(uuid.uuid4()),
+            name="Floral Wholesalers Inc.",
+            contact_person="John Floral",
+            email="contact@floralwholesalers.com",
+            phone="555-0192",
+            address="123 Botanical Way, Portland, OR",
+        )
+        sup2 = models.Supplier(
+            id=str(uuid.uuid4()),
+            name="Bloom Direct Ltd.",
+            contact_person="Sarah Bloom",
+            email="info@bloomdirect.com",
+            phone="555-0188",
+            address="456 Meadow Lane, Denver, CO",
+        )
+        db.add_all([sup1, sup2])
+        db.commit()
+
+        # Flowers
+        flower1 = models.Flower(
+            id=str(uuid.uuid4()),
+            name="Red Roses",
+            species="Rosa rubiginosa",
+            color="Red",
+            price_per_stem=2.50,
+            stock_quantity=500,
+            low_stock_threshold=20,
+            freshness_date=date.today(),
+            care_instructions="Keep in cool water, trim stems diagonally every 2 days.",
+            category_id=cat_roses.id,
+            supplier_id=sup1.id,
+        )
+        flower2 = models.Flower(
+            id=str(uuid.uuid4()),
+            name="White Lilies",
+            species="Lilium candidum",
+            color="White",
+            price_per_stem=3.20,
+            stock_quantity=150,
+            low_stock_threshold=25,
+            freshness_date=date.today(),
+            care_instructions="Remove stamens to avoid pollen stains, keep in bright indirect light.",
+            category_id=cat_lilies.id,
+            supplier_id=sup2.id,
+        )
+        flower3 = models.Flower(
+            id=str(uuid.uuid4()),
+            name="Yellow Tulips",
+            species="Tulipa gesneriana",
+            color="Yellow",
+            price_per_stem=1.80,
+            stock_quantity=15,  # Low stock item for testing low stock alert!
+            low_stock_threshold=20,
+            freshness_date=date.today(),
+            care_instructions="Provide fresh cold water, avoid direct heat.",
+            category_id=cat_tulips.id,
+            supplier_id=sup1.id,
+        )
+        db.add_all([flower1, flower2, flower3])
+        db.commit()
