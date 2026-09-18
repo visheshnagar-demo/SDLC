@@ -30,7 +30,6 @@ graph TD
 
 ## Backend Modules (server/)
 - server/__init__.py
-- server/crud.py
 - server/database.py
 - server/main.py
 - server/models.py
@@ -44,7 +43,6 @@ graph TD
 - server/tests/__init__.py
 - server/tests/conftest.py
 - server/tests/test_analytics.py
-- server/tests/test_categories.py
 - server/tests/test_flowers.py
 - server/tests/test_orders.py
 - server/tests/test_suppliers.py

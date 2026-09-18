@@ -1,1 +1,1 @@
-# Package marker for tests
+# server.tests package

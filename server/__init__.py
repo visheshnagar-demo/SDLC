@@ -1,1 +1,1 @@
-# Package marker for server
+# server package

@@ -1,18 +1,15 @@
 import os
-import uuid
-from datetime import date
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./flowers.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./flowers.db")
 
-connect_args = {}
-if "sqlite" in SQLALCHEMY_DATABASE_URL:
-    connect_args["check_same_thread"] = False
+# SQLite specific connect_args
+connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args=connect_args)
+engine = create_engine(DATABASE_URL, connect_args=connect_args, echo=False)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 Base = declarative_base()
 
 
@@ -29,87 +26,75 @@ def init_db():
 
 
 def seed_data(db: Session):
-    from server import models
+    from server.models import Category, Supplier, Flower
 
-    # Check if category exists
-    if db.query(models.Category).first() is None:
-        cat_roses = models.Category(
-            id=str(uuid.uuid4()),
-            name="Roses",
-            description="Classic rose varieties in various colors",
-        )
-        cat_lilies = models.Category(
-            id=str(uuid.uuid4()),
-            name="Lilies",
-            description="Fragrant and elegant lily species",
-        )
-        cat_tulips = models.Category(
-            id=str(uuid.uuid4()),
-            name="Tulips",
-            description="Vibrant spring tulip blooms",
-        )
-        db.add_all([cat_roses, cat_lilies, cat_tulips])
-        db.commit()
+    # Check if data already exists
+    if db.query(Category).first():
+        return
 
-        # Suppliers
-        sup1 = models.Supplier(
-            id=str(uuid.uuid4()),
+    try:
+        # Seed Categories
+        cat_roses = Category(
+            name="Roses", description="Various species and colors of roses"
+        )
+        cat_lilies = Category(name="Lilies", description="Fragrant lily varieties")
+        cat_orchids = Category(name="Orchids", description="Exotic orchid species")
+        db.add_all([cat_roses, cat_lilies, cat_orchids])
+        db.flush()
+
+        # Seed Suppliers
+        supplier_1 = Supplier(
             name="Floral Wholesalers Inc.",
-            contact_person="John Floral",
-            email="contact@floralwholesalers.com",
+            contact_person="Alice Smith",
+            email="alice@floralwholesalers.com",
             phone="555-0192",
-            address="123 Botanical Way, Portland, OR",
+            address="123 Garden Way, Floral City",
         )
-        sup2 = models.Supplier(
-            id=str(uuid.uuid4()),
-            name="Bloom Direct Ltd.",
-            contact_person="Sarah Bloom",
-            email="info@bloomdirect.com",
-            phone="555-0188",
-            address="456 Meadow Lane, Denver, CO",
+        supplier_2 = Supplier(
+            name="Global Botanical Co.",
+            contact_person="Bob Jones",
+            email="bob@globalbotanical.com",
+            phone="555-0144",
+            address="456 Blossom Lane, Greenfield",
         )
-        db.add_all([sup1, sup2])
-        db.commit()
+        db.add_all([supplier_1, supplier_2])
+        db.flush()
 
-        # Flowers
-        flower1 = models.Flower(
-            id=str(uuid.uuid4()),
+        # Seed Flowers
+        flower_1 = Flower(
             name="Red Roses",
             species="Rosa rubiginosa",
             color="Red",
             price_per_stem=2.50,
             stock_quantity=500,
             low_stock_threshold=20,
-            freshness_date=date.today(),
-            care_instructions="Keep in cool water, trim stems diagonally every 2 days.",
+            care_instructions="Trim stems at 45 degrees, keep in cool water.",
             category_id=cat_roses.id,
-            supplier_id=sup1.id,
+            supplier_id=supplier_1.id,
         )
-        flower2 = models.Flower(
-            id=str(uuid.uuid4()),
+        flower_2 = Flower(
             name="White Lilies",
             species="Lilium candidum",
             color="White",
-            price_per_stem=3.20,
+            price_per_stem=3.75,
             stock_quantity=150,
-            low_stock_threshold=25,
-            freshness_date=date.today(),
-            care_instructions="Remove stamens to avoid pollen stains, keep in bright indirect light.",
+            low_stock_threshold=15,
+            care_instructions="Remove anthers to avoid pollen stains.",
             category_id=cat_lilies.id,
-            supplier_id=sup2.id,
+            supplier_id=supplier_1.id,
         )
-        flower3 = models.Flower(
-            id=str(uuid.uuid4()),
-            name="Yellow Tulips",
-            species="Tulipa gesneriana",
-            color="Yellow",
-            price_per_stem=1.80,
-            stock_quantity=15,  # Low stock item for testing low stock alert!
-            low_stock_threshold=20,
-            freshness_date=date.today(),
-            care_instructions="Provide fresh cold water, avoid direct heat.",
-            category_id=cat_tulips.id,
-            supplier_id=sup1.id,
+        flower_3 = Flower(
+            name="Purple Orchids",
+            species="Phalaenopsis",
+            color="Purple",
+            price_per_stem=5.00,
+            stock_quantity=10,  # Below threshold of 12 -> Low stock alert
+            low_stock_threshold=12,
+            care_instructions="Provide indirect sunlight and moderate humidity.",
+            category_id=cat_orchids.id,
+            supplier_id=supplier_2.id,
         )
-        db.add_all([flower1, flower2, flower3])
+        db.add_all([flower_1, flower_2, flower_3])
         db.commit()
+    except Exception:
+        db.rollback()

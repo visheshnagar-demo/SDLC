@@ -1,103 +1,163 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-
-from server import crud, schemas
+from sqlalchemy.orm import Session, joinedload
 from server.database import get_db
+from server.models import Flower, Category, Supplier
+from server.schemas import FlowerCreate, FlowerUpdate, FlowerResponse
 
 router = APIRouter(prefix="/api/v1/flowers", tags=["Flowers"])
 
 
-@router.get("", response_model=List[schemas.FlowerResponse])
+@router.get("", response_model=List[FlowerResponse])
 def list_flowers(
-    skip: int = 0,
-    limit: int = 100,
     category_id: Optional[str] = None,
     supplier_id: Optional[str] = None,
     search: Optional[str] = None,
-    low_stock_only: bool = False,
+    low_stock_only: Optional[bool] = False,
+    skip: int = 0,
+    limit: int = 100,
     db: Session = Depends(get_db),
 ):
-    return crud.get_flowers(
-        db,
-        skip=skip,
-        limit=limit,
-        category_id=category_id,
-        supplier_id=supplier_id,
-        search=search,
-        low_stock_only=low_stock_only,
+    query = db.query(Flower).options(
+        joinedload(Flower.category), joinedload(Flower.supplier)
     )
 
-
-@router.get("/alerts/low-stock", response_model=List[schemas.StockAlert])
-def get_low_stock_alerts(db: Session = Depends(get_db)):
-    analytics = crud.get_dashboard_analytics(db)
-    return analytics["stock_alerts"]
-
-
-@router.post(
-    "", response_model=schemas.FlowerResponse, status_code=status.HTTP_201_CREATED
-)
-def create_flower(flower_in: schemas.FlowerCreate, db: Session = Depends(get_db)):
-    if flower_in.price_per_stem < 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Price per stem cannot be negative",
+    if category_id:
+        query = query.filter(Flower.category_id == category_id)
+    if supplier_id:
+        query = query.filter(Flower.supplier_id == supplier_id)
+    if search:
+        query = query.filter(
+            Flower.name.ilike(f"%{search}%")
+            | Flower.species.ilike(f"%{search}%")
+            | Flower.color.ilike(f"%{search}%")
         )
-    if flower_in.stock_quantity < 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Stock quantity cannot be negative",
+    if low_stock_only:
+        # Stock quantity <= low_stock_threshold and low_stock_threshold > 0
+        query = query.filter(
+            Flower.low_stock_threshold > 0,
+            Flower.stock_quantity <= Flower.low_stock_threshold,
         )
-    try:
-        return crud.create_flower(db, flower_in)
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    flowers = query.offset(skip).limit(limit).all()
+    return flowers
 
 
-@router.get("/{flower_id}", response_model=schemas.FlowerResponse)
-def get_flower(flower_id: str, db: Session = Depends(get_db)):
-    flower = crud.get_flower(db, flower_id)
+@router.post("", response_model=FlowerResponse, status_code=status.HTTP_201_CREATED)
+def create_flower(flower_in: FlowerCreate, db: Session = Depends(get_db)):
+    if flower_in.price_per_stem < 0 or flower_in.stock_quantity < 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Price per stem and stock quantity must be non-negative.",
+        )
+
+    if flower_in.category_id:
+        cat = db.query(Category).filter(Category.id == flower_in.category_id).first()
+        if not cat:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Category ID '{flower_in.category_id}' does not exist.",
+            )
+
+    if flower_in.supplier_id:
+        sup = db.query(Supplier).filter(Supplier.id == flower_in.supplier_id).first()
+        if not sup:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Supplier ID '{flower_in.supplier_id}' does not exist.",
+            )
+
+    flower = Flower(**flower_in.model_dump())
+    db.add(flower)
+    db.commit()
+    db.refresh(flower)
+    return flower
+
+
+@router.get("/{id}", response_model=FlowerResponse)
+def get_flower(id: str, db: Session = Depends(get_db)):
+    flower = (
+        db.query(Flower)
+        .options(joinedload(Flower.category), joinedload(Flower.supplier))
+        .filter(Flower.id == id)
+        .first()
+    )
     if not flower:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Flower with ID '{flower_id}' not found",
+            detail=f"Flower with ID '{id}' not found.",
         )
     return flower
 
 
-@router.put("/{flower_id}", response_model=schemas.FlowerResponse)
-def update_flower(
-    flower_id: str, flower_in: schemas.FlowerUpdate, db: Session = Depends(get_db)
-):
-    if flower_in.price_per_stem is not None and flower_in.price_per_stem < 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Price per stem cannot be negative",
-        )
-    if flower_in.stock_quantity is not None and flower_in.stock_quantity < 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Stock quantity cannot be negative",
-        )
-    try:
-        flower = crud.update_flower(db, flower_id, flower_in)
-        if not flower:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Flower with ID '{flower_id}' not found",
-            )
-        return flower
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
-
-@router.delete("/{flower_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_flower(flower_id: str, db: Session = Depends(get_db)):
-    success = crud.delete_flower(db, flower_id)
-    if not success:
+@router.put("/{id}", response_model=FlowerResponse)
+def update_flower(id: str, flower_in: FlowerUpdate, db: Session = Depends(get_db)):
+    flower = db.query(Flower).filter(Flower.id == id).first()
+    if not flower:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Flower with ID '{flower_id}' not found",
+            detail=f"Flower with ID '{id}' not found.",
         )
+
+    update_data = flower_in.model_dump(exclude_unset=True)
+
+    if (
+        "price_per_stem" in update_data
+        and update_data["price_per_stem"] is not None
+        and update_data["price_per_stem"] < 0
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Price per stem must be non-negative.",
+        )
+    if (
+        "stock_quantity" in update_data
+        and update_data["stock_quantity"] is not None
+        and update_data["stock_quantity"] < 0
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Stock quantity must be non-negative.",
+        )
+
+    if update_data.get("category_id"):
+        cat = (
+            db.query(Category).filter(Category.id == update_data["category_id"]).first()
+        )
+        if not cat:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Category ID '{update_data['category_id']}' does not exist.",
+            )
+
+    if update_data.get("supplier_id"):
+        sup = (
+            db.query(Supplier).filter(Supplier.id == update_data["supplier_id"]).first()
+        )
+        if not sup:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Supplier ID '{update_data['supplier_id']}' does not exist.",
+            )
+
+    for field, value in update_data.items():
+        setattr(flower, field, value)
+
+    db.commit()
+    db.refresh(flower)
+    # Reload relationships
+    db.refresh(flower)
+    return flower
+
+
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_flower(id: str, db: Session = Depends(get_db)):
+    flower = db.query(Flower).filter(Flower.id == id).first()
+    if not flower:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Flower with ID '{id}' not found.",
+        )
+    db.delete(flower)
+    db.commit()
     return None

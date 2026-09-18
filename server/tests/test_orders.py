@@ -1,73 +1,84 @@
-def test_create_order_calculates_total_and_deducts_stock(client):
-    # Get initial flowers
-    flowers_res = client.get("/api/v1/flowers")
-    flowers = flowers_res.json()
-    red_rose = next(f for f in flowers if f["name"] == "Red Roses")
-    initial_stock = red_rose["stock_quantity"]
+def test_create_order_success_and_stock_deduction(client):
+    # Fetch a flower
+    flowers = client.get("/api/v1/flowers").json()
+    flower = flowers[0]
+    flower_id = flower["id"]
+    initial_stock = flower["stock_quantity"]
+    price = flower["price_per_stem"]
 
     order_payload = {
-        "customer_name": "Alice Smith",
-        "customer_email": "alice@example.com",
+        "customer_name": "John Doe",
+        "customer_email": "john@example.com",
         "customer_phone": "555-1234",
-        "items": [{"flower_id": red_rose["id"], "quantity": 12}],
-        "notes": "Deliver by 2 PM",
+        "notes": "Express delivery",
+        "items": [{"flower_id": flower_id, "quantity": 5}],
     }
 
-    res = client.post("/api/v1/orders", json=order_payload)
-    assert res.status_code == 201
-    order = res.json()
-    assert order["customer_name"] == "Alice Smith"
-    assert order["status"] == "Pending"
-    assert order["total_amount"] == 12 * red_rose["price_per_stem"]
-    assert len(order["items"]) == 1
+    response = client.post("/api/v1/orders", json=order_payload)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["customer_name"] == "John Doe"
+    assert data["status"] == "Pending"
+    assert data["total_amount"] == round(5 * price, 2)
+    assert len(data["order_items"]) == 1
 
-    # Verify stock deduction
-    updated_rose_res = client.get(f"/api/v1/flowers/{red_rose['id']}")
-    updated_rose = updated_rose_res.json()
-    assert updated_rose["stock_quantity"] == initial_stock - 12
+    # Verify stock was deducted
+    updated_flower = client.get(f"/api/v1/flowers/{flower_id}").json()
+    assert updated_flower["stock_quantity"] == initial_stock - 5
 
 
-def test_insufficient_stock_error(client):
-    # Get flower
-    flowers_res = client.get("/api/v1/flowers")
-    flower = flowers_res.json()[0]
-    stock = flower["stock_quantity"]
+def test_create_order_insufficient_stock_error(client):
+    flowers = client.get("/api/v1/flowers").json()
+    flower = flowers[0]
+    flower_id = flower["id"]
+    current_stock = flower["stock_quantity"]
 
+    # Request more than available stock
+    excessive_qty = current_stock + 100
     order_payload = {
-        "customer_name": "Bob Jones",
-        "items": [
-            {
-                "flower_id": flower["id"],
-                "quantity": stock + 1000,  # Exceeds available stock
-            }
-        ],
+        "customer_name": "Jane Smith",
+        "items": [{"flower_id": flower_id, "quantity": excessive_qty}],
     }
 
-    res = client.post("/api/v1/orders", json=order_payload)
-    assert res.status_code == 400
-    assert "Insufficient Stock" in res.json()["detail"]
+    response = client.post("/api/v1/orders", json=order_payload)
+    assert response.status_code == 400
+    assert "Insufficient Stock" in response.json()["detail"]
+
+    # Verify stock remained unchanged
+    check_flower = client.get(f"/api/v1/flowers/{flower_id}").json()
+    assert check_flower["stock_quantity"] == current_stock
 
 
-def test_update_order_status(client):
-    # Get flower
-    flower = client.get("/api/v1/flowers").json()[0]
+def test_list_orders(client):
+    response = client.get("/api/v1/orders")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+
+def test_order_cancellation_restores_stock(client):
+    flowers = client.get("/api/v1/flowers").json()
+    flower = flowers[0]
+    flower_id = flower["id"]
+    initial_stock = flower["stock_quantity"]
+
+    # Create an order of 3 stems
     order_payload = {
-        "customer_name": "Charlie Brown",
-        "items": [{"flower_id": flower["id"], "quantity": 1}],
+        "customer_name": "Alice Green",
+        "items": [{"flower_id": flower_id, "quantity": 3}],
     }
-    order = client.post("/api/v1/orders", json=order_payload).json()
-    order_id = order["id"]
+    create_res = client.post("/api/v1/orders", json=order_payload)
+    order_id = create_res.json()["id"]
 
-    # Patch status to Processing
-    patch_res = client.patch(
-        f"/api/v1/orders/{order_id}/status", json={"status": "Processing"}
-    )
+    # Verify stock deducted
+    flower_after_order = client.get(f"/api/v1/flowers/{flower_id}").json()
+    assert flower_after_order["stock_quantity"] == initial_stock - 3
+
+    # Cancel order
+    status_update = {"status": "Cancelled"}
+    patch_res = client.patch(f"/api/v1/orders/{order_id}/status", json=status_update)
     assert patch_res.status_code == 200
-    assert patch_res.json()["status"] == "Processing"
+    assert patch_res.json()["status"] == "Cancelled"
 
-    # Patch status to Completed
-    patch_res2 = client.patch(
-        f"/api/v1/orders/{order_id}/status", json={"status": "Completed"}
-    )
-    assert patch_res2.status_code == 200
-    assert patch_res2.json()["status"] == "Completed"
+    # Verify stock restored
+    flower_after_cancel = client.get(f"/api/v1/flowers/{flower_id}").json()
+    assert flower_after_cancel["stock_quantity"] == initial_stock
