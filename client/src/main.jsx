@@ -8,15 +8,12 @@ class ErrorBoundary extends React.Component {
     super(props);
     this.state = { hasError: false, error: null };
   }
-
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
   }
-
-  componentDidCatch(_error, _errorInfo) {
-    // Error logged for boundary tracking
+  componentDidCatch(error, errorInfo) {
+    console.error("Uncaught render error:", error, errorInfo);
   }
-
   render() {
     if (this.state.hasError) {
       return (
@@ -27,25 +24,8 @@ class ErrorBoundary extends React.Component {
             fontFamily: "sans-serif",
           }}
         >
-          <h2>Something went wrong.</h2>
-          <p style={{ color: "#666" }}>
-            {this.state.error?.message ||
-              "An unexpected rendering error occurred."}
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              marginTop: "1rem",
-              padding: "0.5rem 1rem",
-              backgroundColor: "#4F46E5",
-              color: "#fff",
-              border: "none",
-              borderRadius: "0.375rem",
-              cursor: "pointer",
-            }}
-          >
-            Reload Page
-          </button>
+          <h2>Something went wrong in the application.</h2>
+          <p style={{ color: "#666" }}>{this.state.error?.toString()}</p>
         </div>
       );
     }

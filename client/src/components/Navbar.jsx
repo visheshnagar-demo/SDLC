@@ -1,79 +1,97 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
-import { CreditCard, RefreshCw, BarChart3, ShieldCheck } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Smartphone,
+  LayoutDashboard,
+  ShieldCheck,
+  LogOut,
+  User,
+} from "lucide-react";
+import { logout } from "../services/api";
 
-export const Navbar = () => {
+export default function Navbar({ currentUser, onLogout }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    if (onLogout) onLogout();
+    navigate("/login");
+  };
+
+  const navItems = [
+    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+    { name: "Device Inventory", path: "/devices", icon: Smartphone },
+    { name: "Policies & Audit", path: "/policies", icon: ShieldCheck },
+  ];
+
   return (
-    <header className="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-50 shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-inner">
-            <CreditCard className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="font-bold text-lg tracking-tight text-white block leading-none">
-              PayGateway{" "}
-              <span className="text-indigo-400 font-normal text-xs ml-1">
-                v1.0
+    <nav className="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          <div className="flex items-center space-x-8">
+            <Link to="/dashboard" className="flex items-center space-x-3">
+              <div className="p-2 bg-blue-600 rounded-lg text-white">
+                <Smartphone className="w-5 h-5" />
+              </div>
+              <span className="font-bold text-lg tracking-tight text-white">
+                MobileManager{" "}
+                <span className="text-xs font-normal text-blue-400">
+                  Enterprise
+                </span>
               </span>
-            </span>
-            <span className="text-[10px] text-slate-400 font-medium tracking-wider uppercase">
-              Secure Merchant Portal
-            </span>
+            </Link>
+
+            <div className="hidden md:flex space-x-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname.startsWith(item.path);
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      isActive
+                        ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
+                        : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        <nav className="flex items-center space-x-1 sm:space-x-2">
-          <NavLink
-            to="/checkout"
-            className={({ isActive }) =>
-              `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                isActive
-                  ? "bg-indigo-600/30 text-indigo-300 border border-indigo-500/50"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`
-            }
-          >
-            <CreditCard className="w-4 h-4" />
-            <span>Checkout</span>
-          </NavLink>
+          <div className="flex items-center space-x-4">
+            {currentUser && (
+              <div className="flex items-center space-x-3 text-xs border-r border-slate-700 pr-4">
+                <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-blue-400 font-bold">
+                  <User className="w-4 h-4" />
+                </div>
+                <div className="hidden sm:block">
+                  <p className="font-semibold text-slate-200">
+                    {currentUser.full_name || currentUser.email}
+                  </p>
+                  <p className="text-slate-400 capitalize">
+                    {currentUser.role || "IT Admin"}
+                  </p>
+                </div>
+              </div>
+            )}
 
-          <NavLink
-            to="/refunds"
-            className={({ isActive }) =>
-              `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                isActive
-                  ? "bg-indigo-600/30 text-indigo-300 border border-indigo-500/50"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`
-            }
-          >
-            <RefreshCw className="w-4 h-4" />
-            <span>Refunds</span>
-          </NavLink>
-
-          <NavLink
-            to="/analytics"
-            className={({ isActive }) =>
-              `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                isActive
-                  ? "bg-indigo-600/30 text-indigo-300 border border-indigo-500/50"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`
-            }
-          >
-            <BarChart3 className="w-4 h-4" />
-            <span>Analytics</span>
-          </NavLink>
-        </nav>
-
-        <div className="hidden md:flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2.5 py-1 rounded-full font-medium">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          <span>PCI-DSS Compliant</span>
+            <button
+              onClick={handleLogout}
+              className="flex items-center space-x-1 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-md transition-colors"
+              title="Logout"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
+          </div>
         </div>
       </div>
-    </header>
+    </nav>
   );
-};
-
-export default Navbar;
+}
