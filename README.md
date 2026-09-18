@@ -1,4 +1,77 @@
-# Project
+# Ganesh Temple Management System
+
+A comprehensive web application for managing devotee registrations, pooja and archana bookings, e-Hundi donations, temple inventory, and daily cashier shift reconciliation.
+
+## Features
+
+- **Devotee & Membership Management**: Profile creation, digital Devotee ID generation, family member linkage with Gotra/Rashi details.
+- **Pooja & Archana Booking System**: Time slot matrix, atomic slot reservation, QR-code e-pass generation and validation.
+- **Donation & e-Hundi Platform**: Multi-fund offerings (Annadanam, Corpus, General Hundi), 80G tax exemption certificates.
+- **Inventory & Seva Asset Tracking**: Stock SKU management, low-stock threshold alerting, precious asset (gold/silver) vault audit logging.
+- **Financial Accounting & Audit**: Cashier shift open/close reconciliation, zero-variance tracking, consolidated daily revenue reports, immutable audit trail.
+
+## Tech Stack
+
+- **Backend**: Python 3.11, FastAPI, SQLAlchemy 2.x, SQLite (Local/Testing) / PostgreSQL (Prod), PyJWT / Passlib (Auth).
+- **Frontend**: React 18, Vite, Tailwind CSS, Axios, Lucide Icons.
+
+---
+
+### Prerequisites
+- Python 3.11+
+- Virtual environment tool (`venv` or `uv`)
+
+### Installation & Execution
+```bash
+cd server
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+# Run tests
+pytest
+
+# Start Development Server (Port 8000)
+uvicorn server.main:app --reload --port 8000
+```
+
+---
+
+## Full-Stack Local Development
+
+To run the complete system locally:
+
+1. **Start the Backend Server**:
+   ```bash
+   cd server
+   python -m venv venv && source venv/bin/activate
+   pip install -r requirements.txt
+   uvicorn server.main:app --reload --port 8000
+   ```
+   The backend API will be available at `http://localhost:8000` (OpenAPI Docs at `http://localhost:8000/docs`).
+
+2. **Start the Frontend Client**:
+   ```bash
+   cd client
+   npm install
+   npm run dev
+   ```
+   The Vite frontend dev server will be available at `http://localhost:5173`.
+
+### Default Configuration & Environment Variables
+- Backend runs on `http://localhost:8000`
+- Frontend runs on `http://localhost:5173`
+- Environment variables can be configured via `.env` files in `server/` and `client/`.
+
+### Test Credentials
+Seed data is automatically initialized on startup with ready-to-use accounts:
+
+| Role | Email | Password |
+| :--- | :--- | :--- |
+| **Administrator** | `admin@example.com` | `adminpassword` |
+| **Head Priest** | `priest@example.com` | `priestpassword` |
+| **Counter Cashier** | `cashier@example.com` | `cashierpassword` |
+| **Devotee / User** | `test@example.com` | `testpassword` |
 
 ## Server
 

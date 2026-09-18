@@ -1,22 +1,23 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Payment Gateway Service",
-    "version": "0.1.0"
+    "title": "Ganesh Temple Management System API",
+    "description": "RESTful API services for Ganesh Temple operations, devotee management, pooja bookings, e-Hundi donations, inventory, and cashier audit.",
+    "version": "1.0.0"
   },
   "paths": {
-    "/api/v1/payments/checkout-session": {
+    "/api/v1/auth/login": {
       "post": {
         "tags": [
-          "payments"
+          "Authentication"
         ],
-        "summary": "Create Session",
-        "operationId": "create_session_api_v1_payments_checkout_session_post",
+        "summary": "Login For Access Token",
+        "operationId": "login_for_access_token_api_v1_auth_login_post",
         "requestBody": {
           "content": {
-            "application/json": {
+            "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/CheckoutSessionRequest"
+                "$ref": "#/components/schemas/Body_login_for_access_token_api_v1_auth_login_post"
               }
             }
           },
@@ -28,7 +29,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CheckoutSessionResponse"
+                  "$ref": "#/components/schemas/Token"
                 }
               }
             }
@@ -46,18 +47,18 @@
         }
       }
     },
-    "/api/v1/payments/digital-wallet": {
+    "/api/v1/auth/token": {
       "post": {
         "tags": [
-          "payments"
+          "Authentication"
         ],
-        "summary": "Pay Digital Wallet",
-        "operationId": "pay_digital_wallet_api_v1_payments_digital_wallet_post",
+        "summary": "Login For Access Token",
+        "operationId": "login_for_access_token_api_v1_auth_token_post",
         "requestBody": {
           "content": {
-            "application/json": {
+            "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/DigitalWalletPaymentRequest"
+                "$ref": "#/components/schemas/Body_login_for_access_token_api_v1_auth_token_post"
               }
             }
           },
@@ -69,7 +70,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DigitalWalletPaymentResponse"
+                  "$ref": "#/components/schemas/Token"
                 }
               }
             }
@@ -87,231 +88,97 @@
         }
       }
     },
-    "/api/v1/payments/rates": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Get Rates",
-        "operationId": "get_rates_api_v1_payments_rates_get",
-        "parameters": [
-          {
-            "name": "base_currency",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "Base currency code",
-              "default": "USD",
-              "title": "Base Currency"
-            },
-            "description": "Base currency code"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExchangeRatesResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "List Transactions",
-        "operationId": "list_transactions_api_v1_payments_transactions_get",
-        "parameters": [
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Search transaction ID or email",
-              "title": "Search"
-            },
-            "description": "Search transaction ID or email"
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction status",
-              "title": "Status"
-            },
-            "description": "Filter by transaction status"
-          },
-          {
-            "name": "currency",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by currency",
-              "title": "Currency"
-            },
-            "description": "Filter by currency"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TransactionSummary"
-                  },
-                  "title": "Response List Transactions Api V1 Payments Transactions Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions/{transaction_id}": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Get Transaction",
-        "operationId": "get_transaction_api_v1_payments_transactions__transaction_id__get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Transaction Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TransactionDetail"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/refunds": {
+    "/api/v1/auth/register": {
       "post": {
         "tags": [
-          "refunds"
+          "Authentication"
         ],
-        "summary": "Create Refund Endpoint",
-        "operationId": "create_refund_endpoint_api_v1_refunds_post",
+        "summary": "Register User",
+        "operationId": "register_user_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Read Users Me",
+        "operationId": "read_users_me_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/devotees": {
+      "post": {
+        "tags": [
+          "Devotees"
+        ],
+        "summary": "Create Devotee",
+        "operationId": "create_devotee_api_v1_devotees_post",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RefundRequest"
+                "$ref": "#/components/schemas/DevoteeCreate"
               }
             }
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RefundSummary"
+                  "$ref": "#/components/schemas/DevoteeResponse"
                 }
               }
             }
@@ -330,13 +197,13 @@
       },
       "get": {
         "tags": [
-          "refunds"
+          "Devotees"
         ],
-        "summary": "List Refunds Endpoint",
-        "operationId": "list_refunds_endpoint_api_v1_refunds_get",
+        "summary": "List Devotees",
+        "operationId": "list_devotees_api_v1_devotees_get",
         "parameters": [
           {
-            "name": "transaction_id",
+            "name": "phone",
             "in": "query",
             "required": false,
             "schema": {
@@ -348,10 +215,24 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
+              "title": "Phone"
+            }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Email"
+            }
           },
           {
             "name": "skip",
@@ -359,7 +240,6 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "minimum": 0,
               "default": 0,
               "title": "Skip"
             }
@@ -370,9 +250,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
+              "default": 20,
               "title": "Limit"
             }
           }
@@ -385,9 +263,9 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/RefundSummary"
+                    "$ref": "#/components/schemas/DevoteeResponse"
                   },
-                  "title": "Response List Refunds Endpoint Api V1 Refunds Get"
+                  "title": "Response List Devotees Api V1 Devotees Get"
                 }
               }
             }
@@ -405,17 +283,184 @@
         }
       }
     },
-    "/api/v1/webhooks/stripe": {
-      "post": {
+    "/api/v1/devotees/{devotee_id}": {
+      "get": {
         "tags": [
-          "webhooks"
+          "Devotees"
         ],
-        "summary": "Handle Stripe Webhook",
-        "operationId": "handle_stripe_webhook_api_v1_webhooks_stripe_post",
+        "summary": "Get Devotee",
+        "operationId": "get_devotee_api_v1_devotees__devotee_id__get",
         "parameters": [
           {
-            "name": "stripe-signature",
-            "in": "header",
+            "name": "devotee_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Devotee Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevoteeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devotees/{devotee_id}/family": {
+      "post": {
+        "tags": [
+          "Devotees"
+        ],
+        "summary": "Add Family Member",
+        "operationId": "add_family_member_api_v1_devotees__devotee_id__family_post",
+        "parameters": [
+          {
+            "name": "devotee_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Devotee Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FamilyMemberCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyMemberResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/poojas": {
+      "get": {
+        "tags": [
+          "Pooja & Bookings"
+        ],
+        "summary": "List Poojas",
+        "operationId": "list_poojas_api_v1_poojas_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PoojaCatalogResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Poojas Api V1 Poojas Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Pooja & Bookings"
+        ],
+        "summary": "Create Pooja",
+        "operationId": "create_pooja_api_v1_poojas_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PoojaCatalogCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoojaCatalogResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/poojas/{pooja_id}/slots": {
+      "get": {
+        "tags": [
+          "Pooja & Bookings"
+        ],
+        "summary": "List Pooja Slots",
+        "operationId": "list_pooja_slots_api_v1_poojas__pooja_id__slots_get",
+        "parameters": [
+          {
+            "name": "pooja_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pooja Id"
+            }
+          },
+          {
+            "name": "slot_date",
+            "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
@@ -426,10 +471,813 @@
                   "type": "null"
                 }
               ],
-              "title": "Stripe-Signature"
+              "title": "Slot Date"
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PoojaSlotResponse"
+                  },
+                  "title": "Response List Pooja Slots Api V1 Poojas  Pooja Id  Slots Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Pooja & Bookings"
+        ],
+        "summary": "Create Pooja Slot",
+        "operationId": "create_pooja_slot_api_v1_poojas__pooja_id__slots_post",
+        "parameters": [
+          {
+            "name": "pooja_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pooja Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PoojaSlotBase"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoojaSlotResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/bookings": {
+      "post": {
+        "tags": [
+          "Pooja & Bookings"
+        ],
+        "summary": "Create Booking",
+        "operationId": "create_booking_api_v1_bookings_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PoojaBookingCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoojaBookingResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Pooja & Bookings"
+        ],
+        "summary": "List Bookings",
+        "operationId": "list_bookings_api_v1_bookings_get",
+        "parameters": [
+          {
+            "name": "devotee_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Devotee Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PoojaBookingResponse"
+                  },
+                  "title": "Response List Bookings Api V1 Bookings Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/bookings/{booking_id}": {
+      "get": {
+        "tags": [
+          "Pooja & Bookings"
+        ],
+        "summary": "Get Booking",
+        "operationId": "get_booking_api_v1_bookings__booking_id__get",
+        "parameters": [
+          {
+            "name": "booking_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Booking Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoojaBookingResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/bookings/{booking_id}/verify-qr": {
+      "post": {
+        "tags": [
+          "Pooja & Bookings"
+        ],
+        "summary": "Verify Qr Code",
+        "operationId": "verify_qr_code_api_v1_bookings__booking_id__verify_qr_post",
+        "parameters": [
+          {
+            "name": "booking_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Booking Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/QRVerifyRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Verify In"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoojaBookingResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/donations": {
+      "post": {
+        "tags": [
+          "Donations & e-Hundi"
+        ],
+        "summary": "Create Donation",
+        "operationId": "create_donation_api_v1_donations_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DonationCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Donations & e-Hundi"
+        ],
+        "summary": "List Donations",
+        "operationId": "list_donations_api_v1_donations_get",
+        "parameters": [
+          {
+            "name": "fund_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fund Type"
+            }
+          },
+          {
+            "name": "payment_method",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Payment Method"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DonationResponse"
+                  },
+                  "title": "Response List Donations Api V1 Donations Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/donations/{donation_id}": {
+      "get": {
+        "tags": [
+          "Donations & e-Hundi"
+        ],
+        "summary": "Get Donation",
+        "operationId": "get_donation_api_v1_donations__donation_id__get",
+        "parameters": [
+          {
+            "name": "donation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Donation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/items": {
+      "get": {
+        "tags": [
+          "Inventory & Assets"
+        ],
+        "summary": "List Inventory Items",
+        "operationId": "list_inventory_items_api_v1_inventory_items_get",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryItemResponse"
+                  },
+                  "title": "Response List Inventory Items Api V1 Inventory Items Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Inventory & Assets"
+        ],
+        "summary": "Create Inventory Item",
+        "operationId": "create_inventory_item_api_v1_inventory_items_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryItemCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryItemResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/movements": {
+      "post": {
+        "tags": [
+          "Inventory & Assets"
+        ],
+        "summary": "Create Inventory Movement",
+        "operationId": "create_inventory_movement_api_v1_inventory_movements_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryMovementCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryMovementResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/alerts": {
+      "get": {
+        "tags": [
+          "Inventory & Assets"
+        ],
+        "summary": "Get Low Stock Alerts",
+        "operationId": "get_low_stock_alerts_api_v1_inventory_alerts_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryItemResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Get Low Stock Alerts Api V1 Inventory Alerts Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/shifts/open": {
+      "post": {
+        "tags": [
+          "Finance & Cashier Audit"
+        ],
+        "summary": "Open Shift",
+        "operationId": "open_shift_api_v1_finance_shifts_open_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShiftOpenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/finance/shifts": {
+      "get": {
+        "tags": [
+          "Finance & Cashier Audit"
+        ],
+        "summary": "List Shifts",
+        "operationId": "list_shifts_api_v1_finance_shifts_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ShiftResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Shifts Api V1 Finance Shifts Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/shifts/{shift_id}/close": {
+      "post": {
+        "tags": [
+          "Finance & Cashier Audit"
+        ],
+        "summary": "Close Shift",
+        "operationId": "close_shift_api_v1_finance_shifts__shift_id__close_post",
+        "parameters": [
+          {
+            "name": "shift_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Shift Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShiftCloseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/reports/daily": {
+      "get": {
+        "tags": [
+          "Finance & Cashier Audit"
+        ],
+        "summary": "Get Daily Report",
+        "operationId": "get_daily_report_api_v1_finance_reports_daily_get",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyReportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/audit-logs": {
+      "get": {
+        "tags": [
+          "Finance & Cashier Audit"
+        ],
+        "summary": "Get Audit Logs",
+        "operationId": "get_audit_logs_api_v1_finance_audit_logs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AuditLogResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Get Audit Logs Api V1 Finance Audit Logs Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check__get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -438,120 +1286,36 @@
                 "schema": {}
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
         }
       }
     },
-    "/api/v1/audit-logs": {
+    "/readyz": {
       "get": {
         "tags": [
-          "audit-logs"
+          "Health"
         ],
-        "summary": "List Audit Logs",
-        "operationId": "list_audit_logs_api_v1_audit_logs_get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
-          },
-          {
-            "name": "event_type",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by event type",
-              "title": "Event Type"
-            },
-            "description": "Filter by event type"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
-          }
-        ],
+        "summary": "Health Check",
+        "operationId": "health_check_readyz_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AuditLogEntry"
-                  },
-                  "title": "Response List Audit Logs Api V1 Audit Logs Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": {}
               }
             }
           }
         }
       }
     },
-    "/health": {
+    "/healthz": {
       "get": {
+        "tags": [
+          "Health"
+        ],
         "summary": "Health Check",
-        "operationId": "health_check_health_get",
+        "operationId": "health_check_healthz_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -567,13 +1331,17 @@
   },
   "components": {
     "schemas": {
-      "AuditLogEntry": {
+      "AuditLogResponse": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "transaction_id": {
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "user_id": {
             "anyOf": [
               {
                 "type": "string"
@@ -582,20 +1350,18 @@
                 "type": "null"
               }
             ],
-            "title": "Transaction Id"
+            "title": "User Id"
           },
-          "event_type": {
-            "type": "string",
-            "title": "Event Type"
-          },
-          "ip_address": {
-            "type": "string",
-            "title": "Ip Address"
-          },
-          "masked_payload": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Masked Payload"
+          "details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
           },
           "created_at": {
             "anyOf": [
@@ -613,145 +1379,39 @@
         "type": "object",
         "required": [
           "id",
-          "event_type",
-          "ip_address",
-          "masked_payload"
+          "action"
         ],
-        "title": "AuditLogEntry"
+        "title": "AuditLogResponse"
       },
-      "CartItem": {
+      "Body_login_for_access_token_api_v1_auth_login_post": {
         "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "quantity": {
-            "type": "integer",
-            "title": "Quantity",
-            "default": 1
-          },
-          "unit_price": {
-            "type": "number",
-            "title": "Unit Price"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "unit_price"
-        ],
-        "title": "CartItem"
-      },
-      "CheckoutSessionRequest": {
-        "properties": {
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount",
-            "description": "Amount in base currency"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "description": "Settlement/target currency",
-            "default": "USD"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "items": {
+          "grant_type": {
             "anyOf": [
               {
-                "items": {
-                  "$ref": "#/components/schemas/CartItem"
-                },
-                "type": "array"
+                "type": "string",
+                "pattern": "^password$"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Items"
-          }
-        },
-        "type": "object",
-        "required": [
-          "amount",
-          "customer_email"
-        ],
-        "title": "CheckoutSessionRequest"
-      },
-      "CheckoutSessionResponse": {
-        "properties": {
-          "session_id": {
+            "title": "Grant Type"
+          },
+          "username": {
             "type": "string",
-            "title": "Session Id"
+            "title": "Username"
           },
-          "payment_intent_id": {
+          "password": {
             "type": "string",
-            "title": "Payment Intent Id"
+            "format": "password",
+            "title": "Password"
           },
-          "client_secret": {
+          "scope": {
             "type": "string",
-            "title": "Client Secret"
+            "title": "Scope",
+            "default": ""
           },
-          "base_amount": {
-            "type": "number",
-            "title": "Base Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_amount": {
-            "type": "number",
-            "title": "Target Amount"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          }
-        },
-        "type": "object",
-        "required": [
-          "session_id",
-          "payment_intent_id",
-          "client_secret",
-          "base_amount",
-          "base_currency",
-          "target_amount",
-          "target_currency",
-          "exchange_rate"
-        ],
-        "title": "CheckoutSessionResponse"
-      },
-      "DigitalWalletPaymentRequest": {
-        "properties": {
-          "wallet_type": {
-            "type": "string",
-            "title": "Wallet Type",
-            "description": "apple_pay or google_pay"
-          },
-          "payment_token": {
-            "type": "string",
-            "title": "Payment Token"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "default": "USD"
-          },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
-          },
-          "customer_email": {
+          "client_id": {
             "anyOf": [
               {
                 "type": "string"
@@ -760,81 +1420,534 @@
                 "type": "null"
               }
             ],
-            "title": "Customer Email",
-            "default": "customer@example.com"
+            "title": "Client Id"
+          },
+          "client_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "format": "password",
+            "title": "Client Secret"
           }
         },
         "type": "object",
         "required": [
-          "wallet_type",
-          "payment_token",
-          "amount"
+          "username",
+          "password"
         ],
-        "title": "DigitalWalletPaymentRequest"
+        "title": "Body_login_for_access_token_api_v1_auth_login_post"
       },
-      "DigitalWalletPaymentResponse": {
+      "Body_login_for_access_token_api_v1_auth_token_post": {
         "properties": {
-          "transaction_id": {
-            "type": "string",
-            "title": "Transaction Id"
+          "grant_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^password$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grant Type"
           },
-          "payment_intent_id": {
+          "username": {
             "type": "string",
-            "title": "Payment Intent Id"
+            "title": "Username"
           },
-          "wallet_type": {
+          "password": {
             "type": "string",
-            "title": "Wallet Type"
+            "format": "password",
+            "title": "Password"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": ""
+          },
+          "client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id"
+          },
+          "client_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "format": "password",
+            "title": "Client Secret"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "Body_login_for_access_token_api_v1_auth_token_post"
+      },
+      "DailyReportResponse": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "total_donations": {
+            "type": "number",
+            "title": "Total Donations"
+          },
+          "total_pooja_bookings": {
+            "type": "number",
+            "title": "Total Pooja Bookings"
+          },
+          "total_revenue": {
+            "type": "number",
+            "title": "Total Revenue"
+          },
+          "fund_breakdown": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Fund Breakdown"
+          },
+          "payment_method_breakdown": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payment Method Breakdown"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "total_donations",
+          "total_pooja_bookings",
+          "total_revenue",
+          "fund_breakdown",
+          "payment_method_breakdown"
+        ],
+        "title": "DailyReportResponse"
+      },
+      "DevoteeCreate": {
+        "properties": {
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "full_name"
+        ],
+        "title": "DevoteeCreate"
+      },
+      "DevoteeResponse": {
+        "properties": {
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          },
+          "devotee_number": {
+            "type": "string",
+            "title": "Devotee Number"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "family_members": {
+            "items": {
+              "$ref": "#/components/schemas/FamilyMemberResponse"
+            },
+            "type": "array",
+            "title": "Family Members",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "devotee_number"
+        ],
+        "title": "DevoteeResponse"
+      },
+      "DonationCreate": {
+        "properties": {
+          "devotee_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Devotee Id"
+          },
+          "fund_type": {
+            "type": "string",
+            "title": "Fund Type"
           },
           "amount": {
             "type": "number",
             "title": "Amount"
           },
-          "currency": {
+          "payment_method": {
             "type": "string",
-            "title": "Currency"
+            "title": "Payment Method",
+            "default": "upi"
           },
-          "status": {
-            "type": "string",
-            "title": "Status"
+          "payment_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Ref"
+          },
+          "is_tax_exempt": {
+            "type": "boolean",
+            "title": "Is Tax Exempt",
+            "default": true
           }
         },
         "type": "object",
         "required": [
-          "transaction_id",
-          "payment_intent_id",
-          "wallet_type",
-          "amount",
-          "currency",
-          "status"
+          "fund_type",
+          "amount"
         ],
-        "title": "DigitalWalletPaymentResponse"
+        "title": "DonationCreate"
       },
-      "ExchangeRatesResponse": {
+      "DonationResponse": {
         "properties": {
-          "base_currency": {
+          "id": {
             "type": "string",
-            "title": "Base Currency"
+            "title": "Id"
           },
-          "rates": {
-            "additionalProperties": {
-              "type": "number"
-            },
-            "type": "object",
-            "title": "Rates"
+          "devotee_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Devotee Id"
           },
-          "timestamp": {
+          "receipt_number": {
             "type": "string",
-            "title": "Timestamp"
+            "title": "Receipt Number"
+          },
+          "fund_type": {
+            "type": "string",
+            "title": "Fund Type"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount"
+          },
+          "payment_method": {
+            "type": "string",
+            "title": "Payment Method"
+          },
+          "payment_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Ref"
+          },
+          "is_tax_exempt": {
+            "type": "boolean",
+            "title": "Is Tax Exempt"
+          },
+          "tax_80g_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax 80G Ref"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
           }
         },
         "type": "object",
         "required": [
-          "base_currency",
-          "rates",
-          "timestamp"
+          "id",
+          "receipt_number",
+          "fund_type",
+          "amount",
+          "payment_method",
+          "is_tax_exempt"
         ],
-        "title": "ExchangeRatesResponse"
+        "title": "DonationResponse"
+      },
+      "FamilyMemberCreate": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "relationship": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relationship"
+          },
+          "gotra": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gotra"
+          },
+          "rashi": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rashi"
+          },
+          "nakshatra": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nakshatra"
+          }
+        },
+        "type": "object",
+        "required": [
+          "full_name"
+        ],
+        "title": "FamilyMemberCreate"
+      },
+      "FamilyMemberResponse": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "relationship": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relationship"
+          },
+          "gotra": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gotra"
+          },
+          "rashi": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rashi"
+          },
+          "nakshatra": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nakshatra"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "devotee_id": {
+            "type": "string",
+            "title": "Devotee Id"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "full_name",
+          "id",
+          "devotee_id"
+        ],
+        "title": "FamilyMemberResponse"
       },
       "HTTPValidationError": {
         "properties": {
@@ -849,22 +1962,129 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "RefundRequest": {
+      "InventoryItemCreate": {
         "properties": {
-          "transaction_id": {
+          "item_code": {
             "type": "string",
-            "title": "Transaction Id"
+            "title": "Item Code"
           },
-          "amount": {
+          "item_name": {
+            "type": "string",
+            "title": "Item Name"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "unit_of_measure": {
+            "type": "string",
+            "title": "Unit Of Measure",
+            "default": "kg"
+          },
+          "current_stock": {
             "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
+            "title": "Current Stock",
+            "default": 0.0
           },
-          "reason": {
+          "minimum_threshold": {
+            "type": "number",
+            "title": "Minimum Threshold",
+            "default": 10.0
+          },
+          "is_precious_asset": {
+            "type": "boolean",
+            "title": "Is Precious Asset",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_code",
+          "item_name",
+          "category"
+        ],
+        "title": "InventoryItemCreate"
+      },
+      "InventoryItemResponse": {
+        "properties": {
+          "item_code": {
             "type": "string",
-            "title": "Reason"
+            "title": "Item Code"
           },
-          "memo": {
+          "item_name": {
+            "type": "string",
+            "title": "Item Name"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "unit_of_measure": {
+            "type": "string",
+            "title": "Unit Of Measure",
+            "default": "kg"
+          },
+          "current_stock": {
+            "type": "number",
+            "title": "Current Stock",
+            "default": 0.0
+          },
+          "minimum_threshold": {
+            "type": "number",
+            "title": "Minimum Threshold",
+            "default": 10.0
+          },
+          "is_precious_asset": {
+            "type": "boolean",
+            "title": "Is Precious Asset",
+            "default": false
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_code",
+          "item_name",
+          "category",
+          "id"
+        ],
+        "title": "InventoryItemResponse"
+      },
+      "InventoryMovementCreate": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "title": "Item Id"
+          },
+          "movement_type": {
+            "type": "string",
+            "title": "Movement Type"
+          },
+          "quantity": {
+            "type": "number",
+            "title": "Quantity"
+          },
+          "unit_price": {
+            "type": "number",
+            "title": "Unit Price",
+            "default": 0.0
+          },
+          "reference_reason": {
             "anyOf": [
               {
                 "type": "string"
@@ -873,40 +2093,40 @@
                 "type": "null"
               }
             ],
-            "title": "Memo"
+            "title": "Reference Reason"
           }
         },
         "type": "object",
         "required": [
-          "transaction_id",
-          "amount",
-          "reason"
+          "item_id",
+          "movement_type",
+          "quantity"
         ],
-        "title": "RefundRequest"
+        "title": "InventoryMovementCreate"
       },
-      "RefundSummary": {
+      "InventoryMovementResponse": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "transaction_id": {
+          "item_id": {
             "type": "string",
-            "title": "Transaction Id"
+            "title": "Item Id"
           },
-          "refund_amount": {
+          "movement_type": {
+            "type": "string",
+            "title": "Movement Type"
+          },
+          "quantity": {
             "type": "number",
-            "title": "Refund Amount"
+            "title": "Quantity"
           },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
+          "unit_price": {
+            "type": "number",
+            "title": "Unit Price"
           },
-          "reason": {
-            "type": "string",
-            "title": "Reason"
-          },
-          "memo": {
+          "reference_reason": {
             "anyOf": [
               {
                 "type": "string"
@@ -915,11 +2135,7 @@
                 "type": "null"
               }
             ],
-            "title": "Memo"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
+            "title": "Reference Reason"
           },
           "created_at": {
             "anyOf": [
@@ -937,70 +2153,113 @@
         "type": "object",
         "required": [
           "id",
-          "transaction_id",
-          "refund_amount",
-          "currency",
-          "reason",
-          "status"
+          "item_id",
+          "movement_type",
+          "quantity",
+          "unit_price"
         ],
-        "title": "RefundSummary"
+        "title": "InventoryMovementResponse"
       },
-      "TransactionDetail": {
+      "PoojaBookingCreate": {
+        "properties": {
+          "slot_id": {
+            "type": "string",
+            "title": "Slot Id"
+          },
+          "devotee_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Devotee Id"
+          },
+          "sankalp_name": {
+            "type": "string",
+            "title": "Sankalp Name"
+          },
+          "sankalp_gotra": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sankalp Gotra"
+          },
+          "amount_paid": {
+            "type": "number",
+            "title": "Amount Paid",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "slot_id",
+          "sankalp_name"
+        ],
+        "title": "PoojaBookingCreate"
+      },
+      "PoojaBookingResponse": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "payment_intent_id": {
+          "slot_id": {
             "type": "string",
-            "title": "Payment Intent Id"
+            "title": "Slot Id"
           },
-          "customer_email": {
+          "devotee_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Devotee Id"
+          },
+          "booking_number": {
             "type": "string",
-            "title": "Customer Email"
+            "title": "Booking Number"
           },
-          "payment_method": {
+          "sankalp_name": {
             "type": "string",
-            "title": "Payment Method"
+            "title": "Sankalp Name"
           },
-          "amount": {
+          "sankalp_gotra": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sankalp Gotra"
+          },
+          "amount_paid": {
             "type": "number",
-            "title": "Amount"
+            "title": "Amount Paid"
           },
-          "base_currency": {
+          "payment_status": {
             "type": "string",
-            "title": "Base Currency"
+            "title": "Payment Status"
           },
-          "target_currency": {
+          "qr_code_token": {
             "type": "string",
-            "title": "Target Currency"
+            "title": "Qr Code Token"
           },
-          "converted_amount": {
-            "type": "number",
-            "title": "Converted Amount"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          },
-          "status": {
+          "booking_status": {
             "type": "string",
-            "title": "Status"
-          },
-          "refunded_amount": {
-            "type": "number",
-            "title": "Refunded Amount"
-          },
-          "remaining_refundable_balance": {
-            "type": "number",
-            "title": "Remaining Refundable Balance"
-          },
-          "refunds": {
-            "items": {
-              "$ref": "#/components/schemas/RefundSummary"
-            },
-            "type": "array",
-            "title": "Refunds"
+            "title": "Booking Status"
           },
           "created_at": {
             "anyOf": [
@@ -1018,49 +2277,413 @@
         "type": "object",
         "required": [
           "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "base_currency",
-          "target_currency",
-          "converted_amount",
-          "exchange_rate",
-          "status",
-          "refunded_amount",
-          "remaining_refundable_balance"
+          "slot_id",
+          "booking_number",
+          "sankalp_name",
+          "amount_paid",
+          "payment_status",
+          "qr_code_token",
+          "booking_status"
         ],
-        "title": "TransactionDetail"
+        "title": "PoojaBookingResponse"
       },
-      "TransactionSummary": {
+      "PoojaCatalogCreate": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "default_price": {
+            "type": "number",
+            "title": "Default Price",
+            "default": 0.0
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "title": "Duration Minutes",
+            "default": 30
+          },
+          "max_capacity": {
+            "type": "integer",
+            "title": "Max Capacity",
+            "default": 50
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "PoojaCatalogCreate"
+      },
+      "PoojaCatalogResponse": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "default_price": {
+            "type": "number",
+            "title": "Default Price",
+            "default": 0.0
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "title": "Duration Minutes",
+            "default": 30
+          },
+          "max_capacity": {
+            "type": "integer",
+            "title": "Max Capacity",
+            "default": 50
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "id",
+          "is_active"
+        ],
+        "title": "PoojaCatalogResponse"
+      },
+      "PoojaSlotBase": {
+        "properties": {
+          "slot_date": {
+            "type": "string",
+            "title": "Slot Date"
+          },
+          "start_time": {
+            "type": "string",
+            "title": "Start Time"
+          },
+          "end_time": {
+            "type": "string",
+            "title": "End Time"
+          },
+          "capacity": {
+            "type": "integer",
+            "title": "Capacity",
+            "default": 50
+          }
+        },
+        "type": "object",
+        "required": [
+          "slot_date",
+          "start_time",
+          "end_time"
+        ],
+        "title": "PoojaSlotBase"
+      },
+      "PoojaSlotResponse": {
+        "properties": {
+          "slot_date": {
+            "type": "string",
+            "title": "Slot Date"
+          },
+          "start_time": {
+            "type": "string",
+            "title": "Start Time"
+          },
+          "end_time": {
+            "type": "string",
+            "title": "End Time"
+          },
+          "capacity": {
+            "type": "integer",
+            "title": "Capacity",
+            "default": 50
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "pooja_id": {
+            "type": "string",
+            "title": "Pooja Id"
+          },
+          "priest_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priest Id"
+          },
+          "booked_count": {
+            "type": "integer",
+            "title": "Booked Count",
+            "default": 0
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "open"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "slot_date",
+          "start_time",
+          "end_time",
+          "id",
+          "pooja_id"
+        ],
+        "title": "PoojaSlotResponse"
+      },
+      "QRVerifyRequest": {
+        "properties": {
+          "qr_code_token": {
+            "type": "string",
+            "title": "Qr Code Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "qr_code_token"
+        ],
+        "title": "QRVerifyRequest"
+      },
+      "ShiftCloseRequest": {
+        "properties": {
+          "closing_cash_actual": {
+            "type": "number",
+            "title": "Closing Cash Actual"
+          }
+        },
+        "type": "object",
+        "required": [
+          "closing_cash_actual"
+        ],
+        "title": "ShiftCloseRequest"
+      },
+      "ShiftOpenRequest": {
+        "properties": {
+          "counter_number": {
+            "type": "string",
+            "title": "Counter Number",
+            "default": "Counter-1"
+          },
+          "opening_cash": {
+            "type": "number",
+            "title": "Opening Cash",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "title": "ShiftOpenRequest"
+      },
+      "ShiftResponse": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "payment_intent_id": {
+          "cashier_id": {
             "type": "string",
-            "title": "Payment Intent Id"
+            "title": "Cashier Id"
           },
-          "customer_email": {
+          "counter_number": {
             "type": "string",
-            "title": "Customer Email"
+            "title": "Counter Number"
           },
-          "payment_method": {
-            "type": "string",
-            "title": "Payment Method"
+          "opened_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opened At"
           },
-          "amount": {
+          "closed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed At"
+          },
+          "opening_cash": {
             "type": "number",
-            "title": "Amount"
+            "title": "Opening Cash"
           },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
+          "closing_cash_actual": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closing Cash Actual"
+          },
+          "system_calculated": {
+            "type": "number",
+            "title": "System Calculated"
+          },
+          "variance": {
+            "type": "number",
+            "title": "Variance"
           },
           "status": {
             "type": "string",
             "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "cashier_id",
+          "counter_number",
+          "opening_cash",
+          "system_calculated",
+          "variance",
+          "status"
+        ],
+        "title": "ShiftResponse"
+      },
+      "Token": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token"
+        ],
+        "title": "Token"
+      },
+      "UserCreate": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "default": "devotee"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "full_name",
+          "password"
+        ],
+        "title": "UserCreate"
+      },
+      "UserResponse": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "default": "devotee"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
           },
           "created_at": {
             "anyOf": [
@@ -1077,15 +2700,12 @@
         },
         "type": "object",
         "required": [
+          "email",
+          "full_name",
           "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "currency",
-          "status"
+          "is_active"
         ],
-        "title": "TransactionSummary"
+        "title": "UserResponse"
       },
       "ValidationError": {
         "properties": {
@@ -1126,6 +2746,17 @@
           "type"
         ],
         "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "OAuth2PasswordBearer": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "/api/v1/auth/token"
+          }
+        }
       }
     }
   }
