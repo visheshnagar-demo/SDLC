@@ -13,8 +13,8 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
-  componentDidCatch(_error, _errorInfo) {
-    // Error logged for boundary tracking
+  componentDidCatch(error, errorInfo) {
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
   }
 
   render() {
@@ -37,7 +37,7 @@ class ErrorBoundary extends React.Component {
             style={{
               marginTop: "1rem",
               padding: "0.5rem 1rem",
-              backgroundColor: "#4F46E5",
+              backgroundColor: "#0F382C",
               color: "#fff",
               border: "none",
               borderRadius: "0.375rem",
