@@ -7,7 +7,7 @@ import { MemoryRouter } from "react-router-dom";
 // Mock API module
 vi.mock("../services/api", () => ({
   getDashboardAnalytics: vi.fn().mockResolvedValue({
-    total_flowers: 12,
+    total_flowers_in_stock: 12,
     low_stock_count: 2,
     total_orders: 5,
     total_revenue: 450.0,
@@ -47,7 +47,7 @@ describe("Flowers Management System - Dashboard", () => {
       </MemoryRouter>,
     );
     expect(
-      await screen.findByText(/Store Overview & Analytics/i),
+      await screen.findByText(/Florist Executive Dashboard/i),
     ).toBeInTheDocument();
   });
 });
