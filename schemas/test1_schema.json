@@ -1,0 +1,74 @@
+[
+  {
+    "name": "rank",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Tour rank by gross revenue"
+  },
+  {
+    "name": "peak",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Peak rank attained"
+  },
+  {
+    "name": "all_time_peak",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "All-time peak rank"
+  },
+  {
+    "name": "actual_gross",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Actual gross earnings in USD"
+  },
+  {
+    "name": "adjusted_gross_in_2022_dollars",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Adjusted gross revenue in 2022 USD"
+  },
+  {
+    "name": "artist",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Artist or band name"
+  },
+  {
+    "name": "tour_title",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Tour title"
+  },
+  {
+    "name": "year_s",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Tour year or year range"
+  },
+  {
+    "name": "shows",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Number of shows played"
+  },
+  {
+    "name": "average_gross",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Average gross earnings per show"
+  },
+  {
+    "name": "ref",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Source citation or reference"
+  },
+  {
+    "name": "ingested_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Pipeline ingestion timestamp"
+  }
+]
