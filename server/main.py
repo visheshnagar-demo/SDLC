@@ -1,41 +1,78 @@
-import os
-from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
-from server.api.v1 import api_v1_router
-from server.database import init_db
-from server.config import settings
+"""CLI / Cloud Run Job entrypoint for SCRUM-322 ETL Pipeline."""
+
+import sys
+from server.config import config
+from server.pipeline.extract import extract_from_gcs
+from server.pipeline.transform import transform_data
+from server.pipeline.load import load_to_bigquery
+from server.pipeline.observability import PipelineMetrics, structured_logger
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    init_db()
-    yield
+def run_pipeline() -> PipelineMetrics:
+    """
+    Executes the full ETL pipeline:
+    1. Extracts raw CSV from GCS
+    2. Normalizes, cleans, and transforms schema
+    3. Loads verified data into BigQuery
+    """
+    metrics = PipelineMetrics(
+        source_uri=config.gcs_source_uri,
+        target_table=config.full_target_table_id,
+    )
+
+    structured_logger.info(
+        "Starting ETL Pipeline execution",
+        {
+            "run_id": metrics.run_id,
+            "source_uri": config.gcs_source_uri,
+            "target_table": config.full_target_table_id,
+            "write_disposition": config.write_disposition,
+        },
+    )
+
+    try:
+        # Step 1: Extraction
+        raw_df = extract_from_gcs(config.gcs_source_uri)
+        metrics.rows_extracted = len(raw_df)
+
+        # Step 2: Transformation
+        clean_df = transform_data(
+            raw_df,
+            max_error_ratio=config.circuit_breaker_max_error_ratio,
+        )
+        metrics.rows_transformed = len(clean_df)
+
+        # Step 3: Load into BigQuery
+        load_result = load_to_bigquery(
+            df=clean_df,
+            project_id=config.bq_project_id,
+            dataset_id=config.bq_dataset_id,
+            table_id=config.bq_table_id,
+            write_disposition=config.write_disposition,
+            location=config.bq_location,
+        )
+        metrics.rows_loaded = load_result.get("rows_loaded", len(clean_df))
+        metrics.finish(status="SUCCESS")
+
+        structured_logger.info(
+            "ETL Pipeline completed successfully",
+            {"metrics": metrics.to_dict()},
+        )
+        return metrics
+
+    except Exception as exc:
+        metrics.finish(status="FAILED", error_message=str(exc))
+        structured_logger.error(
+            f"ETL Pipeline execution failed: {str(exc)}",
+            {"metrics": metrics.to_dict()},
+            exc_info=True,
+        )
+        raise
 
 
-app = FastAPI(
-    title=settings.PROJECT_NAME,
-    lifespan=lifespan,
-)
-
-allowed_origins_raw = os.getenv(
-    "ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000"
-)
-allowed_origins = [
-    origin.strip() for origin in allowed_origins_raw.split(",") if origin.strip()
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-app.include_router(api_v1_router)
-
-
-@app.get("/health")
-def health_check():
-    return {"status": "ok", "service": "payment-gateway-service"}
+if __name__ == "__main__":
+    try:
+        run_pipeline()
+        sys.exit(0)
+    except Exception:
+        sys.exit(1)

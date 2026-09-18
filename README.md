@@ -1,88 +1,81 @@
-# Project
+# ETL Pipeline: GCS to BigQuery (`viswa`)
 
-## Server
+Automated, idempotent, and resilient ETL pipeline that extracts concert tour records from Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/my_file (1).csv`), applies schema discovery, normalization, validation, and sanitization transformations, and loads structured data into Google BigQuery table `viswa` in dataset `analytics` (project: `upbeat-repeater-477110-q6`).
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+## Architecture & Features
+- **Zero-Scheduler / Cloud Run Job Architecture**: Containerized standalone batch ETL runner that executes and exits cleanly.
+- **Dynamic Schema Discovery & Normalization**: Strips invalid characters, sanitizes column headers to snake_case, converts types (rank, shows, amounts), and standardizes missing values.
+- **Circuit Breaker**: Validates data integrity before loading; halts execution if corruption exceeds threshold.
+- **Idempotent BigQuery Loading**: Uses partitioned batch load jobs with `WRITE_TRUNCATE` / `WRITE_APPEND` disposition.
+- **Cloud Logging & Observability**: Structured JSON logging capturing start/end timestamps, duration, and processed row metrics.
 
-### Setup
+## Schema Definition
+Target Table: `upbeat-repeater-477110-q6.analytics.viswa`
+Partitioning: `_etl_loaded_at` (DAY)
+Clustering: `artist`
 
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+| Field Name | Type | Description |
+| :--- | :--- | :--- |
+| `rank` | INTEGER | Rank of the concert tour |
+| `peak` | STRING | Peak position |
+| `all_time_peak` | STRING | All time peak position |
+| `actual_gross` | STRING | Actual gross revenue |
+| `adjusted_gross_in_2022_dollars` | STRING | Adjusted gross revenue in 2022 dollars |
+| `artist` | STRING | Name of the artist/performer |
+| `tour_title` | STRING | Title of the tour |
+| `years` | STRING | Active year or range of years |
+| `shows` | INTEGER | Total number of shows |
+| `average_gross` | STRING | Average gross revenue per show |
+| `ref` | STRING | Reference citation |
+| `_etl_loaded_at` | TIMESTAMP | UTC ingestion timestamp |
+
+## Project Structure
+```
+├── server/
+│   ├── __init__.py
+│   ├── config.py                 # Configuration and environment mappings
+│   ├── main.py                   # Main CLI / Job entrypoint
+│   ├── pipeline/
+│   │   ├── __init__.py
+│   │   ├── extract.py            # GCS stream extractor
+│   │   ├── transform.py          # Normalization & circuit breaker
+│   │   ├── load.py               # BigQuery batch loader
+│   │   └── observability.py      # Structured JSON logger & metrics
+│   ├── schemas/
+│   │   └── viswa_schema.json     # BigQuery table schema
+│   ├── sql/
+│   │   └── ddl/
+│   │       └── viswa.sql         # BigQuery DDL
+│   └── tests/
+│       ├── __init__.py
+│       ├── test_extract.py
+│       ├── test_transform.py
+│       └── test_load.py
+├── dags/
+│   └── scrum_322_viswa_dag.py    # Airflow DAG definition
+├── tests/
+│   ├── __init__.py
+│   └── test_scrum_322_pipeline.py
+├── Dockerfile                    # Python 3.11 container for Cloud Run Job
+├── env.deploy.json               # Environment configuration for deployment
+├── requirements.txt
+├── .env.example
+└── README.md
 ```
 
-2. Install dependencies:
-```bash
-cd server
-pip install -r requirements.txt
-cd ..
-```
+## Local Development & Testing
 
-### Running Tests
-```bash
-cd server
-python -m pytest -v
-cd ..
-```
+1. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### Starting the Development Server
-```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
+2. Run test suite:
+   ```bash
+   pytest server/tests tests/
+   ```
 
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
-```bash
-# Copy the example environment file
-cp .env.example .env
-```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-
+3. Run pipeline locally:
+   ```bash
+   python -m server.main
+   ```

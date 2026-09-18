@@ -1,188 +1,63 @@
 # OS
 .DS_Store
-.DS_Store?
-._*
 Thumbs.db
 Desktop.ini
-$RECYCLE.BIN/
-*~
-.fuse_hidden*
-.Trash-*
 
 # Secrets & credentials
 .env
 .env.*
 !.env.example
 !.env.sample
-!.env.template
 *.pem
 *.key
 *.cert
-*.crt
-*.p12
-*.pfx
 secrets/
-secret.json
-secrets.json
-credentials.json
-service-account*.json
-*serviceaccount*.json
-token.json
-oauth_token
+*.json
+!env.deploy.json
+!schemas/*.json
+!dbt_project.yml
+!profiles.yml.example
 
-# IDE
-.vscode/
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-*.code-workspace
-.history/
-.idea/
-*.iml
-*.swp
-*.swo
-
-# Python — bytecode & packaging
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-*.pyc
-*.pyo
-*.pyd
+*.so
 .Python
+build/
 develop-eggs/
+dist/
 downloads/
 eggs/
 .eggs/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
 # Virtual environments
 .venv/
 venv/
 env/
 ENV/
-env.bak/
-venv.bak/
-.virtualenv/
-.python-version
 
-# Testing & coverage
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-.hypothesis/
-.pytest_cache/
-htmlcov/
-pytestdebug.log
-
-# Type checkers
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.pytype/
-
-# Misc Python tooling
-pip-log.txt
-Pipfile.lock
-celerybeat-schedule
-celerybeat.pid
-
-# Build output
-build/
-dist/
-
-# Databases
-*.sqlite
-*.sqlite3
-*.db
-*.db-shm
-*.db-wal
-test.db
-dump.rdb
-*.rdb
-
-# Docker / Cloud
-docker-compose.override.yml
-.dockerignore
-.gcloudignore
-application_default_credentials.json
-
-# Agent-internal files
-.backend_validated
-.project_file_plan.json
-test_acceptance_qa.py
-
-# Miscellaneous
-*.tmp
-*.temp
-*.bak
-*.orig
-*.rej
-*.patch
-.scratch/
-scratch/
-tmp/
-temp/
+# Airflow
+airflow.db
+airflow.cfg
+unittests.cfg
 *.log
 logs/
 
-# Frontend / Node.js
-# Node.js / npm
-node_modules/
-jspm_packages/
-.npm/
-.pnpm-store/
-.node_repl_history
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-dist-ssr/
-out/
-.output/
-# Cache
-.cache/
-.parcel-cache/
-.eslintcache
-.stylelintcache
-*.tsbuildinfo
-.turbo/
-# Coverage
-coverage/
-*.lcov
-.nyc_output/
-# React / Vite
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-storybook-static/
-.storybook/node_modules/
-.vite/
-*.vite_build.log
-# Testing & QA
-test-results/
-playwright-report/
-playwright/.cache/
-cypress/videos/
-cypress/screenshots/
-cypress/downloads/
-.vitest/
-*.snap
-.vite_build.log
-.npm_install.log
-.vitest_run.log
-.frontend_validated
+# dbt
+target/
+dbt_packages/
+logs/
 
-# Frontend build artifacts (auto-added by Frontend Agent)
-client/node_modules/
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Misc
+*.tmp
+*.temp
+scratch/
