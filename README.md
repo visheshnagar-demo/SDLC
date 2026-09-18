@@ -1,88 +1,63 @@
-# Project
+# GCS to BigQuery ETL Pipeline (SCRUM-321)
 
-## Server
+Production-grade ETL pipeline ingesting CSV data from Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/my_file (1).csv`) and loading transformed records into Google BigQuery table `upbeat-repeater-477110-q6.analytics.viswa`.
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+## Architecture Overview
+- **Source**: Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/my_file (1).csv`)
+- **Transformation Engine**: Python 3.11 / Pandas / Standard ETL sanitization & enrichment
+  - Header name normalization & sanitization
+  - Type casting and null representation normalization
+  - Synthetic UUID v4 Primary Key injection (`record_id`)
+  - Deterministic SHA256 record hashing (`data_hash`)
+  - Timestamp auditing (`ingested_at`, `source_file`)
+- **Target Sink**: Google BigQuery (`upbeat-repeater-477110-q6.analytics.viswa`)
+  - Partitioned by `DATE(ingested_at)`
+  - Clustered by `record_id`
+- **Orchestration / Execution Modes**:
+  1. **Serverless Auto-Boot Container (`app.py` & `Dockerfile`)**: Boots on Cloud Run (port 8080) and immediately executes the ETL pipeline asynchronously, providing health & execution observability via HTTP endpoints.
+  2. **Standalone Runner (`pipeline/run_gcs_to_bigquery_viswa.py`)**: Can be invoked directly via CLI.
+  3. **Airflow DAG (`dags/gcs_to_bigquery_viswa_dag.py`)**: Decoupled staging workflow with GCP operators.
 
-### Setup
-
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+## Directory Structure
+```
+├── app.py                                    # Cloud Run Auto-Boot entrypoint & healthcheck HTTP server
+├── Dockerfile                                # Container image definition (Python 3.11)
+├── requirements.txt                          # Dependencies
+├── README.md                                 # Pipeline documentation
+├── dags/
+│   └── gcs_to_bigquery_viswa_dag.py         # Airflow DAG (Composer compatible)
+├── pipeline/
+│   ├── run_gcs_to_bigquery_viswa.py          # Standalone ETL pipeline runner
+│   └── gcs_to_bigquery_viswa_README.md
+├── schemas/
+│   └── viswa_schema.json                     # BigQuery table JSON schema
+├── sql/
+│   └── ddl/
+│       └── viswa.sql                         # BigQuery DDL with partition & cluster keys
+└── tests/
+    └── test_gcs_to_bigquery_viswa_pipeline.py# Automated pytest test suite
 ```
 
-2. Install dependencies:
+## Running Locally
+
+### 1. Install Dependencies
 ```bash
-cd server
 pip install -r requirements.txt
-cd ..
 ```
 
-### Running Tests
+### 2. Execute Standalone ETL Runner
 ```bash
-cd server
-python -m pytest -v
-cd ..
+python -m pipeline.run_gcs_to_bigquery_viswa
 ```
 
-### Starting the Development Server
+### 3. Run Validation Tests
 ```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+pytest tests/ -v
 ```
 
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
+### 4. Run Auto-Boot HTTP Server
 ```bash
-# Copy the example environment file
-cp .env.example .env
+python app.py
 ```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-
+- GET `/healthz` or `/status`: Returns pipeline run execution status and record metrics.
+- POST `/run`: Triggers a new pipeline run.
