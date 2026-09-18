@@ -1,162 +1,112 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Payment Gateway Service",
-    "version": "0.1.0"
+    "title": "Mobile Management System API",
+    "description": "Centralized RESTful API for managing mobile assets, device assignments, security policies, and remote commands.",
+    "version": "1.0.0"
   },
   "paths": {
-    "/api/v1/payments/checkout-session": {
-      "post": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Create Session",
-        "operationId": "create_session_api_v1_payments_checkout_session_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CheckoutSessionRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CheckoutSessionResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/digital-wallet": {
-      "post": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Pay Digital Wallet",
-        "operationId": "pay_digital_wallet_api_v1_payments_digital_wallet_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DigitalWalletPaymentRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DigitalWalletPaymentResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/rates": {
+    "/api/v1/health": {
       "get": {
         "tags": [
-          "payments"
+          "Health"
         ],
-        "summary": "Get Rates",
-        "operationId": "get_rates_api_v1_payments_rates_get",
+        "summary": "Health Check",
+        "operationId": "health_check_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login",
+        "operationId": "login_api_v1_auth_login_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Get Me",
+        "operationId": "get_me_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRead"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/devices": {
+      "get": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "List Devices",
+        "operationId": "list_devices_api_v1_devices_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "parameters": [
           {
-            "name": "base_currency",
+            "name": "skip",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string",
-              "description": "Base currency code",
-              "default": "USD",
-              "title": "Base Currency"
-            },
-            "description": "Base currency code"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExchangeRatesResponse"
-                }
-              }
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
             }
           },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "List Transactions",
-        "operationId": "list_transactions_api_v1_payments_transactions_get",
-        "parameters": [
           {
-            "name": "search",
+            "name": "limit",
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Search transaction ID or email",
-              "title": "Search"
-            },
-            "description": "Search transaction ID or email"
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
           },
           {
             "name": "status",
@@ -171,13 +121,11 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by transaction status",
               "title": "Status"
-            },
-            "description": "Filter by transaction status"
+            }
           },
           {
-            "name": "currency",
+            "name": "os_type",
             "in": "query",
             "required": false,
             "schema": {
@@ -189,32 +137,23 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by currency",
-              "title": "Currency"
-            },
-            "description": "Filter by currency"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
+              "title": "Os Type"
             }
           },
           {
-            "name": "limit",
+            "name": "search",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
             }
           }
         ],
@@ -226,92 +165,9 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TransactionSummary"
+                    "$ref": "#/components/schemas/DeviceRead"
                   },
-                  "title": "Response List Transactions Api V1 Payments Transactions Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions/{transaction_id}": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Get Transaction",
-        "operationId": "get_transaction_api_v1_payments_transactions__transaction_id__get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Transaction Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TransactionDetail"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/refunds": {
-      "post": {
-        "tags": [
-          "refunds"
-        ],
-        "summary": "Create Refund Endpoint",
-        "operationId": "create_refund_endpoint_api_v1_refunds_post",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RefundRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RefundSummary"
+                  "title": "Response List Devices Api V1 Devices Get"
                 }
               }
             }
@@ -328,66 +184,34 @@
           }
         }
       },
-      "get": {
+      "post": {
         "tags": [
-          "refunds"
+          "Devices"
         ],
-        "summary": "List Refunds Endpoint",
-        "operationId": "list_refunds_endpoint_api_v1_refunds_get",
-        "parameters": [
+        "summary": "Create Device",
+        "operationId": "create_device_api_v1_devices_post",
+        "security": [
           {
-            "name": "transaction_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
+            "OAuth2PasswordBearer": []
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceCreate"
+              }
+            }
+          }
+        },
         "responses": {
-          "200": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RefundSummary"
-                  },
-                  "title": "Response List Refunds Endpoint Api V1 Refunds Get"
+                  "$ref": "#/components/schemas/DeviceRead"
                 }
               }
             }
@@ -405,28 +229,26 @@
         }
       }
     },
-    "/api/v1/webhooks/stripe": {
-      "post": {
+    "/api/v1/devices/{id}": {
+      "get": {
         "tags": [
-          "webhooks"
+          "Devices"
         ],
-        "summary": "Handle Stripe Webhook",
-        "operationId": "handle_stripe_webhook_api_v1_webhooks_stripe_post",
+        "summary": "Get Device",
+        "operationId": "get_device_api_v1_devices__id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "parameters": [
           {
-            "name": "stripe-signature",
-            "in": "header",
-            "required": false,
+            "name": "id",
+            "in": "path",
+            "required": true,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Stripe-Signature"
+              "type": "string",
+              "title": "Id"
             }
           }
         ],
@@ -435,7 +257,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceRead"
+                }
               }
             }
           },
@@ -450,52 +274,632 @@
             }
           }
         }
+      },
+      "put": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Update Device",
+        "operationId": "update_device_api_v1_devices__id__put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Decommission Device",
+        "operationId": "decommission_device_api_v1_devices__id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices/{id}/assign": {
+      "post": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Assign Device",
+        "operationId": "assign_device_api_v1_devices__id__assign_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceAssign"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceAssignmentRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices/{id}/unassign": {
+      "post": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Unassign Device",
+        "operationId": "unassign_device_api_v1_devices__id__unassign_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/DeviceUnassign"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Unassign In"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceAssignmentRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices/{id}/assignments": {
+      "get": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Get Device Assignments",
+        "operationId": "get_device_assignments_api_v1_devices__id__assignments_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceAssignmentRead"
+                  },
+                  "title": "Response Get Device Assignments Api V1 Devices  Id  Assignments Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices/{id}/actions": {
+      "post": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Trigger Remote Action",
+        "operationId": "trigger_remote_action_api_v1_devices__id__actions_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoteActionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteActionRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "List Users",
+        "operationId": "list_users_api_v1_users_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "department",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Department"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserRead"
+                  },
+                  "title": "Response List Users Api V1 Users Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Create User",
+        "operationId": "create_user_api_v1_users_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/policies": {
+      "get": {
+        "tags": [
+          "Security Policies"
+        ],
+        "summary": "Get Policies",
+        "operationId": "get_policies_api_v1_policies_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SecurityPolicyRead"
+                  },
+                  "type": "array",
+                  "title": "Response Get Policies Api V1 Policies Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Security Policies"
+        ],
+        "summary": "Create Policy",
+        "operationId": "create_policy_api_v1_policies_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SecurityPolicyCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityPolicyRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/policies/{id}": {
+      "put": {
+        "tags": [
+          "Security Policies"
+        ],
+        "summary": "Update Policy",
+        "operationId": "update_policy_api_v1_policies__id__put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SecurityPolicyUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityPolicyRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/dashboard": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Get Dashboard",
+        "operationId": "get_dashboard_api_v1_analytics_dashboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardAnalytics"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/api/v1/audit-logs": {
       "get": {
         "tags": [
-          "audit-logs"
+          "Audit Logs"
         ],
-        "summary": "List Audit Logs",
-        "operationId": "list_audit_logs_api_v1_audit_logs_get",
+        "summary": "Get Audit Logs",
+        "operationId": "get_audit_logs_api_v1_audit_logs_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
-          },
-          {
-            "name": "event_type",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by event type",
-              "title": "Event Type"
-            },
-            "description": "Filter by event type"
-          },
           {
             "name": "skip",
             "in": "query",
@@ -513,10 +917,58 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 50,
               "title": "Limit"
+            }
+          },
+          {
+            "name": "actor_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Actor Id"
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Action"
+            }
+          },
+          {
+            "name": "resource_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Resource Type"
             }
           }
         ],
@@ -528,9 +980,9 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AuditLogEntry"
+                    "$ref": "#/components/schemas/AuditLogRead"
                   },
-                  "title": "Response List Audit Logs Api V1 Audit Logs Get"
+                  "title": "Response Get Audit Logs Api V1 Audit Logs Get"
                 }
               }
             }
@@ -542,22 +994,6 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/health": {
-      "get": {
-        "summary": "Health Check",
-        "operationId": "health_check_health_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
               }
             }
           }
@@ -567,13 +1003,13 @@
   },
   "components": {
     "schemas": {
-      "AuditLogEntry": {
+      "AuditLogRead": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "transaction_id": {
+          "actor_id": {
             "anyOf": [
               {
                 "type": "string"
@@ -582,22 +1018,136 @@
                 "type": "null"
               }
             ],
-            "title": "Transaction Id"
+            "title": "Actor Id"
           },
-          "event_type": {
+          "action": {
             "type": "string",
-            "title": "Event Type"
+            "title": "Action"
           },
-          "ip_address": {
+          "resource_type": {
             "type": "string",
-            "title": "Ip Address"
+            "title": "Resource Type"
           },
-          "masked_payload": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Masked Payload"
+          "resource_id": {
+            "type": "string",
+            "title": "Resource Id"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
           },
           "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "action",
+          "resource_type",
+          "resource_id",
+          "created_at"
+        ],
+        "title": "AuditLogRead"
+      },
+      "DashboardAnalytics": {
+        "properties": {
+          "total_devices": {
+            "type": "integer",
+            "title": "Total Devices"
+          },
+          "active_assignments": {
+            "type": "integer",
+            "title": "Active Assignments"
+          },
+          "available_devices": {
+            "type": "integer",
+            "title": "Available Devices"
+          },
+          "non_compliant_count": {
+            "type": "integer",
+            "title": "Non Compliant Count"
+          },
+          "os_distribution": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Os Distribution"
+          },
+          "status_distribution": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Status Distribution"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_devices",
+          "active_assignments",
+          "available_devices",
+          "non_compliant_count",
+          "os_distribution",
+          "status_distribution"
+        ],
+        "title": "DashboardAnalytics"
+      },
+      "DeviceAssign": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "title": "DeviceAssign"
+      },
+      "DeviceAssignmentRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "device_id": {
+            "type": "string",
+            "title": "Device Id"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "assigned_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Assigned At"
+          },
+          "returned_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -607,151 +1157,9 @@
                 "type": "null"
               }
             ],
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "event_type",
-          "ip_address",
-          "masked_payload"
-        ],
-        "title": "AuditLogEntry"
-      },
-      "CartItem": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
+            "title": "Returned At"
           },
-          "quantity": {
-            "type": "integer",
-            "title": "Quantity",
-            "default": 1
-          },
-          "unit_price": {
-            "type": "number",
-            "title": "Unit Price"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "unit_price"
-        ],
-        "title": "CartItem"
-      },
-      "CheckoutSessionRequest": {
-        "properties": {
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount",
-            "description": "Amount in base currency"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "description": "Settlement/target currency",
-            "default": "USD"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "items": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/CartItem"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Items"
-          }
-        },
-        "type": "object",
-        "required": [
-          "amount",
-          "customer_email"
-        ],
-        "title": "CheckoutSessionRequest"
-      },
-      "CheckoutSessionResponse": {
-        "properties": {
-          "session_id": {
-            "type": "string",
-            "title": "Session Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "client_secret": {
-            "type": "string",
-            "title": "Client Secret"
-          },
-          "base_amount": {
-            "type": "number",
-            "title": "Base Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_amount": {
-            "type": "number",
-            "title": "Target Amount"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          }
-        },
-        "type": "object",
-        "required": [
-          "session_id",
-          "payment_intent_id",
-          "client_secret",
-          "base_amount",
-          "base_currency",
-          "target_amount",
-          "target_currency",
-          "exchange_rate"
-        ],
-        "title": "CheckoutSessionResponse"
-      },
-      "DigitalWalletPaymentRequest": {
-        "properties": {
-          "wallet_type": {
-            "type": "string",
-            "title": "Wallet Type",
-            "description": "apple_pay or google_pay"
-          },
-          "payment_token": {
-            "type": "string",
-            "title": "Payment Token"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "default": "USD"
-          },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
-          },
-          "customer_email": {
+          "notes": {
             "anyOf": [
               {
                 "type": "string"
@@ -760,81 +1168,306 @@
                 "type": "null"
               }
             ],
-            "title": "Customer Email",
-            "default": "customer@example.com"
+            "title": "Notes"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
-          "wallet_type",
-          "payment_token",
-          "amount"
+          "id",
+          "device_id",
+          "user_id",
+          "assigned_at",
+          "created_at",
+          "updated_at"
         ],
-        "title": "DigitalWalletPaymentRequest"
+        "title": "DeviceAssignmentRead"
       },
-      "DigitalWalletPaymentResponse": {
+      "DeviceCreate": {
         "properties": {
-          "transaction_id": {
+          "serial_number": {
             "type": "string",
-            "title": "Transaction Id"
+            "title": "Serial Number"
           },
-          "payment_intent_id": {
+          "imei": {
             "type": "string",
-            "title": "Payment Intent Id"
+            "title": "Imei"
           },
-          "wallet_type": {
+          "model": {
             "type": "string",
-            "title": "Wallet Type"
+            "title": "Model"
           },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "currency": {
+          "manufacturer": {
             "type": "string",
-            "title": "Currency"
+            "title": "Manufacturer"
+          },
+          "os_type": {
+            "type": "string",
+            "title": "Os Type"
+          },
+          "os_version": {
+            "type": "string",
+            "title": "Os Version"
+          },
+          "ownership_type": {
+            "type": "string",
+            "title": "Ownership Type",
+            "default": "CORPORATE"
           },
           "status": {
             "type": "string",
-            "title": "Status"
+            "title": "Status",
+            "default": "AVAILABLE"
+          },
+          "is_encrypted": {
+            "type": "boolean",
+            "title": "Is Encrypted",
+            "default": true
+          },
+          "passcode_enforced": {
+            "type": "boolean",
+            "title": "Passcode Enforced",
+            "default": true
+          },
+          "is_compliant": {
+            "type": "boolean",
+            "title": "Is Compliant",
+            "default": true
           }
         },
         "type": "object",
         "required": [
-          "transaction_id",
-          "payment_intent_id",
-          "wallet_type",
-          "amount",
-          "currency",
-          "status"
+          "serial_number",
+          "imei",
+          "model",
+          "manufacturer",
+          "os_type",
+          "os_version"
         ],
-        "title": "DigitalWalletPaymentResponse"
+        "title": "DeviceCreate"
       },
-      "ExchangeRatesResponse": {
+      "DeviceRead": {
         "properties": {
-          "base_currency": {
+          "serial_number": {
             "type": "string",
-            "title": "Base Currency"
+            "title": "Serial Number"
           },
-          "rates": {
-            "additionalProperties": {
-              "type": "number"
-            },
-            "type": "object",
-            "title": "Rates"
-          },
-          "timestamp": {
+          "imei": {
             "type": "string",
-            "title": "Timestamp"
+            "title": "Imei"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "manufacturer": {
+            "type": "string",
+            "title": "Manufacturer"
+          },
+          "os_type": {
+            "type": "string",
+            "title": "Os Type"
+          },
+          "os_version": {
+            "type": "string",
+            "title": "Os Version"
+          },
+          "ownership_type": {
+            "type": "string",
+            "title": "Ownership Type",
+            "default": "CORPORATE"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "AVAILABLE"
+          },
+          "is_encrypted": {
+            "type": "boolean",
+            "title": "Is Encrypted",
+            "default": true
+          },
+          "passcode_enforced": {
+            "type": "boolean",
+            "title": "Passcode Enforced",
+            "default": true
+          },
+          "is_compliant": {
+            "type": "boolean",
+            "title": "Is Compliant",
+            "default": true
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
-          "base_currency",
-          "rates",
-          "timestamp"
+          "serial_number",
+          "imei",
+          "model",
+          "manufacturer",
+          "os_type",
+          "os_version",
+          "id",
+          "created_at",
+          "updated_at"
         ],
-        "title": "ExchangeRatesResponse"
+        "title": "DeviceRead"
+      },
+      "DeviceUnassign": {
+        "properties": {
+          "status_after_unassign": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status After Unassign",
+            "default": "AVAILABLE"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "title": "DeviceUnassign"
+      },
+      "DeviceUpdate": {
+        "properties": {
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "manufacturer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manufacturer"
+          },
+          "os_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Os Type"
+          },
+          "os_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Os Version"
+          },
+          "ownership_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ownership Type"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "is_encrypted": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Encrypted"
+          },
+          "passcode_enforced": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passcode Enforced"
+          },
+          "is_compliant": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Compliant"
+          }
+        },
+        "type": "object",
+        "title": "DeviceUpdate"
       },
       "HTTPValidationError": {
         "properties": {
@@ -849,22 +1482,13 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "RefundRequest": {
+      "RemoteActionCreate": {
         "properties": {
-          "transaction_id": {
+          "action_type": {
             "type": "string",
-            "title": "Transaction Id"
-          },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
+            "title": "Action Type"
           },
           "reason": {
-            "type": "string",
-            "title": "Reason"
-          },
-          "memo": {
             "anyOf": [
               {
                 "type": "string"
@@ -873,40 +1497,38 @@
                 "type": "null"
               }
             ],
-            "title": "Memo"
+            "title": "Reason"
           }
         },
         "type": "object",
         "required": [
-          "transaction_id",
-          "amount",
-          "reason"
+          "action_type"
         ],
-        "title": "RefundRequest"
+        "title": "RemoteActionCreate"
       },
-      "RefundSummary": {
+      "RemoteActionRead": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "transaction_id": {
+          "device_id": {
             "type": "string",
-            "title": "Transaction Id"
+            "title": "Device Id"
           },
-          "refund_amount": {
-            "type": "number",
-            "title": "Refund Amount"
-          },
-          "currency": {
+          "initiated_by_user_id": {
             "type": "string",
-            "title": "Currency"
+            "title": "Initiated By User Id"
+          },
+          "action_type": {
+            "type": "string",
+            "title": "Action Type"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
           },
           "reason": {
-            "type": "string",
-            "title": "Reason"
-          },
-          "memo": {
             "anyOf": [
               {
                 "type": "string"
@@ -915,13 +1537,9 @@
                 "type": "null"
               }
             ],
-            "title": "Memo"
+            "title": "Reason"
           },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "created_at": {
+          "executed_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -931,161 +1549,340 @@
                 "type": "null"
               }
             ],
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "transaction_id",
-          "refund_amount",
-          "currency",
-          "reason",
-          "status"
-        ],
-        "title": "RefundSummary"
-      },
-      "TransactionDetail": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "payment_method": {
-            "type": "string",
-            "title": "Payment Method"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "converted_amount": {
-            "type": "number",
-            "title": "Converted Amount"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "refunded_amount": {
-            "type": "number",
-            "title": "Refunded Amount"
-          },
-          "remaining_refundable_balance": {
-            "type": "number",
-            "title": "Remaining Refundable Balance"
-          },
-          "refunds": {
-            "items": {
-              "$ref": "#/components/schemas/RefundSummary"
-            },
-            "type": "array",
-            "title": "Refunds"
+            "title": "Executed At"
           },
           "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "base_currency",
-          "target_currency",
-          "converted_amount",
-          "exchange_rate",
+          "device_id",
+          "initiated_by_user_id",
+          "action_type",
           "status",
-          "refunded_amount",
-          "remaining_refundable_balance"
+          "created_at"
         ],
-        "title": "TransactionDetail"
+        "title": "RemoteActionRead"
       },
-      "TransactionSummary": {
+      "SecurityPolicyCreate": {
         "properties": {
-          "id": {
+          "name": {
             "type": "string",
-            "title": "Id"
+            "title": "Name"
           },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "payment_method": {
-            "type": "string",
-            "title": "Payment Method"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "created_at": {
+          "description": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Created At"
+            "title": "Description"
+          },
+          "min_os_version_ios": {
+            "type": "string",
+            "title": "Min Os Version Ios",
+            "default": "16.0"
+          },
+          "min_os_version_android": {
+            "type": "string",
+            "title": "Min Os Version Android",
+            "default": "13.0"
+          },
+          "require_encryption": {
+            "type": "boolean",
+            "title": "Require Encryption",
+            "default": true
+          },
+          "require_passcode": {
+            "type": "boolean",
+            "title": "Require Passcode",
+            "default": true
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
           }
         },
         "type": "object",
         "required": [
-          "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "currency",
-          "status"
+          "name"
         ],
-        "title": "TransactionSummary"
+        "title": "SecurityPolicyCreate"
+      },
+      "SecurityPolicyRead": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "min_os_version_ios": {
+            "type": "string",
+            "title": "Min Os Version Ios",
+            "default": "16.0"
+          },
+          "min_os_version_android": {
+            "type": "string",
+            "title": "Min Os Version Android",
+            "default": "13.0"
+          },
+          "require_encryption": {
+            "type": "boolean",
+            "title": "Require Encryption",
+            "default": true
+          },
+          "require_passcode": {
+            "type": "boolean",
+            "title": "Require Passcode",
+            "default": true
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "SecurityPolicyRead"
+      },
+      "SecurityPolicyUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "min_os_version_ios": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Os Version Ios"
+          },
+          "min_os_version_android": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Os Version Android"
+          },
+          "require_encryption": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Require Encryption"
+          },
+          "require_passcode": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Require Passcode"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "title": "SecurityPolicyUpdate"
+      },
+      "Token": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token"
+        ],
+        "title": "Token"
+      },
+      "UserCreate": {
+        "properties": {
+          "employee_id": {
+            "type": "string",
+            "title": "Employee Id"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "department": {
+            "type": "string",
+            "title": "Department"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "default": "EMPLOYEE"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "employee_id",
+          "email",
+          "full_name",
+          "department",
+          "password"
+        ],
+        "title": "UserCreate"
+      },
+      "UserRead": {
+        "properties": {
+          "employee_id": {
+            "type": "string",
+            "title": "Employee Id"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "department": {
+            "type": "string",
+            "title": "Department"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "default": "EMPLOYEE"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "employee_id",
+          "email",
+          "full_name",
+          "department",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "UserRead"
       },
       "ValidationError": {
         "properties": {
@@ -1126,6 +1923,17 @@
           "type"
         ],
         "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "OAuth2PasswordBearer": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "/api/v1/auth/login"
+          }
+        }
       }
     }
   }

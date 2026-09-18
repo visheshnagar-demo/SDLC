@@ -1,4 +1,53 @@
-# Project
+# Mobile Management System (SCRUM-326)
+
+A central administrative mobile device management (MDM) portal and RESTful API backend built with Python, FastAPI, SQLAlchemy, and React.
+
+### Prerequisites & Setup
+- Python 3.11+
+- Virtual environment (`venv`)
+
+```bash
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r server/requirements.txt
+```
+
+### Running the Backend Development Server
+```bash
+# Start FastAPI application on port 8000
+uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+```
+API Documentation is available at `http://localhost:8000/docs` (Swagger UI).
+
+### Running Tests
+```bash
+pytest server/tests
+```
+
+## Full-Stack Local Development
+
+To run the complete system locally:
+
+1. **Backend Server**:
+   Start the FastAPI server on port 8000:
+   ```bash
+   uvicorn server.main:app --reload --port 8000
+   ```
+
+2. **Frontend Dev Server**:
+   In the `client/` directory, install packages and start Vite on port 5173:
+   ```bash
+   cd client
+   npm install
+   npm run dev
+   ```
+
+3. **Default Test Accounts**:
+   - **Regular Employee**: `test@example.com` / `testpassword`
+   - **IT Administrator**: `admin@example.com` / `adminpassword`
 
 ## Server
 
