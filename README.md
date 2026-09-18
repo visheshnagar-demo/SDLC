@@ -1,4 +1,64 @@
-# Project
+# Simple Todo List Application
+
+A full-stack task management application with a FastAPI backend and React frontend.
+
+## Features
+- **Task Creation**: Add tasks with title and optional description.
+- **Task List View**: View all tasks sorted chronologically.
+- **Completion Toggle**: Easily toggle task completion status.
+- **Task Deletion**: Permanently remove tasks.
+- **Filter & Search**: Filter by status (All, Active, Completed) and search tasks by keyword.
+
+---
+
+### Prerequisites
+- Python 3.11+
+- Virtualenv / pip
+
+### Setup Instructions
+1. Navigate to the server directory:
+   ```bash
+   cd server
+   ```
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Run tests:
+   ```bash
+   pytest
+   ```
+5. Start the development server:
+   ```bash
+   uvicorn server.main:app --reload --port 8000
+   ```
+
+---
+
+## Full-Stack Local Development
+
+### 1. Run Backend
+```bash
+cd server
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn server.main:app --reload --port 8000
+```
+Backend API will be accessible at: `http://localhost:8000` (API Docs at `http://localhost:8000/docs`).
+
+### 2. Run Frontend
+```bash
+cd client
+npm install
+npm run dev
+```
+Frontend application will be accessible at: `http://localhost:5173`.
 
 ## Server
 

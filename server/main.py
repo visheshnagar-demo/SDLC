@@ -2,9 +2,9 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from server.api.v1 import api_v1_router
+
 from server.database import init_db
-from server.config import settings
+from server.routers.todos import router as todos_router
 
 
 @asynccontextmanager
@@ -14,28 +14,33 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
+    title="Simple Todo List API",
+    version="1.0.0",
+    description="RESTful API for managing todo items",
     lifespan=lifespan,
 )
 
-allowed_origins_raw = os.getenv(
-    "ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000"
-)
-allowed_origins = [
-    origin.strip() for origin in allowed_origins_raw.split(",") if origin.strip()
+# CORS Middleware
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000"
+    ).split(",")
+    if origin.strip()
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(api_v1_router)
+# Routers
+app.include_router(todos_router)
 
 
-@app.get("/health")
+@app.get("/health", tags=["health"])
 def health_check():
-    return {"status": "ok", "service": "payment-gateway-service"}
+    return {"status": "healthy"}
