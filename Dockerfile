@@ -5,4 +5,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 # Cloud Run Job: runs the pipeline script directly, exits on completion.
 # No HTTP port exposed — this is a batch Job, not a Service.
-CMD ["python", "-m", "pipeline.run_test1_etl"]
+CMD ["python", "-m", "pipeline.run_gcs_to_bq_test1"]

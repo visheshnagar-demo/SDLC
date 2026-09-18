@@ -1,152 +1,106 @@
 {
-  "pipeline_id": "test1_etl",
-  "source_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
-  "target_table": "upbeat-repeater-477110-q6.analytics.test1",
+  "pipeline_id": "gcs_to_bq_test1",
+  "source": {
+    "type": "gcs",
+    "bucket": "sdlc-workspec-store",
+    "prefix": "etl/data/my_file (1).csv",
+    "file_format": "csv"
+  },
+  "target": {
+    "type": "bigquery",
+    "database": "upbeat-repeater-477110-q6",
+    "dataset": "analytics",
+    "table_name": "test1",
+    "write_mode": "overwrite"
+  },
   "columns": [
     {
-      "name": "Rank",
       "source_name": "Rank",
       "target_name": "rank",
+      "source_column": "Rank",
+      "target_column": "rank",
       "target_type": "INTEGER",
       "transform": "to_integer"
     },
     {
-      "name": "Peak",
       "source_name": "Peak",
       "target_name": "peak",
+      "source_column": "Peak",
+      "target_column": "peak",
       "target_type": "INTEGER",
-      "transform": "strip_footnotes_to_int"
+      "transform": "extract_digits_to_integer"
     },
     {
-      "name": "All Time Peak",
       "source_name": "All Time Peak",
       "target_name": "all_time_peak",
+      "source_column": "All Time Peak",
+      "target_column": "all_time_peak",
       "target_type": "INTEGER",
-      "transform": "strip_footnotes_to_int"
+      "transform": "extract_digits_to_integer"
     },
     {
-      "name": "Actual\u00a0gross",
       "source_name": "Actual\u00a0gross",
       "target_name": "actual_gross",
+      "source_column": "Actual\u00a0gross",
+      "target_column": "actual_gross",
       "target_type": "INTEGER",
-      "transform": "clean_currency_to_int"
+      "transform": "clean_currency_to_integer"
     },
     {
-      "name": "Adjusted\u00a0gross (in 2022 dollars)",
       "source_name": "Adjusted\u00a0gross (in 2022 dollars)",
       "target_name": "adjusted_gross_in_2022_dollars",
+      "source_column": "Adjusted\u00a0gross (in 2022 dollars)",
+      "target_column": "adjusted_gross_in_2022_dollars",
       "target_type": "INTEGER",
-      "transform": "clean_currency_to_int"
+      "transform": "clean_currency_to_integer"
     },
     {
-      "name": "Artist",
       "source_name": "Artist",
       "target_name": "artist",
+      "source_column": "Artist",
+      "target_column": "artist",
       "target_type": "STRING",
-      "transform": "trim_string"
+      "transform": "strip_string"
     },
     {
-      "name": "Tour title",
       "source_name": "Tour title",
       "target_name": "tour_title",
+      "source_column": "Tour title",
+      "target_column": "tour_title",
       "target_type": "STRING",
-      "transform": "trim_string"
+      "transform": "clean_text"
     },
     {
-      "name": "Year(s)",
       "source_name": "Year(s)",
       "target_name": "year_s",
+      "source_column": "Year(s)",
+      "target_column": "year_s",
       "target_type": "STRING",
-      "transform": "trim_string"
+      "transform": "strip_string"
     },
     {
-      "name": "Shows",
       "source_name": "Shows",
       "target_name": "shows",
+      "source_column": "Shows",
+      "target_column": "shows",
       "target_type": "INTEGER",
       "transform": "to_integer"
     },
     {
-      "name": "Average gross",
       "source_name": "Average gross",
       "target_name": "average_gross",
+      "source_column": "Average gross",
+      "target_column": "average_gross",
       "target_type": "INTEGER",
-      "transform": "clean_currency_to_int"
+      "transform": "clean_currency_to_integer"
     },
     {
-      "name": "Ref.",
       "source_name": "Ref.",
       "target_name": "ref",
+      "source_column": "Ref.",
+      "target_column": "ref",
       "target_type": "STRING",
-      "transform": "trim_string"
-    }
-  ],
-  "source_columns": [
-    {
-      "name": "Rank",
-      "target_name": "rank",
-      "target_type": "INTEGER",
-      "transform": "to_integer"
-    },
-    {
-      "name": "Peak",
-      "target_name": "peak",
-      "target_type": "INTEGER",
-      "transform": "strip_footnotes_to_int"
-    },
-    {
-      "name": "All Time Peak",
-      "target_name": "all_time_peak",
-      "target_type": "INTEGER",
-      "transform": "strip_footnotes_to_int"
-    },
-    {
-      "name": "Actual\u00a0gross",
-      "target_name": "actual_gross",
-      "target_type": "INTEGER",
-      "transform": "clean_currency_to_int"
-    },
-    {
-      "name": "Adjusted\u00a0gross (in 2022 dollars)",
-      "target_name": "adjusted_gross_in_2022_dollars",
-      "target_type": "INTEGER",
-      "transform": "clean_currency_to_int"
-    },
-    {
-      "name": "Artist",
-      "target_name": "artist",
-      "target_type": "STRING",
-      "transform": "trim_string"
-    },
-    {
-      "name": "Tour title",
-      "target_name": "tour_title",
-      "target_type": "STRING",
-      "transform": "trim_string"
-    },
-    {
-      "name": "Year(s)",
-      "target_name": "year_s",
-      "target_type": "STRING",
-      "transform": "trim_string"
-    },
-    {
-      "name": "Shows",
-      "target_name": "shows",
-      "target_type": "INTEGER",
-      "transform": "to_integer"
-    },
-    {
-      "name": "Average gross",
-      "target_name": "average_gross",
-      "target_type": "INTEGER",
-      "transform": "clean_currency_to_int"
-    },
-    {
-      "name": "Ref.",
-      "target_name": "ref",
-      "target_type": "STRING",
-      "transform": "trim_string"
+      "transform": "clean_text"
     }
   ]
 }
