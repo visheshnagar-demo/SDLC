@@ -1,1 +1,1 @@
-# Package initializer for server
+# Package init for server

@@ -1,1 +1,1 @@
-# Package initializer for tests
+# Tests package init

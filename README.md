@@ -1,46 +1,4 @@
-# Mobile Management System (SCRUM-326)
-
-Centralized Mobile Management System backend built with FastAPI, SQLAlchemy 2.x, and SQLite/PostgreSQL.
-
-### Prerequisites
-- Python 3.11+
-- Virtual environment tool (`venv` or `uv`)
-
-### Environment Variables
-Copy `.env.example` or set environment variables:
-- `DATABASE_URL`: Database connection string (default: `sqlite:///./app.db`)
-- `JWT_SECRET_KEY`: Secret key for signing JWT access tokens
-- `ALLOWED_ORIGINS`: Comma-separated CORS origins (default: `http://localhost:5173,http://localhost:3000`)
-
-### Installation & Server Start
-```bash
-# Navigate to server directory
-cd server
-
-# Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run backend development server
-uvicorn main:app --reload --port 8000
-```
-
-### Running Tests
-```bash
-pytest
-```
-
-## Full-Stack Local Development
-- **Backend Server**: `http://localhost:8000` (API documentation at `http://localhost:8000/docs`)
-- **Frontend App**: `http://localhost:5173`
-
-### Default Pre-seeded Test Accounts
-- **Admin User**: `admin@example.com` / `adminpassword` (Role: `ADMIN`)
-- **Employee User**: `test@example.com` / `testpassword` (Role: `EMPLOYEE`)
-- **Support User**: `support@example.com` / `supportpassword` (Role: `IT_SUPPORT`)
+# Project
 
 ## Server
 

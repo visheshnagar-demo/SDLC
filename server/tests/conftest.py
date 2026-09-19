@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from server.database import Base, get_db, seed_data
 from server.main import app
+import server.models  # noqa: F401
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
@@ -19,83 +20,56 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_db():
-    import server.models  # noqa: F401
-
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
-    seed_data(db)
-    db.close()
+    try:
+        seed_data(db)
+    finally:
+        db.close()
     yield
     Base.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture
-def db():
-    connection = engine.connect()
-    transaction = connection.begin()
-    db_session = TestingSessionLocal(bind=connection)
-
-    yield db_session
-
-    db_session.close()
-    transaction.rollback()
-    connection.close()
+def db_session():
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 @pytest.fixture
-def client(db):
+def client(db_session):
     def _override_get_db():
         try:
-            yield db
+            yield db_session
         finally:
             pass
 
     app.dependency_overrides[get_db] = _override_get_db
-    with TestClient(app) as test_client:
-        yield test_client
+    with TestClient(app) as c:
+        yield c
     app.dependency_overrides.clear()
 
 
 @pytest.fixture
-def admin_token(client):
+def admin_auth_headers(client):
     response = client.post(
         "/api/v1/auth/login",
         json={"email": "admin@example.com", "password": "adminpassword"},
     )
-    assert response.status_code == 200, f"Login failed: {response.text}"
-    return response.json()["access_token"]
+    assert response.status_code == 200
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
-def admin_headers(admin_token):
-    return {"Authorization": f"Bearer {admin_token}"}
-
-
-@pytest.fixture
-def employee_token(client):
+def user_auth_headers(client):
     response = client.post(
         "/api/v1/auth/login",
         json={"email": "test@example.com", "password": "testpassword"},
     )
-    assert response.status_code == 200, f"Login failed: {response.text}"
-    return response.json()["access_token"]
-
-
-@pytest.fixture
-def employee_headers(employee_token):
-    return {"Authorization": f"Bearer {employee_token}"}
-
-
-@pytest.fixture
-def support_token(client):
-    response = client.post(
-        "/api/v1/auth/login",
-        json={"email": "support@example.com", "password": "supportpassword"},
-    )
-    assert response.status_code == 200, f"Login failed: {response.text}"
-    return response.json()["access_token"]
-
-
-@pytest.fixture
-def support_headers(support_token):
-    return {"Authorization": f"Bearer {support_token}"}
+    assert response.status_code == 200
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}

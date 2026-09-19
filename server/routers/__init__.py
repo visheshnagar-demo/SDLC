@@ -1,1 +1,1 @@
-# Package initializer for routers
+# Routers package init
