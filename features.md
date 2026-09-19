@@ -17,3 +17,13 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-327 - News Channel Management System
+
+### Feature Summary
+Provides news operations managers, editors, journalists, and operators with a unified dashboard and management system to configure news channels, draft and publish news content, schedule broadcast slots, and monitor live status.
+
+### Key Features
+- Channel & Program Management with role-based access control
+- News Article & Content Workflow for drafting, reviewing, and publishing news assets
+- Real-Time Broadcast Scheduling & Monitoring Dashboard with emergency overrides

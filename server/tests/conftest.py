@@ -7,6 +7,8 @@ from fastapi.testclient import TestClient
 from server.database import Base, get_db, seed_data
 import server.models  # noqa: F401
 from server.main import app
+from server.auth import create_access_token
+from server.models import User
 
 # In-memory SQLite for testing with StaticPool
 TEST_DATABASE_URL = "sqlite:///:memory:"
@@ -52,3 +54,43 @@ def client(db_session):
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def admin_headers(db_session):
+    admin = db_session.query(User).filter(User.email == "admin@example.com").first()
+    token = create_access_token(
+        data={"sub": admin.id, "email": admin.email, "role": admin.role}
+    )
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def manager_headers(db_session):
+    manager = db_session.query(User).filter(User.email == "manager@example.com").first()
+    token = create_access_token(
+        data={"sub": manager.id, "email": manager.email, "role": manager.role}
+    )
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def journalist_headers(db_session):
+    journalist = (
+        db_session.query(User).filter(User.email == "journalist@example.com").first()
+    )
+    token = create_access_token(
+        data={"sub": journalist.id, "email": journalist.email, "role": journalist.role}
+    )
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def operator_headers(db_session):
+    operator = (
+        db_session.query(User).filter(User.email == "operator@example.com").first()
+    )
+    token = create_access_token(
+        data={"sub": operator.id, "email": operator.email, "role": operator.role}
+    )
+    return {"Authorization": f"Bearer {token}"}
