@@ -1,36 +1,55 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-
 from server.database import get_db
-from server.models import SecurityPolicy, User, Device
-from server.schemas import SecurityPolicyResponse, SecurityPolicyUpdate
-from server.auth import get_current_admin_user, get_current_user
-from server.services.audit_service import create_audit_log
-from server.services.device_service import evaluate_compliance
+from server.models import SecurityPolicy, User
+from server.schemas import PolicyOut, PolicyUpdate, PolicyCreate
+from server.auth import get_current_user, require_admin
+from server.services.audit_service import log_audit
 
-router = APIRouter(prefix="/policies", tags=["Policies"])
+router = APIRouter(prefix="/api/v1/policies", tags=["Policies"])
 
 
-@router.get("", response_model=List[SecurityPolicyResponse])
-def list_policies(
+@router.get("", response_model=List[PolicyOut])
+def get_policies(
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     return db.query(SecurityPolicy).all()
 
 
-@router.put("/{id}", response_model=SecurityPolicyResponse)
-def update_policy(
-    id: str,
-    policy_in: SecurityPolicyUpdate,
+@router.post("", response_model=PolicyOut, status_code=status.HTTP_201_CREATED)
+def create_policy(
+    policy_in: PolicyCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user),
+    current_user: User = Depends(require_admin),
 ):
-    policy = db.query(SecurityPolicy).filter(SecurityPolicy.id == id).first()
+    policy = SecurityPolicy(**policy_in.model_dump())
+    db.add(policy)
+    db.commit()
+    db.refresh(policy)
+
+    log_audit(
+        db=db,
+        actor_id=current_user.id,
+        action="POLICY_CREATED",
+        resource_type="SecurityPolicy",
+        resource_id=policy.id,
+        details={"name": policy.name},
+    )
+    return policy
+
+
+@router.put("/{policy_id}", response_model=PolicyOut)
+def update_policy(
+    policy_id: str,
+    policy_in: PolicyUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    policy = db.query(SecurityPolicy).filter(SecurityPolicy.id == policy_id).first()
     if not policy:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Security Policy with ID '{id}' not found.",
+            status_code=status.HTTP_404_NOT_FOUND, detail="Policy not found"
         )
 
     update_data = policy_in.model_dump(exclude_unset=True)
@@ -40,19 +59,12 @@ def update_policy(
     db.commit()
     db.refresh(policy)
 
-    # Re-evaluate all devices compliance
-    devices = db.query(Device).all()
-    for dev in devices:
-        dev.is_compliant = evaluate_compliance(db, dev)
-    db.commit()
-
-    create_audit_log(
+    log_audit(
         db=db,
-        action="POLICY_UPDATED",
-        resource_type="policy",
-        resource_id=id,
         actor_id=current_user.id,
+        action="POLICY_UPDATED",
+        resource_type="SecurityPolicy",
+        resource_id=policy.id,
         details=update_data,
     )
-
     return policy

@@ -51,12 +51,10 @@ graph TD
 - server/services/device_service.py
 - server/tests/__init__.py
 - server/tests/conftest.py
-- server/tests/test_analytics.py
-- server/tests/test_audit.py
+- server/tests/test_assignments_and_actions.py
 - server/tests/test_auth.py
 - server/tests/test_devices.py
-- server/tests/test_policies.py
-- server/tests/test_users.py
+- server/tests/test_policies_and_analytics.py
 
 ## Frontend Modules (client/)
 - (no client/ files found yet)

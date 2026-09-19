@@ -1,15 +1,14 @@
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
+from starlette.middleware.cors import CORSMiddleware
 from server.database import init_db, seed_data, SessionLocal
 from server.routers import auth, devices, users, policies, analytics, audit
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize DB schema and seed initial data
+    # Startup: Initialize DB tables and seed data
     init_db()
     db = SessionLocal()
     try:
@@ -21,37 +20,37 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Mobile Management System API",
-    description="API for managing mobile devices, assignments, policies, and remote actions",
+    description="Central MDM API for tracking mobile inventory, assignments, policies, and remote actions.",
     version="1.0.0",
     lifespan=lifespan,
 )
 
-# CORS Setup
-allowed_origins_env = os.getenv(
+# Configure CORS
+ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000"
-)
-allowed_origins = [
-    origin.strip() for origin in allowed_origins_env.split(",") if origin.strip()
-]
-
+).split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include Routers under /api/v1
-app.include_router(auth.router, prefix="/api/v1")
-app.include_router(devices.router, prefix="/api/v1")
-app.include_router(users.router, prefix="/api/v1")
-app.include_router(policies.router, prefix="/api/v1")
-app.include_router(analytics.router, prefix="/api/v1")
-app.include_router(audit.router, prefix="/api/v1")
+# Include Routers
+app.include_router(auth.router)
+app.include_router(devices.router)
+app.include_router(users.router)
+app.include_router(policies.router)
+app.include_router(analytics.router)
+app.include_router(audit.router)
+
+
+@app.get("/")
+def root():
+    return {"message": "Mobile Management System API is running"}
 
 
 @app.get("/health")
-@app.get("/api/v1/health")
 def health_check():
-    return {"status": "ok", "app": "Mobile Management System"}
+    return {"status": "healthy"}

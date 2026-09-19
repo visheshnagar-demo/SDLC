@@ -9,7 +9,7 @@ def test_login_success(client):
     assert data["token_type"] == "bearer"
 
 
-def test_login_invalid_password(client):
+def test_login_invalid_credentials(client):
     response = client.post(
         "/api/v1/auth/login",
         json={"email": "admin@example.com", "password": "wrongpassword"},
@@ -17,8 +17,8 @@ def test_login_invalid_password(client):
     assert response.status_code == 401
 
 
-def test_get_me(client, admin_auth_headers):
-    response = client.get("/api/v1/auth/me", headers=admin_auth_headers)
+def test_get_me(client, admin_token_headers):
+    response = client.get("/api/v1/auth/me", headers=admin_token_headers)
     assert response.status_code == 200
     data = response.json()
     assert data["email"] == "admin@example.com"

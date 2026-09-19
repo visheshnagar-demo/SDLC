@@ -1,31 +1,54 @@
 import json
-import uuid
-from typing import Optional, Any
+from typing import Optional, Dict, Any, List
 from sqlalchemy.orm import Session
 from server.models import AuditLog
 
 
-def create_audit_log(
+def log_audit(
     db: Session,
+    actor_id: Optional[str],
     action: str,
     resource_type: str,
-    resource_id: str,
-    actor_id: Optional[str] = None,
-    details: Optional[Any] = None,
+    resource_id: Optional[str] = None,
+    details: Optional[Dict[str, Any]] = None,
 ) -> AuditLog:
-    details_str = json.dumps(details) if details is not None else None
+    details_str = json.dumps(details) if details else None
     audit_entry = AuditLog(
-        id=str(uuid.uuid4()),
         actor_id=actor_id,
         action=action,
         resource_type=resource_type,
         resource_id=resource_id,
-        details=details_str,
+        details_json=details_str,
     )
     db.add(audit_entry)
-    try:
-        db.commit()
-        db.refresh(audit_entry)
-    except Exception:
-        db.rollback()
+    db.commit()
+    db.refresh(audit_entry)
     return audit_entry
+
+
+def get_audit_logs(
+    db: Session,
+    skip: int = 0,
+    limit: int = 50,
+    resource_type: Optional[str] = None,
+    action: Optional[str] = None,
+) -> List[AuditLog]:
+    query = db.query(AuditLog)
+    if resource_type:
+        query = query.filter(AuditLog.resource_type == resource_type)
+    if action:
+        query = query.filter(AuditLog.action == action)
+
+    logs = query.order_by(AuditLog.created_at.desc()).offset(skip).limit(limit).all()
+
+    # Unpack details_json into details attribute for response schemas
+    for log in logs:
+        if log.details_json:
+            try:
+                log.details = json.loads(log.details_json)
+            except Exception:
+                log.details = {"raw": log.details_json}
+        else:
+            log.details = None
+
+    return logs

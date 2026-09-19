@@ -1,4 +1,49 @@
-# Project
+# Mobile Management System (SCRUM-326)
+
+A central mobile device management platform for tracking mobile inventory, employee assignments, security compliance policies, remote management actions, and analytics.
+
+## Full-Stack Local Development
+
+### Backend (Server) Setup
+1. Navigate to the `server/` directory:
+   ```bash
+   cd server
+   ```
+2. Create and activate a Python virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Start the FastAPI development server (runs on port 8000):
+   ```bash
+   uvicorn main:app --reload --port 8000
+   ```
+5. Run tests:
+   ```bash
+   pytest
+   ```
+
+### Frontend (Client) Setup
+1. Navigate to the `client/` directory:
+   ```bash
+   cd client
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the Vite dev server (runs on port 5173):
+   ```bash
+   npm run dev
+   ```
+
+### Default Credentials
+- **Regular User**: `test@example.com` / `testpassword`
+- **Admin User**: `admin@example.com` / `adminpassword`
 
 ## Server
 

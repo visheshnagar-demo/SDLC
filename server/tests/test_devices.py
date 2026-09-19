@@ -1,133 +1,74 @@
-def test_create_and_get_device(client, admin_auth_headers):
-    payload = {
-        "serial_number": "SN-TEST-1001",
-        "imei": "123456789012345",
-        "model": "iPhone 15 Pro",
+def test_create_and_get_device(client, admin_token_headers):
+    device_data = {
+        "serial_number": "SN12345678",
+        "imei": "358901234567890",
+        "model": "iPhone 14 Pro",
         "manufacturer": "Apple",
         "os_type": "iOS",
-        "os_version": "17.2",
+        "os_version": "16.5",
         "ownership_type": "Corporate",
-        "status": "Available",
         "is_encrypted": True,
         "passcode_enforced": True,
     }
-
-    # Register device
-    res = client.post("/api/v1/devices", json=payload, headers=admin_auth_headers)
-    assert res.status_code == 201
-    device_data = res.json()
-    device_id = device_data["id"]
-    assert device_data["serial_number"] == "SN-TEST-1001"
-    assert device_data["is_compliant"] is True
-
-    # Get device by ID
-    res_get = client.get(f"/api/v1/devices/{device_id}")
-    assert res_get.status_code == 200
-    assert res_get.json()["model"] == "iPhone 15 Pro"
-
-    # List devices
-    res_list = client.get("/api/v1/devices")
-    assert res_list.status_code == 200
-    assert len(res_list.json()) >= 1
-
-
-def test_assign_and_unassign_device(client, admin_auth_headers, user_auth_headers):
-    # Register device
-    dev_res = client.post(
-        "/api/v1/devices",
-        json={
-            "serial_number": "SN-ASSIGN-2002",
-            "model": "Galaxy S23",
-            "manufacturer": "Samsung",
-            "os_type": "Android",
-            "os_version": "13.0",
-            "is_encrypted": True,
-            "passcode_enforced": True,
-        },
-        headers=admin_auth_headers,
+    response = client.post(
+        "/api/v1/devices", json=device_data, headers=admin_token_headers
     )
-    assert dev_res.status_code == 201
-    device_id = dev_res.json()["id"]
+    assert response.status_code == 201
+    created = response.json()
+    assert created["serial_number"] == "SN12345678"
+    assert created["status"] == "Available"
+    assert created["is_compliant"] is True
 
-    # Get user id
-    me_res = client.get("/api/v1/auth/me", headers=user_auth_headers)
-    user_id = me_res.json()["id"]
+    device_id = created["id"]
+    get_res = client.get(f"/api/v1/devices/{device_id}", headers=admin_token_headers)
+    assert get_res.status_code == 200
+    assert get_res.json()["model"] == "iPhone 14 Pro"
 
-    # Assign device using admin credentials
-    assign_res = client.post(
-        f"/api/v1/devices/{device_id}/assign",
-        json={"user_id": user_id, "notes": "Assigned for remote work"},
-        headers=admin_auth_headers,
+
+def test_list_devices(client, admin_token_headers):
+    response = client.get("/api/v1/devices", headers=admin_token_headers)
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+
+def test_update_device(client, admin_token_headers):
+    device_data = {
+        "serial_number": "SN87654321",
+        "imei": "358901234567891",
+        "model": "Galaxy S23",
+        "manufacturer": "Samsung",
+        "os_type": "Android",
+        "os_version": "13.0",
+    }
+    create_res = client.post(
+        "/api/v1/devices", json=device_data, headers=admin_token_headers
     )
-    assert assign_res.status_code == 200
-    assert assign_res.json()["device_id"] == device_id
-    assert assign_res.json()["user_id"] == user_id
+    device_id = create_res.json()["id"]
 
-    # Verify regular user cannot assign
-    non_admin_assign = client.post(
-        f"/api/v1/devices/{device_id}/assign",
-        json={"user_id": user_id},
-        headers=user_auth_headers,
+    update_res = client.put(
+        f"/api/v1/devices/{device_id}",
+        json={"os_version": "14.0"},
+        headers=admin_token_headers,
     )
-    assert non_admin_assign.status_code == 403
+    assert update_res.status_code == 200
+    assert update_res.json()["os_version"] == "14.0"
 
-    # Verify device status is "Assigned"
-    dev_check = client.get(f"/api/v1/devices/{device_id}")
-    assert dev_check.json()["status"] == "Assigned"
 
-    # Get assignment history
-    hist_res = client.get(f"/api/v1/devices/{device_id}/assignments")
-    assert hist_res.status_code == 200
-    assert len(hist_res.json()) >= 1
-
-    # Unassign device using admin credentials
-    unassign_res = client.post(
-        f"/api/v1/devices/{device_id}/unassign",
-        json={"notes": "Returned by employee"},
-        headers=admin_auth_headers,
+def test_decommission_device(client, admin_token_headers):
+    device_data = {
+        "serial_number": "SN_DEC_001",
+        "model": "Pixel 7",
+        "manufacturer": "Google",
+        "os_type": "Android",
+        "os_version": "13.0",
+    }
+    create_res = client.post(
+        "/api/v1/devices", json=device_data, headers=admin_token_headers
     )
-    assert unassign_res.status_code == 200
-    assert unassign_res.json()["returned_at"] is not None
+    device_id = create_res.json()["id"]
 
-    # Verify device status returned to "Available"
-    dev_check_after = client.get(f"/api/v1/devices/{device_id}")
-    assert dev_check_after.json()["status"] == "Available"
+    del_res = client.delete(f"/api/v1/devices/{device_id}", headers=admin_token_headers)
+    assert del_res.status_code == 200
 
-
-def test_remote_action(client, admin_auth_headers):
-    # Register device
-    dev_res = client.post(
-        "/api/v1/devices",
-        json={
-            "serial_number": "SN-ACTION-3003",
-            "model": "Pixel 8",
-            "manufacturer": "Google",
-            "os_type": "Android",
-            "os_version": "14.0",
-        },
-        headers=admin_auth_headers,
-    )
-    device_id = dev_res.json()["id"]
-
-    # Trigger Remote Lock
-    lock_res = client.post(
-        f"/api/v1/devices/{device_id}/actions",
-        json={"action_type": "Remote Lock", "reason": "Security audit"},
-        headers=admin_auth_headers,
-    )
-    assert lock_res.status_code == 200
-    assert lock_res.json()["action_type"] == "Remote Lock"
-    assert lock_res.json()["status"] == "Completed"
-
-    # Trigger Remote Wipe
-    wipe_res = client.post(
-        f"/api/v1/devices/{device_id}/actions",
-        json={"action_type": "Remote Wipe", "reason": "Lost device"},
-        headers=admin_auth_headers,
-    )
-    assert wipe_res.status_code == 200
-    assert wipe_res.json()["action_type"] == "Remote Wipe"
-
-    # Check device status is Wiped
-    dev_check = client.get(f"/api/v1/devices/{device_id}")
-    assert dev_check.json()["status"] == "Wiped"
+    get_res = client.get(f"/api/v1/devices/{device_id}", headers=admin_token_headers)
+    assert get_res.json()["status"] == "Decommissioned"

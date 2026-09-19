@@ -1,11 +1,9 @@
-import uuid
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Optional, List
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-
 from server.models import Device, User, DeviceAssignment
-from server.services.audit_service import create_audit_log
+from server.services.audit_service import log_audit
 
 
 def assign_device(
@@ -18,18 +16,22 @@ def assign_device(
     device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Device with ID '{device_id}' not found.",
+            status_code=status.HTTP_404_NOT_FOUND, detail="Device not found"
+        )
+
+    if device.status not in ["Available", "Pending Return"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Device cannot be assigned from state '{device.status}'",
         )
 
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User with ID '{user_id}' not found.",
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
-    # Check active assignment
+    # Close any existing active assignment for this device
     active_assignment = (
         db.query(DeviceAssignment)
         .filter(
@@ -40,34 +42,36 @@ def assign_device(
     )
 
     if active_assignment:
-        # Close existing assignment
         active_assignment.returned_at = datetime.now(timezone.utc)
 
-    # Update device status
-    device.status = "Assigned"
-
-    assignment = DeviceAssignment(
-        id=str(uuid.uuid4()),
+    # Create new assignment
+    new_assignment = DeviceAssignment(
         device_id=device_id,
         user_id=user_id,
         assigned_at=datetime.now(timezone.utc),
         notes=notes,
     )
+    device.status = "Assigned"
 
-    db.add(assignment)
+    db.add(new_assignment)
     db.commit()
-    db.refresh(assignment)
+    db.refresh(new_assignment)
 
-    create_audit_log(
+    log_audit(
         db=db,
-        action="DEVICE_ASSIGNED",
-        resource_type="device",
-        resource_id=device_id,
         actor_id=actor_id,
-        details={"user_id": user_id, "user_email": user.email, "notes": notes},
+        action="DEVICE_ASSIGNED",
+        resource_type="DeviceAssignment",
+        resource_id=new_assignment.id,
+        details={
+            "device_id": device_id,
+            "user_id": user_id,
+            "employee_id": user.employee_id,
+            "department": user.department,
+        },
     )
 
-    return assignment
+    return new_assignment
 
 
 def unassign_device(
@@ -75,12 +79,11 @@ def unassign_device(
     device_id: str,
     notes: Optional[str] = None,
     actor_id: Optional[str] = None,
-) -> DeviceAssignment:
+) -> Optional[DeviceAssignment]:
     device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Device with ID '{device_id}' not found.",
+            status_code=status.HTTP_404_NOT_FOUND, detail="Device not found"
         )
 
     active_assignment = (
@@ -95,28 +98,26 @@ def unassign_device(
     if not active_assignment:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Device '{device_id}' has no active assignment to unassign.",
+            detail="No active assignment found for device",
         )
 
     active_assignment.returned_at = datetime.now(timezone.utc)
     if notes:
         active_assignment.notes = (
             active_assignment.notes or ""
-        ) + f" [Unassign Note: {notes}]"
+        ) + f" [Unassigned: {notes}]"
 
-    # Transition status
     device.status = "Available"
-
     db.commit()
     db.refresh(active_assignment)
 
-    create_audit_log(
+    log_audit(
         db=db,
-        action="DEVICE_UNASSIGNED",
-        resource_type="device",
-        resource_id=device_id,
         actor_id=actor_id,
-        details={"user_id": active_assignment.user_id, "notes": notes},
+        action="DEVICE_UNASSIGNED",
+        resource_type="DeviceAssignment",
+        resource_id=active_assignment.id,
+        details={"device_id": device_id, "user_id": active_assignment.user_id},
     )
 
     return active_assignment

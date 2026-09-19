@@ -1,48 +1,24 @@
-import json
-from typing import List
-from fastapi import APIRouter, Depends
+from typing import List, Optional
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-
 from server.database import get_db
-from server.models import AuditLog, User
-from server.schemas import AuditLogResponse
+from server.models import User
+from server.schemas import AuditLogOut
 from server.auth import get_current_user
+from server.services.audit_service import get_audit_logs
 
-router = APIRouter(prefix="/audit-logs", tags=["Audit Logs"])
+router = APIRouter(prefix="/api/v1/audit-logs", tags=["Audit"])
 
 
-@router.get("", response_model=List[AuditLogResponse])
+@router.get("", response_model=List[AuditLogOut])
 def list_audit_logs(
-    skip: int = 0,
-    limit: int = 100,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    resource_type: Optional[str] = Query(None),
+    action: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    logs = (
-        db.query(AuditLog)
-        .order_by(AuditLog.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
+    return get_audit_logs(
+        db=db, skip=skip, limit=limit, resource_type=resource_type, action=action
     )
-    results = []
-    for log in logs:
-        details_parsed = None
-        if log.details:
-            try:
-                details_parsed = json.loads(log.details)
-            except Exception:
-                details_parsed = log.details
-
-        results.append(
-            AuditLogResponse(
-                id=log.id,
-                actor_id=log.actor_id,
-                action=log.action,
-                resource_type=log.resource_type,
-                resource_id=log.resource_id,
-                details=details_parsed,
-                created_at=log.created_at,
-            )
-        )
-    return results

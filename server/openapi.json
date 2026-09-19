@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Mobile Management System API",
-    "description": "API for managing mobile devices, assignments, policies, and remote actions",
+    "description": "Central MDM API for tracking mobile inventory, assignments, policies, and remote actions.",
     "version": "1.0.0"
   },
   "paths": {
@@ -13,6 +13,16 @@
         ],
         "summary": "Login",
         "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -20,6 +30,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Token"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -40,7 +60,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserResponse"
+                  "$ref": "#/components/schemas/UserOut"
                 }
               }
             }
@@ -60,6 +80,11 @@
         ],
         "summary": "List Devices",
         "operationId": "list_devices_api_v1_devices_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "skip",
@@ -67,6 +92,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "minimum": 0,
               "default": 0,
               "title": "Skip"
             }
@@ -77,7 +103,9 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "default": 100,
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
               "title": "Limit"
             }
           },
@@ -144,6 +172,22 @@
               ],
               "title": "Search"
             }
+          },
+          {
+            "name": "is_compliant",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Is Compliant"
+            }
           }
         ],
         "responses": {
@@ -154,7 +198,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/DeviceResponse"
+                    "$ref": "#/components/schemas/DeviceOut"
                   },
                   "title": "Response List Devices Api V1 Devices Get"
                 }
@@ -177,8 +221,8 @@
         "tags": [
           "Devices"
         ],
-        "summary": "Register Device",
-        "operationId": "register_device_api_v1_devices_post",
+        "summary": "Create Device",
+        "operationId": "create_device_api_v1_devices_post",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -200,7 +244,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DeviceResponse"
+                  "$ref": "#/components/schemas/DeviceOut"
                 }
               }
             }
@@ -218,21 +262,26 @@
         }
       }
     },
-    "/api/v1/devices/{id}": {
+    "/api/v1/devices/{device_id}": {
       "get": {
         "tags": [
           "Devices"
         ],
         "summary": "Get Device",
-        "operationId": "get_device_api_v1_devices__id__get",
+        "operationId": "get_device_api_v1_devices__device_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "parameters": [
           {
-            "name": "id",
+            "name": "device_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Device Id"
             }
           }
         ],
@@ -242,7 +291,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DeviceResponse"
+                  "$ref": "#/components/schemas/DeviceOut"
                 }
               }
             }
@@ -264,7 +313,7 @@
           "Devices"
         ],
         "summary": "Update Device",
-        "operationId": "update_device_api_v1_devices__id__put",
+        "operationId": "update_device_api_v1_devices__device_id__put",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -272,12 +321,12 @@
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "device_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Device Id"
             }
           }
         ],
@@ -297,7 +346,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DeviceResponse"
+                  "$ref": "#/components/schemas/DeviceOut"
                 }
               }
             }
@@ -318,8 +367,8 @@
         "tags": [
           "Devices"
         ],
-        "summary": "Delete Device",
-        "operationId": "delete_device_api_v1_devices__id__delete",
+        "summary": "Decommission Device",
+        "operationId": "decommission_device_api_v1_devices__device_id__delete",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -327,12 +376,12 @@
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "device_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Device Id"
             }
           }
         ],
@@ -341,9 +390,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DeviceResponse"
-                }
+                "schema": {}
               }
             }
           },
@@ -360,13 +407,13 @@
         }
       }
     },
-    "/api/v1/devices/{id}/assign": {
+    "/api/v1/devices/{device_id}/assign": {
       "post": {
         "tags": [
           "Devices"
         ],
         "summary": "Assign Device",
-        "operationId": "assign_device_api_v1_devices__id__assign_post",
+        "operationId": "assign_device_api_v1_devices__device_id__assign_post",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -374,12 +421,12 @@
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "device_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Device Id"
             }
           }
         ],
@@ -399,7 +446,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DeviceAssignmentResponse"
+                  "$ref": "#/components/schemas/AssignmentOut"
                 }
               }
             }
@@ -417,13 +464,13 @@
         }
       }
     },
-    "/api/v1/devices/{id}/unassign": {
+    "/api/v1/devices/{device_id}/unassign": {
       "post": {
         "tags": [
           "Devices"
         ],
         "summary": "Unassign Device",
-        "operationId": "unassign_device_api_v1_devices__id__unassign_post",
+        "operationId": "unassign_device_api_v1_devices__device_id__unassign_post",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -431,12 +478,12 @@
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "device_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Device Id"
             }
           }
         ],
@@ -452,7 +499,7 @@
                     "type": "null"
                   }
                 ],
-                "title": "Unassign In"
+                "title": "Request"
               }
             }
           }
@@ -463,7 +510,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DeviceAssignmentResponse"
+                  "$ref": "#/components/schemas/AssignmentOut"
                 }
               }
             }
@@ -481,21 +528,26 @@
         }
       }
     },
-    "/api/v1/devices/{id}/assignments": {
+    "/api/v1/devices/{device_id}/assignments": {
       "get": {
         "tags": [
           "Devices"
         ],
-        "summary": "Get Assignment History",
-        "operationId": "get_assignment_history_api_v1_devices__id__assignments_get",
+        "summary": "Get Device Assignments",
+        "operationId": "get_device_assignments_api_v1_devices__device_id__assignments_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "parameters": [
           {
-            "name": "id",
+            "name": "device_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Device Id"
             }
           }
         ],
@@ -507,9 +559,9 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/DeviceAssignmentResponse"
+                    "$ref": "#/components/schemas/AssignmentOut"
                   },
-                  "title": "Response Get Assignment History Api V1 Devices  Id  Assignments Get"
+                  "title": "Response Get Device Assignments Api V1 Devices  Device Id  Assignments Get"
                 }
               }
             }
@@ -527,13 +579,13 @@
         }
       }
     },
-    "/api/v1/devices/{id}/actions": {
+    "/api/v1/devices/{device_id}/actions": {
       "post": {
         "tags": [
           "Devices"
         ],
-        "summary": "Trigger Action",
-        "operationId": "trigger_action_api_v1_devices__id__actions_post",
+        "summary": "Trigger Remote Action",
+        "operationId": "trigger_remote_action_api_v1_devices__device_id__actions_post",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -541,12 +593,12 @@
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "device_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Device Id"
             }
           }
         ],
@@ -566,7 +618,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RemoteActionResponse"
+                  "$ref": "#/components/schemas/RemoteActionOut"
                 }
               }
             }
@@ -603,6 +655,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "minimum": 0,
               "default": 0,
               "title": "Skip"
             }
@@ -613,8 +666,42 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "default": 100,
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
               "title": "Limit"
+            }
+          },
+          {
+            "name": "department",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Department"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Role"
             }
           }
         ],
@@ -626,7 +713,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/UserResponse"
+                    "$ref": "#/components/schemas/UserOut"
                   },
                   "title": "Response List Users Api V1 Users Get"
                 }
@@ -651,8 +738,8 @@
         "tags": [
           "Policies"
         ],
-        "summary": "List Policies",
-        "operationId": "list_policies_api_v1_policies_get",
+        "summary": "Get Policies",
+        "operationId": "get_policies_api_v1_policies_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -660,10 +747,54 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/SecurityPolicyResponse"
+                    "$ref": "#/components/schemas/PolicyOut"
                   },
                   "type": "array",
-                  "title": "Response List Policies Api V1 Policies Get"
+                  "title": "Response Get Policies Api V1 Policies Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Policies"
+        ],
+        "summary": "Create Policy",
+        "operationId": "create_policy_api_v1_policies_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicyCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -676,13 +807,13 @@
         ]
       }
     },
-    "/api/v1/policies/{id}": {
+    "/api/v1/policies/{policy_id}": {
       "put": {
         "tags": [
           "Policies"
         ],
         "summary": "Update Policy",
-        "operationId": "update_policy_api_v1_policies__id__put",
+        "operationId": "update_policy_api_v1_policies__policy_id__put",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -690,12 +821,12 @@
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "policy_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Policy Id"
             }
           }
         ],
@@ -704,7 +835,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SecurityPolicyUpdate"
+                "$ref": "#/components/schemas/PolicyUpdate"
               }
             }
           }
@@ -715,7 +846,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SecurityPolicyResponse"
+                  "$ref": "#/components/schemas/PolicyOut"
                 }
               }
             }
@@ -746,18 +877,23 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DashboardAnalyticsResponse"
+                  "$ref": "#/components/schemas/DashboardMetrics"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
     "/api/v1/audit-logs": {
       "get": {
         "tags": [
-          "Audit Logs"
+          "Audit"
         ],
         "summary": "List Audit Logs",
         "operationId": "list_audit_logs_api_v1_audit_logs_get",
@@ -773,6 +909,7 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "minimum": 0,
               "default": 0,
               "title": "Skip"
             }
@@ -783,8 +920,42 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "default": 100,
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
               "title": "Limit"
+            }
+          },
+          {
+            "name": "resource_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Resource Type"
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Action"
             }
           }
         ],
@@ -796,7 +967,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AuditLogResponse"
+                    "$ref": "#/components/schemas/AuditLogOut"
                   },
                   "title": "Response List Audit Logs Api V1 Audit Logs Get"
                 }
@@ -816,10 +987,10 @@
         }
       }
     },
-    "/api/v1/health": {
+    "/": {
       "get": {
-        "summary": "Health Check",
-        "operationId": "health_check_api_v1_health_get",
+        "summary": "Root",
+        "operationId": "root__get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -851,121 +1022,7 @@
   },
   "components": {
     "schemas": {
-      "AuditLogResponse": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "actor_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Actor Id"
-          },
-          "action": {
-            "type": "string",
-            "title": "Action"
-          },
-          "resource_type": {
-            "type": "string",
-            "title": "Resource Type"
-          },
-          "resource_id": {
-            "type": "string",
-            "title": "Resource Id"
-          },
-          "details": {
-            "anyOf": [
-              {},
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Details"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "action",
-          "resource_type",
-          "resource_id",
-          "created_at"
-        ],
-        "title": "AuditLogResponse"
-      },
-      "DashboardAnalyticsResponse": {
-        "properties": {
-          "total_devices": {
-            "type": "integer",
-            "title": "Total Devices"
-          },
-          "active_assignments": {
-            "type": "integer",
-            "title": "Active Assignments"
-          },
-          "available_devices": {
-            "type": "integer",
-            "title": "Available Devices"
-          },
-          "non_compliant_count": {
-            "type": "integer",
-            "title": "Non Compliant Count"
-          },
-          "os_distribution": {
-            "additionalProperties": {
-              "type": "integer"
-            },
-            "type": "object",
-            "title": "Os Distribution"
-          }
-        },
-        "type": "object",
-        "required": [
-          "total_devices",
-          "active_assignments",
-          "available_devices",
-          "non_compliant_count",
-          "os_distribution"
-        ],
-        "title": "DashboardAnalyticsResponse"
-      },
-      "DeviceAssignRequest": {
-        "properties": {
-          "user_id": {
-            "type": "string",
-            "title": "User Id"
-          },
-          "notes": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Notes"
-          }
-        },
-        "type": "object",
-        "required": [
-          "user_id"
-        ],
-        "title": "DeviceAssignRequest"
-      },
-      "DeviceAssignmentResponse": {
+      "AssignmentOut": {
         "properties": {
           "id": {
             "type": "string",
@@ -980,8 +1037,15 @@
             "title": "User Id"
           },
           "assigned_at": {
-            "type": "string",
-            "format": "date-time",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Assigned At"
           },
           "returned_at": {
@@ -1010,7 +1074,7 @@
           "user": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/UserResponse"
+                "$ref": "#/components/schemas/UserOut"
               },
               {
                 "type": "null"
@@ -1022,10 +1086,156 @@
         "required": [
           "id",
           "device_id",
-          "user_id",
-          "assigned_at"
+          "user_id"
         ],
-        "title": "DeviceAssignmentResponse"
+        "title": "AssignmentOut"
+      },
+      "AuditLogOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "actor_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Id"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "resource_type": {
+            "type": "string",
+            "title": "Resource Type"
+          },
+          "resource_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Id"
+          },
+          "details": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "action",
+          "resource_type"
+        ],
+        "title": "AuditLogOut"
+      },
+      "DashboardMetrics": {
+        "properties": {
+          "total_devices": {
+            "type": "integer",
+            "title": "Total Devices"
+          },
+          "active_assignments": {
+            "type": "integer",
+            "title": "Active Assignments"
+          },
+          "available_devices": {
+            "type": "integer",
+            "title": "Available Devices"
+          },
+          "unassigned_inventory": {
+            "type": "integer",
+            "title": "Unassigned Inventory"
+          },
+          "non_compliant_count": {
+            "type": "integer",
+            "title": "Non Compliant Count"
+          },
+          "os_distribution": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Os Distribution"
+          },
+          "status_distribution": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Status Distribution"
+          },
+          "ownership_distribution": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Ownership Distribution"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_devices",
+          "active_assignments",
+          "available_devices",
+          "unassigned_inventory",
+          "non_compliant_count",
+          "os_distribution",
+          "status_distribution",
+          "ownership_distribution"
+        ],
+        "title": "DashboardMetrics"
+      },
+      "DeviceAssignRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "title": "DeviceAssignRequest"
       },
       "DeviceCreate": {
         "properties": {
@@ -1065,24 +1275,14 @@
             "title": "Ownership Type",
             "default": "Corporate"
           },
-          "status": {
-            "type": "string",
-            "title": "Status",
-            "default": "Available"
-          },
           "is_encrypted": {
             "type": "boolean",
             "title": "Is Encrypted",
-            "default": false
+            "default": true
           },
           "passcode_enforced": {
             "type": "boolean",
             "title": "Passcode Enforced",
-            "default": false
-          },
-          "is_compliant": {
-            "type": "boolean",
-            "title": "Is Compliant",
             "default": true
           }
         },
@@ -1096,8 +1296,12 @@
         ],
         "title": "DeviceCreate"
       },
-      "DeviceResponse": {
+      "DeviceOut": {
         "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
           "serial_number": {
             "type": "string",
             "title": "Serial Number"
@@ -1131,56 +1335,64 @@
           },
           "ownership_type": {
             "type": "string",
-            "title": "Ownership Type",
-            "default": "Corporate"
+            "title": "Ownership Type"
           },
           "status": {
             "type": "string",
-            "title": "Status",
-            "default": "Available"
+            "title": "Status"
           },
           "is_encrypted": {
             "type": "boolean",
-            "title": "Is Encrypted",
-            "default": false
+            "title": "Is Encrypted"
           },
           "passcode_enforced": {
             "type": "boolean",
-            "title": "Passcode Enforced",
-            "default": false
+            "title": "Passcode Enforced"
           },
           "is_compliant": {
             "type": "boolean",
-            "title": "Is Compliant",
-            "default": true
-          },
-          "id": {
-            "type": "string",
-            "title": "Id"
+            "title": "Is Compliant"
           },
           "created_at": {
-            "type": "string",
-            "format": "date-time",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Created At"
           },
           "updated_at": {
-            "type": "string",
-            "format": "date-time",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
+          "id",
           "serial_number",
           "model",
           "manufacturer",
           "os_type",
           "os_version",
-          "id",
-          "created_at",
-          "updated_at"
+          "ownership_type",
+          "status",
+          "is_encrypted",
+          "passcode_enforced",
+          "is_compliant"
         ],
-        "title": "DeviceResponse"
+        "title": "DeviceOut"
       },
       "DeviceUnassignRequest": {
         "properties": {
@@ -1339,87 +1551,25 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "RemoteActionCreate": {
+      "LoginRequest": {
         "properties": {
-          "action_type": {
+          "email": {
             "type": "string",
-            "title": "Action Type"
+            "title": "Email"
           },
-          "reason": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Reason"
+          "password": {
+            "type": "string",
+            "title": "Password"
           }
         },
         "type": "object",
         "required": [
-          "action_type"
+          "email",
+          "password"
         ],
-        "title": "RemoteActionCreate"
+        "title": "LoginRequest"
       },
-      "RemoteActionResponse": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "device_id": {
-            "type": "string",
-            "title": "Device Id"
-          },
-          "initiated_by_user_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Initiated By User Id"
-          },
-          "action_type": {
-            "type": "string",
-            "title": "Action Type"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "reason": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Reason"
-          },
-          "executed_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Executed At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "device_id",
-          "action_type",
-          "status",
-          "executed_at"
-        ],
-        "title": "RemoteActionResponse"
-      },
-      "SecurityPolicyResponse": {
+      "PolicyCreate": {
         "properties": {
           "name": {
             "type": "string",
@@ -1439,12 +1589,12 @@
           "min_os_version_ios": {
             "type": "string",
             "title": "Min Os Version Ios",
-            "default": "16.0"
+            "default": "15.0"
           },
           "min_os_version_android": {
             "type": "string",
             "title": "Min Os Version Android",
-            "default": "12.0"
+            "default": "11.0"
           },
           "require_encryption": {
             "type": "boolean",
@@ -1460,32 +1610,93 @@
             "type": "boolean",
             "title": "Is Active",
             "default": true
-          },
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "PolicyCreate"
+      },
+      "PolicyOut": {
+        "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "created_at": {
+          "name": {
             "type": "string",
-            "format": "date-time",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "min_os_version_ios": {
+            "type": "string",
+            "title": "Min Os Version Ios"
+          },
+          "min_os_version_android": {
+            "type": "string",
+            "title": "Min Os Version Android"
+          },
+          "require_encryption": {
+            "type": "boolean",
+            "title": "Require Encryption"
+          },
+          "require_passcode": {
+            "type": "boolean",
+            "title": "Require Passcode"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Created At"
           },
           "updated_at": {
-            "type": "string",
-            "format": "date-time",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
-          "name",
           "id",
-          "created_at",
-          "updated_at"
+          "name",
+          "min_os_version_ios",
+          "min_os_version_android",
+          "require_encryption",
+          "require_passcode",
+          "is_active"
         ],
-        "title": "SecurityPolicyResponse"
+        "title": "PolicyOut"
       },
-      "SecurityPolicyUpdate": {
+      "PolicyUpdate": {
         "properties": {
           "name": {
             "anyOf": [
@@ -1566,7 +1777,93 @@
           }
         },
         "type": "object",
-        "title": "SecurityPolicyUpdate"
+        "title": "PolicyUpdate"
+      },
+      "RemoteActionCreate": {
+        "properties": {
+          "action_type": {
+            "type": "string",
+            "title": "Action Type"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action_type"
+        ],
+        "title": "RemoteActionCreate"
+      },
+      "RemoteActionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "device_id": {
+            "type": "string",
+            "title": "Device Id"
+          },
+          "initiated_by_user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initiated By User Id"
+          },
+          "action_type": {
+            "type": "string",
+            "title": "Action Type"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "executed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Executed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "device_id",
+          "action_type",
+          "status"
+        ],
+        "title": "RemoteActionOut"
       },
       "Token": {
         "properties": {
@@ -1586,8 +1883,27 @@
         ],
         "title": "Token"
       },
-      "UserResponse": {
+      "UserOut": {
         "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name"
+          },
           "employee_id": {
             "anyOf": [
               {
@@ -1598,15 +1914,6 @@
               }
             ],
             "title": "Employee Id"
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "title": "Email"
-          },
-          "full_name": {
-            "type": "string",
-            "title": "Full Name"
           },
           "department": {
             "anyOf": [
@@ -1621,38 +1928,33 @@
           },
           "role": {
             "type": "string",
-            "title": "Role",
-            "default": "employee"
+            "title": "Role"
           },
           "is_active": {
             "type": "boolean",
-            "title": "Is Active",
-            "default": true
-          },
-          "id": {
-            "type": "string",
-            "title": "Id"
+            "title": "Is Active"
           },
           "created_at": {
-            "type": "string",
-            "format": "date-time",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Created At"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
-          "email",
-          "full_name",
           "id",
-          "created_at",
-          "updated_at"
+          "email",
+          "role",
+          "is_active"
         ],
-        "title": "UserResponse"
+        "title": "UserOut"
       },
       "ValidationError": {
         "properties": {
