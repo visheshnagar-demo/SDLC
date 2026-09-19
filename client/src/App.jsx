@@ -1,40 +1,37 @@
-import React from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import React, { useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
-import CheckoutPage from "./pages/CheckoutPage";
-import RefundPortalPage from "./pages/RefundPortalPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
+import DashboardPage from "./pages/DashboardPage";
+import ChannelsPage from "./pages/ChannelsPage";
+import SchedulePage from "./pages/SchedulePage";
+import EditorialPage from "./pages/EditorialPage";
 
-export function App() {
+export default function App() {
+  const [user, setUser] = useState({
+    id: "usr-admin-1",
+    email: "test@example.com",
+    full_name: "Operations Admin",
+    role: "News Manager",
+  });
+
+  const handleRoleChange = (newRole) => {
+    setUser((prev) => ({ ...prev, role: newRole }));
+  };
+
   return (
-    <Router>
-      <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-        <Navbar />
-        <main className="flex-1">
+    <BrowserRouter>
+      <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-blue-500 selection:text-white">
+        <Navbar currentUser={user} onRoleChange={handleRoleChange} />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
           <Routes>
-            <Route path="/" element={<Navigate to="/checkout" replace />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/refunds" element={<RefundPortalPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="*" element={<Navigate to="/checkout" replace />} />
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/channels" element={<ChannelsPage />} />
+            <Route path="/schedule" element={<SchedulePage />} />
+            <Route path="/editorial" element={<EditorialPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
-        <footer className="bg-slate-900 text-slate-400 border-t border-slate-800 py-6 text-center text-xs">
-          <div className="max-w-7xl mx-auto px-4">
-            <p>
-              © {new Date().getFullYear()} PayGateway Service. PCI-DSS Level 1
-              Merchant Security.
-            </p>
-          </div>
-        </footer>
       </div>
-    </Router>
+    </BrowserRouter>
   );
 }
-
-export default App;
