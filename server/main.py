@@ -1,10 +1,16 @@
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from starlette.middleware.cors import CORSMiddleware
-from server.api.v1 import api_v1_router
-from server.database import init_db
+
 from server.config import settings
+from server.database import init_db
+from server.routes.auth import router as auth_router
+from server.routes.inmates import router as inmates_router
+from server.routes.housing import router as housing_router
+from server.routes.movements import router as movements_router
+from server.routes.releases import router as releases_router
+from server.routes.audit import router as audit_router
 
 
 @asynccontextmanager
@@ -15,6 +21,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
+    description="Jail Management System (JMS) - Inmate Intake, Housing, Movement, and Release API",
+    version="1.0.0",
     lifespan=lifespan,
 )
 
@@ -27,15 +35,24 @@ allowed_origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=allowed_origins if allowed_origins else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+api_v1_router = APIRouter(prefix="/api/v1")
+api_v1_router.include_router(auth_router)
+api_v1_router.include_router(inmates_router)
+api_v1_router.include_router(housing_router)
+api_v1_router.include_router(movements_router)
+api_v1_router.include_router(releases_router)
+api_v1_router.include_router(audit_router)
+
 app.include_router(api_v1_router)
 
 
-@app.get("/health")
+@app.get("/health", tags=["Health"])
+@app.get("/api/v1/health", tags=["Health"])
 def health_check():
-    return {"status": "ok", "service": "payment-gateway-service"}
+    return {"status": "ok", "service": settings.PROJECT_NAME, "version": "1.0.0"}

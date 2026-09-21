@@ -17,3 +17,15 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-328 - Jail Management System - Inmate Intake, Housing, and Release Management
+
+### Feature Summary
+Provides detention officers, housing managers, and facility administrators with a centralized full-stack solution to securely manage inmate lifecycles from intake to release.
+
+### Key Features
+- Inmate Intake and Booking Workflow
+- Dynamic Housing Assignment with Keep-Away Conflict Alerts
+- Real-time Inmate Movement Tracking and Headcount Logging
+- Automated Release Processing & Hold/Detainer Verification Checklist
+- NIST-Compliant Role-Based Access Control (RBAC) & Immutable Audit Trail
