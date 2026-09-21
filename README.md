@@ -26,6 +26,7 @@ Automated ETL pipeline designed to ingest CSV transactional datasets from Google
 │   └── test3_etl_dag.py           # Airflow DAG for orchestration
 ├── Dockerfile                     # Cloud Run Job container specification
 ├── env.deploy.json                # Deployment environment configuration
+├── openapi.json                   # OpenAPI 3.0 specification & schema contract
 ├── pipeline/
 │   ├── __init__.py
 │   ├── extractor.py               # GCS extraction module

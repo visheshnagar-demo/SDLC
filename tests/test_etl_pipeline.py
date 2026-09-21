@@ -54,6 +54,21 @@ def test_transformation_spec_validity():
     assert "quantity" in column_targets
 
 
+def test_openapi_spec_validity():
+    """Verify openapi.json structure and schema definitions."""
+    openapi_path = "openapi.json"
+    assert os.path.isfile(openapi_path)
+    with open(openapi_path, "r", encoding="utf-8") as f:
+        spec = json.load(f)
+    assert spec.get("openapi") == "3.0.3"
+    assert "paths" in spec
+    assert "components" in spec
+    assert "schemas" in spec["components"]
+    assert "EtlRecord" in spec["components"]["schemas"]
+    assert "EtlConfig" in spec["components"]["schemas"]
+    assert "EtlRunSummary" in spec["components"]["schemas"]
+
+
 def test_rank_sorting_logic_pure():
     """Pure logic test: Verify rank ordering with nulls last."""
     raw_ranks = ["3", "1", "a", "5", None, "2"]
