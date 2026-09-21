@@ -1,10 +1,9 @@
 import os
 import uuid
-import datetime
+import bcrypt
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from sqlalchemy.exc import IntegrityError
-import bcrypt
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:////tmp/app.db")
 
@@ -24,12 +23,21 @@ def get_db():
 
 
 def get_password_hash(password: str) -> str:
+    pwd_bytes = password.encode("utf-8")[:72]
     salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+    return bcrypt.hashpw(pwd_bytes, salt).decode("utf-8")
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    try:
+        pwd_bytes = plain_password.encode("utf-8")[:72]
+        return bcrypt.checkpw(pwd_bytes, hashed_password.encode("utf-8"))
+    except Exception:
+        return False
 
 
 def init_db():
-    from server import models  # noqa: F401
+    import server.models  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
@@ -40,7 +48,8 @@ def init_db():
 
 
 def seed_data(db: Session):
-    from server.models import User, ExchangeRateCache
+    from server.models.audit import User
+    from server.models.housing import HousingUnit
 
     # Seed regular test user
     try:
@@ -50,7 +59,7 @@ def seed_data(db: Session):
                 id=str(uuid.uuid4()),
                 email="test@example.com",
                 hashed_password=get_password_hash("testpassword"),
-                role="user",
+                role="Intake Officer",
                 is_active=True,
                 is_verified=True,
             )
@@ -67,7 +76,7 @@ def seed_data(db: Session):
                 id=str(uuid.uuid4()),
                 email="admin@example.com",
                 hashed_password=get_password_hash("adminpassword"),
-                role="admin",
+                role="Facility Admin",
                 is_active=True,
                 is_verified=True,
             )
@@ -76,23 +85,37 @@ def seed_data(db: Session):
     except IntegrityError:
         db.rollback()
 
-    # Seed initial exchange rates cache
+    # Seed initial housing units
     try:
-        cache = (
-            db.query(ExchangeRateCache)
-            .filter(ExchangeRateCache.base_currency == "USD")
-            .first()
-        )
-        if not cache:
-            now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-            cache = ExchangeRateCache(
-                id=str(uuid.uuid4()),
-                base_currency="USD",
-                rates_json='{"USD": 1.0, "EUR": 0.925, "GBP": 0.79, "JPY": 155.0, "CAD": 1.36}',
-                fetched_at=now,
-                expires_at=now + datetime.timedelta(minutes=15),
-            )
-            db.add(cache)
+        if db.query(HousingUnit).count() == 0:
+            units = [
+                HousingUnit(
+                    unit_name="Unit A - Minimum Security",
+                    security_level="minimum",
+                    capacity=40,
+                    current_occupancy=0,
+                ),
+                HousingUnit(
+                    unit_name="Unit B - Medium Security",
+                    security_level="medium",
+                    capacity=50,
+                    current_occupancy=0,
+                ),
+                HousingUnit(
+                    unit_name="Unit C - Maximum Security",
+                    security_level="maximum",
+                    capacity=30,
+                    current_occupancy=0,
+                ),
+                HousingUnit(
+                    unit_name="Unit D - Medical Isolation",
+                    security_level="maximum",
+                    capacity=15,
+                    current_occupancy=0,
+                ),
+            ]
+            for u in units:
+                db.add(u)
             db.commit()
     except IntegrityError:
         db.rollback()
