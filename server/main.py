@@ -1,10 +1,14 @@
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from starlette.middleware.cors import CORSMiddleware
-from server.api.v1 import api_v1_router
 from server.database import init_db
 from server.config import settings
+from server.routers.items import router as items_router
+from server.routers.inventory import router as inventory_router
+from server.routers.adjustments import router as adjustments_router
+from server.routers.alerts import router as alerts_router
+from server.routers.warehouses import router as warehouses_router
 
 
 @asynccontextmanager
@@ -33,9 +37,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+api_v1_router = APIRouter(prefix="/api/v1")
+api_v1_router.include_router(items_router)
+api_v1_router.include_router(inventory_router)
+api_v1_router.include_router(adjustments_router)
+api_v1_router.include_router(alerts_router)
+api_v1_router.include_router(warehouses_router)
+
 app.include_router(api_v1_router)
 
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "service": "payment-gateway-service"}
+    return {"status": "ok", "service": "inventory-management-service"}

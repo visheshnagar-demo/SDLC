@@ -1,6 +1,5 @@
 import os
 import uuid
-import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from sqlalchemy.exc import IntegrityError
@@ -28,8 +27,17 @@ def get_password_hash(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
 
 
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    try:
+        return bcrypt.checkpw(
+            plain_password.encode("utf-8"), hashed_password.encode("utf-8")
+        )
+    except Exception:
+        return False
+
+
 def init_db():
-    from server import models  # noqa: F401
+    import server.models  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
@@ -40,7 +48,8 @@ def init_db():
 
 
 def seed_data(db: Session):
-    from server.models import User, ExchangeRateCache
+    from server.models.user import User
+    from server.models.warehouse import Warehouse
 
     # Seed regular test user
     try:
@@ -49,8 +58,9 @@ def seed_data(db: Session):
             user = User(
                 id=str(uuid.uuid4()),
                 email="test@example.com",
+                full_name="Test User",
                 hashed_password=get_password_hash("testpassword"),
-                role="user",
+                role="inventory_manager",
                 is_active=True,
                 is_verified=True,
             )
@@ -66,6 +76,7 @@ def seed_data(db: Session):
             admin = User(
                 id=str(uuid.uuid4()),
                 email="admin@example.com",
+                full_name="Admin User",
                 hashed_password=get_password_hash("adminpassword"),
                 role="admin",
                 is_active=True,
@@ -76,23 +87,17 @@ def seed_data(db: Session):
     except IntegrityError:
         db.rollback()
 
-    # Seed initial exchange rates cache
+    # Seed default warehouse
     try:
-        cache = (
-            db.query(ExchangeRateCache)
-            .filter(ExchangeRateCache.base_currency == "USD")
-            .first()
-        )
-        if not cache:
-            now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-            cache = ExchangeRateCache(
+        wh = db.query(Warehouse).filter(Warehouse.code == "WH-MAIN").first()
+        if not wh:
+            wh = Warehouse(
                 id=str(uuid.uuid4()),
-                base_currency="USD",
-                rates_json='{"USD": 1.0, "EUR": 0.925, "GBP": 0.79, "JPY": 155.0, "CAD": 1.36}',
-                fetched_at=now,
-                expires_at=now + datetime.timedelta(minutes=15),
+                code="WH-MAIN",
+                name="Main Warehouse",
+                location="Building A, Central Hub",
             )
-            db.add(cache)
+            db.add(wh)
             db.commit()
     except IntegrityError:
         db.rollback()
