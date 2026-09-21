@@ -1,88 +1,52 @@
-# Project
+# Automated ETL Pipeline: GCS to BigQuery (`test2`)
 
-## Server
+**Jira Issue**: SCRUM-330  
+**GCP Project**: `upbeat-repeater-477110-q6`  
+**Dataset**: `analytics`  
+**Target Table**: `test2`  
+**Source Path**: `gs://sdlc-workspec-store/etl/data/my_file (1).csv`  
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+---
 
-### Setup
+## 1. Overview
+This production-grade ETL batch pipeline extracts concert tour gross statistics from Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/my_file (1).csv`), cleanses and normalizes headers/data types, validates quality through a circuit breaker gate, and loads the structured analytical records into BigQuery table `upbeat-repeater-477110-q6.analytics.test2`.
 
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
-```
+## 2. Pipeline Architecture
+- **Extractor**: Streams CSV data directly from GCS bucket with chunked resilience.
+- **Schema Engine**: Dynamically sanitizes raw headers to compliant snake_case identifiers.
+- **Transformer**: Coerces numeric amounts, strips footnote citations (e.g., `[4]`), normalizes currency, and appends audit fields (`_ingested_at`, `_source_file`, `_pipeline_version`).
+- **Circuit Breaker**: Evaluates corruption thresholds (< 5% corruption allowed) before triggering BigQuery load.
+- **Loader**: Automatically manages dataset creation and uses atomic BigQuery `WRITE_TRUNCATE` loads.
 
-2. Install dependencies:
-```bash
-cd server
-pip install -r requirements.txt
-cd ..
-```
+## 3. Environment Configuration
+The pipeline is configured via environment variables:
+
+| Variable | Description | Default |
+|---|---|---|
+| `GCP_PROJECT_ID` | GCP Project ID | `upbeat-repeater-477110-q6` |
+| `BIGQUERY_DATASET` | Target BigQuery dataset | `analytics` |
+| `BIGQUERY_TABLE` | Target BigQuery table | `test2` |
+| `GCS_SOURCE_BUCKET`| Source GCS bucket name | `sdlc-workspec-store` |
+| `GCS_SOURCE_PREFIX`| Object path in GCS | `etl/data/my_file (1).csv` |
+| `MAX_ERROR_THRESHOLD_PCT` | Circuit breaker threshold | `0.05` |
+
+## 4. Local Execution & Testing
 
 ### Running Tests
 ```bash
-cd server
-python -m pytest -v
-cd ..
+pytest
 ```
 
-### Starting the Development Server
+### Running the Pipeline Locally
 ```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+python -m server.pipeline.main
+# or using the Cloud Run Job runner
+python -m pipeline.run_gcs_to_bigquery_test2
 ```
 
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
+## 5. Deployment as Cloud Run Job
 ```bash
-# Copy the example environment file
-cp .env.example .env
+docker build -t gcr.io/upbeat-repeater-477110-q6/etl-scrum-330:latest .
+gcloud run jobs create etl-scrum-330 --image gcr.io/upbeat-repeater-477110-q6/etl-scrum-330:latest
+gcloud run jobs execute etl-scrum-330
 ```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-
