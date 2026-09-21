@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from fastapi.testclient import TestClient
 
-from server.database import Base, get_db, seed_data
+from server.database import Base, get_db
 import server.models  # noqa: F401
 from server.main import app
 
@@ -20,24 +20,23 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup_database():
+def setup_test_database():
     Base.metadata.create_all(bind=test_engine)
-    db = TestingSessionLocal()
-    try:
-        seed_data(db)
-    finally:
-        db.close()
     yield
     Base.metadata.drop_all(bind=test_engine)
 
 
 @pytest.fixture
 def db_session():
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    connection = test_engine.connect()
+    transaction = connection.begin()
+    session = TestingSessionLocal(bind=connection)
+
+    yield session
+
+    session.close()
+    transaction.rollback()
+    connection.close()
 
 
 @pytest.fixture
