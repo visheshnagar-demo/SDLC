@@ -548,6 +548,800 @@
         }
       }
     },
+    "/api/v1/flocks": {
+      "post": {
+        "tags": [
+          "Flocks"
+        ],
+        "summary": "Create Flock",
+        "operationId": "create_flock_api_v1_flocks_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlockCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlockResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Flocks"
+        ],
+        "summary": "List Flocks",
+        "operationId": "list_flocks_api_v1_flocks_get",
+        "parameters": [
+          {
+            "name": "status_filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status Filter"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FlockResponse"
+                  },
+                  "title": "Response List Flocks Api V1 Flocks Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/flocks/{flock_id}": {
+      "get": {
+        "tags": [
+          "Flocks"
+        ],
+        "summary": "Get Flock",
+        "operationId": "get_flock_api_v1_flocks__flock_id__get",
+        "parameters": [
+          {
+            "name": "flock_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Flock Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlockResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Flocks"
+        ],
+        "summary": "Update Flock",
+        "operationId": "update_flock_api_v1_flocks__flock_id__put",
+        "parameters": [
+          {
+            "name": "flock_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Flock Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlockUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlockResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/flocks/{flock_id}/status": {
+      "patch": {
+        "tags": [
+          "Flocks"
+        ],
+        "summary": "Update Flock Status",
+        "operationId": "update_flock_status_api_v1_flocks__flock_id__status_patch",
+        "parameters": [
+          {
+            "name": "flock_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Flock Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlockStatusUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlockResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/egg-collections": {
+      "post": {
+        "tags": [
+          "Egg Collections"
+        ],
+        "summary": "Create Egg Collection",
+        "operationId": "create_egg_collection_api_v1_egg_collections_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EggCollectionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EggCollectionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Egg Collections"
+        ],
+        "summary": "List Egg Collections",
+        "operationId": "list_egg_collections_api_v1_egg_collections_get",
+        "parameters": [
+          {
+            "name": "flock_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Flock Id"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EggCollectionResponse"
+                  },
+                  "title": "Response List Egg Collections Api V1 Egg Collections Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feed-inventory": {
+      "get": {
+        "tags": [
+          "Feed Inventory & Consumption"
+        ],
+        "summary": "List Feed Inventory",
+        "operationId": "list_feed_inventory_api_v1_feed_inventory_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FeedInventoryResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Feed Inventory Api V1 Feed Inventory Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Feed Inventory & Consumption"
+        ],
+        "summary": "Create Or Update Feed Inventory",
+        "operationId": "create_or_update_feed_inventory_api_v1_feed_inventory_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedInventoryCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedInventoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feed-logs": {
+      "post": {
+        "tags": [
+          "Feed Inventory & Consumption"
+        ],
+        "summary": "Log Feed Consumption",
+        "operationId": "log_feed_consumption_api_v1_feed_logs_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedLogCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedLogResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Feed Inventory & Consumption"
+        ],
+        "summary": "List Feed Logs",
+        "operationId": "list_feed_logs_api_v1_feed_logs_get",
+        "parameters": [
+          {
+            "name": "flock_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Flock Id"
+            }
+          },
+          {
+            "name": "feed_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Feed Id"
+            }
+          },
+          {
+            "name": "log_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Log Date"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeedLogResponse"
+                  },
+                  "title": "Response List Feed Logs Api V1 Feed Logs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health-logs": {
+      "post": {
+        "tags": [
+          "Health & Mortality Logs"
+        ],
+        "summary": "Record Health Log",
+        "operationId": "record_health_log_api_v1_health_logs_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HealthLogCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthLogResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Health & Mortality Logs"
+        ],
+        "summary": "List Health Logs",
+        "operationId": "list_health_logs_api_v1_health_logs_get",
+        "parameters": [
+          {
+            "name": "flock_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Flock Id"
+            }
+          },
+          {
+            "name": "log_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Log Type"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HealthLogResponse"
+                  },
+                  "title": "Response List Health Logs Api V1 Health Logs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/dashboard": {
+      "get": {
+        "tags": [
+          "Farm Analytics"
+        ],
+        "summary": "Get Dashboard Analytics",
+        "operationId": "get_dashboard_analytics_api_v1_analytics_dashboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardAnalyticsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
@@ -730,6 +1524,47 @@
         ],
         "title": "CheckoutSessionResponse"
       },
+      "DashboardAnalyticsResponse": {
+        "properties": {
+          "total_active_flocks": {
+            "type": "integer",
+            "title": "Total Active Flocks"
+          },
+          "total_active_hens": {
+            "type": "integer",
+            "title": "Total Active Hens"
+          },
+          "today_egg_total": {
+            "type": "integer",
+            "title": "Today Egg Total"
+          },
+          "overall_laying_rate_pct": {
+            "type": "number",
+            "title": "Overall Laying Rate Pct"
+          },
+          "low_stock_alerts": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Low Stock Alerts"
+          },
+          "recent_health_events_count": {
+            "type": "integer",
+            "title": "Recent Health Events Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_active_flocks",
+          "total_active_hens",
+          "today_egg_total",
+          "overall_laying_rate_pct",
+          "recent_health_events_count"
+        ],
+        "title": "DashboardAnalyticsResponse"
+      },
       "DigitalWalletPaymentRequest": {
         "properties": {
           "wallet_type": {
@@ -810,6 +1645,127 @@
         ],
         "title": "DigitalWalletPaymentResponse"
       },
+      "EggCollectionCreate": {
+        "properties": {
+          "flock_id": {
+            "type": "string",
+            "title": "Flock Id"
+          },
+          "collection_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Collection Date"
+          },
+          "session": {
+            "type": "string",
+            "title": "Session"
+          },
+          "grade_large": {
+            "type": "integer",
+            "title": "Grade Large",
+            "default": 0
+          },
+          "grade_medium": {
+            "type": "integer",
+            "title": "Grade Medium",
+            "default": 0
+          },
+          "grade_small": {
+            "type": "integer",
+            "title": "Grade Small",
+            "default": 0
+          },
+          "damaged": {
+            "type": "integer",
+            "title": "Damaged",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "flock_id",
+          "collection_date",
+          "session"
+        ],
+        "title": "EggCollectionCreate"
+      },
+      "EggCollectionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "flock_id": {
+            "type": "string",
+            "title": "Flock Id"
+          },
+          "collection_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Collection Date"
+          },
+          "session": {
+            "type": "string",
+            "title": "Session"
+          },
+          "grade_large": {
+            "type": "integer",
+            "title": "Grade Large"
+          },
+          "grade_medium": {
+            "type": "integer",
+            "title": "Grade Medium"
+          },
+          "grade_small": {
+            "type": "integer",
+            "title": "Grade Small"
+          },
+          "damaged": {
+            "type": "integer",
+            "title": "Damaged"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count"
+          },
+          "warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "flock_id",
+          "collection_date",
+          "session",
+          "grade_large",
+          "grade_medium",
+          "grade_small",
+          "damaged",
+          "total_count"
+        ],
+        "title": "EggCollectionResponse"
+      },
       "ExchangeRatesResponse": {
         "properties": {
           "base_currency": {
@@ -836,6 +1792,361 @@
         ],
         "title": "ExchangeRatesResponse"
       },
+      "FeedInventoryCreate": {
+        "properties": {
+          "feed_type": {
+            "type": "string",
+            "title": "Feed Type"
+          },
+          "quantity_kg": {
+            "type": "number",
+            "title": "Quantity Kg",
+            "default": 0.0
+          },
+          "reorder_threshold_kg": {
+            "type": "number",
+            "title": "Reorder Threshold Kg",
+            "default": 100.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "feed_type"
+        ],
+        "title": "FeedInventoryCreate"
+      },
+      "FeedInventoryResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "feed_type": {
+            "type": "string",
+            "title": "Feed Type"
+          },
+          "quantity_kg": {
+            "type": "number",
+            "title": "Quantity Kg"
+          },
+          "reorder_threshold_kg": {
+            "type": "number",
+            "title": "Reorder Threshold Kg"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "feed_type",
+          "quantity_kg",
+          "reorder_threshold_kg"
+        ],
+        "title": "FeedInventoryResponse"
+      },
+      "FeedLogCreate": {
+        "properties": {
+          "flock_id": {
+            "type": "string",
+            "title": "Flock Id"
+          },
+          "feed_id": {
+            "type": "string",
+            "title": "Feed Id"
+          },
+          "quantity_used_kg": {
+            "type": "number",
+            "title": "Quantity Used Kg"
+          },
+          "log_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Log Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "flock_id",
+          "feed_id",
+          "quantity_used_kg",
+          "log_date"
+        ],
+        "title": "FeedLogCreate"
+      },
+      "FeedLogResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "flock_id": {
+            "type": "string",
+            "title": "Flock Id"
+          },
+          "feed_id": {
+            "type": "string",
+            "title": "Feed Id"
+          },
+          "quantity_used_kg": {
+            "type": "number",
+            "title": "Quantity Used Kg"
+          },
+          "remaining_feed_stock_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remaining Feed Stock Kg"
+          },
+          "low_stock_alert": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low Stock Alert",
+            "default": false
+          },
+          "log_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Log Date"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "flock_id",
+          "feed_id",
+          "quantity_used_kg",
+          "log_date"
+        ],
+        "title": "FeedLogResponse"
+      },
+      "FlockCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "breed": {
+            "type": "string",
+            "title": "Breed"
+          },
+          "hatch_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Hatch Date"
+          },
+          "initial_count": {
+            "type": "integer",
+            "title": "Initial Count"
+          },
+          "coop_location": {
+            "type": "string",
+            "title": "Coop Location"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "breed",
+          "hatch_date",
+          "initial_count",
+          "coop_location"
+        ],
+        "title": "FlockCreate"
+      },
+      "FlockResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "breed": {
+            "type": "string",
+            "title": "Breed"
+          },
+          "hatch_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Hatch Date"
+          },
+          "initial_count": {
+            "type": "integer",
+            "title": "Initial Count"
+          },
+          "active_count": {
+            "type": "integer",
+            "title": "Active Count"
+          },
+          "coop_location": {
+            "type": "string",
+            "title": "Coop Location"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "breed",
+          "hatch_date",
+          "initial_count",
+          "active_count",
+          "coop_location",
+          "status"
+        ],
+        "title": "FlockResponse"
+      },
+      "FlockStatusUpdate": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "FlockStatusUpdate"
+      },
+      "FlockUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "breed": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Breed"
+          },
+          "hatch_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hatch Date"
+          },
+          "coop_location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coop Location"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "title": "FlockUpdate"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -848,6 +2159,114 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "HealthLogCreate": {
+        "properties": {
+          "flock_id": {
+            "type": "string",
+            "title": "Flock Id"
+          },
+          "log_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Log Date"
+          },
+          "log_type": {
+            "type": "string",
+            "title": "Log Type"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity",
+            "default": 1
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "flock_id",
+          "log_date",
+          "log_type"
+        ],
+        "title": "HealthLogCreate"
+      },
+      "HealthLogResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "flock_id": {
+            "type": "string",
+            "title": "Flock Id"
+          },
+          "log_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Log Date"
+          },
+          "log_type": {
+            "type": "string",
+            "title": "Log Type"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "updated_active_hen_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated Active Hen Count"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "flock_id",
+          "log_date",
+          "log_type",
+          "quantity"
+        ],
+        "title": "HealthLogResponse"
       },
       "RefundRequest": {
         "properties": {

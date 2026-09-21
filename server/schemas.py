@@ -1,7 +1,9 @@
 from typing import Any, Optional
 from pydantic import BaseModel, ConfigDict, Field
-from datetime import datetime
+from datetime import datetime, date
 
+
+# --- Existing Schemas (Preserved) ---
 
 class CartItem(BaseModel):
     name: str
@@ -111,3 +113,138 @@ class AuditLogEntry(BaseModel):
     ip_address: str
     masked_payload: dict[str, Any]
     created_at: Optional[datetime] = None
+
+
+# --- Hens Management System Schemas ---
+
+class FlockCreate(BaseModel):
+    name: str
+    breed: str
+    hatch_date: date
+    initial_count: int
+    coop_location: str
+
+
+class FlockUpdate(BaseModel):
+    name: Optional[str] = None
+    breed: Optional[str] = None
+    hatch_date: Optional[date] = None
+    coop_location: Optional[str] = None
+    status: Optional[str] = None
+
+
+class FlockStatusUpdate(BaseModel):
+    status: str
+
+
+class FlockResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    name: str
+    breed: str
+    hatch_date: date
+    initial_count: int
+    active_count: int
+    coop_location: str
+    status: str
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class EggCollectionCreate(BaseModel):
+    flock_id: str
+    collection_date: date
+    session: str
+    grade_large: int = 0
+    grade_medium: int = 0
+    grade_small: int = 0
+    damaged: int = 0
+
+
+class EggCollectionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    flock_id: str
+    collection_date: date
+    session: str
+    grade_large: int
+    grade_medium: int
+    grade_small: int
+    damaged: int
+    total_count: int
+    warning: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+
+class FeedInventoryCreate(BaseModel):
+    feed_type: str
+    quantity_kg: float = 0.0
+    reorder_threshold_kg: float = 100.0
+
+
+class FeedInventoryUpdate(BaseModel):
+    quantity_kg: Optional[float] = None
+    reorder_threshold_kg: Optional[float] = None
+
+
+class FeedInventoryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    feed_type: str
+    quantity_kg: float
+    reorder_threshold_kg: float
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class FeedLogCreate(BaseModel):
+    flock_id: str
+    feed_id: str
+    quantity_used_kg: float
+    log_date: date
+
+
+class FeedLogResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    flock_id: str
+    feed_id: str
+    quantity_used_kg: float
+    remaining_feed_stock_kg: Optional[float] = None
+    low_stock_alert: Optional[bool] = False
+    log_date: date
+    created_at: Optional[datetime] = None
+
+
+class HealthLogCreate(BaseModel):
+    flock_id: str
+    log_date: date
+    log_type: str  # MORTALITY | VACCINATION | ILLNESS
+    quantity: int = 1
+    notes: Optional[str] = None
+
+
+class HealthLogResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    flock_id: str
+    log_date: date
+    log_type: str
+    quantity: int
+    updated_active_hen_count: Optional[int] = None
+    notes: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+
+class DashboardAnalyticsResponse(BaseModel):
+    total_active_flocks: int
+    total_active_hens: int
+    today_egg_total: int
+    overall_laying_rate_pct: float
+    low_stock_alerts: list[dict[str, Any]] = Field(default_factory=list)
+    recent_health_events_count: int

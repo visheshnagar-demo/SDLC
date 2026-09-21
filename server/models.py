@@ -6,6 +6,8 @@ from sqlalchemy import (
     Float,
     Boolean,
     DateTime,
+    Date,
+    Integer,
     ForeignKey,
     Text,
 )
@@ -141,3 +143,92 @@ class WebhookEvent(Base):
     id = Column(String, primary_key=True)
     event_type = Column(String, nullable=False)
     processed_at = Column(DateTime, default=get_utc_now, nullable=False)
+
+
+# --- Hens Management System Models ---
+
+class Flock(Base):
+    __tablename__ = "flocks"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    name = Column(String, nullable=False)
+    breed = Column(String, nullable=False)
+    hatch_date = Column(Date, nullable=False)
+    initial_count = Column(Integer, nullable=False)
+    active_count = Column(Integer, nullable=False)
+    coop_location = Column(String, nullable=False)
+    status = Column(String, default="ACTIVE", nullable=False)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    updated_at = Column(
+        DateTime,
+        default=get_utc_now,
+        onupdate=get_utc_now,
+        nullable=False,
+    )
+
+    egg_collections = relationship("EggCollection", back_populates="flock", cascade="all, delete-orphan")
+    feed_logs = relationship("FeedLog", back_populates="flock", cascade="all, delete-orphan")
+    health_logs = relationship("HealthMortalityLog", back_populates="flock", cascade="all, delete-orphan")
+
+
+class EggCollection(Base):
+    __tablename__ = "egg_collections"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    flock_id = Column(String, ForeignKey("flocks.id"), nullable=False)
+    collection_date = Column(Date, nullable=False)
+    session = Column(String, nullable=False)
+    grade_large = Column(Integer, default=0, nullable=False)
+    grade_medium = Column(Integer, default=0, nullable=False)
+    grade_small = Column(Integer, default=0, nullable=False)
+    damaged = Column(Integer, default=0, nullable=False)
+    total_count = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+
+    flock = relationship("Flock", back_populates="egg_collections")
+
+
+class FeedInventory(Base):
+    __tablename__ = "feed_inventory"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    feed_type = Column(String, unique=True, nullable=False)
+    quantity_kg = Column(Float, default=0.0, nullable=False)
+    reorder_threshold_kg = Column(Float, default=100.0, nullable=False)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    updated_at = Column(
+        DateTime,
+        default=get_utc_now,
+        onupdate=get_utc_now,
+        nullable=False,
+    )
+
+    logs = relationship("FeedLog", back_populates="feed", cascade="all, delete-orphan")
+
+
+class FeedLog(Base):
+    __tablename__ = "feed_logs"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    flock_id = Column(String, ForeignKey("flocks.id"), nullable=False)
+    feed_id = Column(String, ForeignKey("feed_inventory.id"), nullable=False)
+    quantity_used_kg = Column(Float, nullable=False)
+    log_date = Column(Date, nullable=False)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+
+    flock = relationship("Flock", back_populates="feed_logs")
+    feed = relationship("FeedInventory", back_populates="logs")
+
+
+class HealthMortalityLog(Base):
+    __tablename__ = "health_mortality_logs"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    flock_id = Column(String, ForeignKey("flocks.id"), nullable=False)
+    log_date = Column(Date, nullable=False)
+    log_type = Column(String, nullable=False)
+    quantity = Column(Integer, default=1, nullable=False)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+
+    flock = relationship("Flock", back_populates="health_logs")
