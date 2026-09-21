@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App";
+import App from "./App.jsx";
 import "./index.css";
 
 class ErrorBoundary extends React.Component {
@@ -13,8 +13,8 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
-  componentDidCatch(_error, _errorInfo) {
-    // Error logged for boundary tracking
+  componentDidCatch(error, errorInfo) {
+    console.error("Uncaught React render error:", error, errorInfo);
   }
 
   render() {
@@ -23,28 +23,29 @@ class ErrorBoundary extends React.Component {
         <div
           style={{
             padding: "2rem",
-            textAlign: "center",
-            fontFamily: "sans-serif",
+            backgroundColor: "#0f172a",
+            color: "#f8fafc",
+            minHeight: "100vh",
           }}
         >
-          <h2>Something went wrong.</h2>
-          <p style={{ color: "#666" }}>
-            {this.state.error?.message ||
-              "An unexpected rendering error occurred."}
+          <h2>Something went wrong in the Rainwater Harvesting Platform.</h2>
+          <p style={{ color: "#94a3b8", marginTop: "0.5rem" }}>
+            {this.state.error?.toString() ||
+              "Check developer console for details."}
           </p>
           <button
             onClick={() => window.location.reload()}
             style={{
               marginTop: "1rem",
               padding: "0.5rem 1rem",
-              backgroundColor: "#4F46E5",
+              backgroundColor: "#0284c7",
               color: "#fff",
               border: "none",
               borderRadius: "0.375rem",
               cursor: "pointer",
             }}
           >
-            Reload Page
+            Reload Platform
           </button>
         </div>
       );
