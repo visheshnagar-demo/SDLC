@@ -1,40 +1,29 @@
 import React from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-import Navbar from "./components/Navbar";
-import CheckoutPage from "./pages/CheckoutPage";
-import RefundPortalPage from "./pages/RefundPortalPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Navbar from "./components/Navbar.jsx";
+import IntakePage from "./pages/IntakePage.jsx";
+import HousingPage from "./pages/HousingPage.jsx";
+import MovementsPage from "./pages/MovementsPage.jsx";
+import ReleasesPage from "./pages/ReleasesPage.jsx";
 
-export function App() {
+export default function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+      <div className="min-h-screen bg-[#090D16] text-[#F8FAFC] flex flex-col font-sans">
         <Navbar />
-        <main className="flex-1">
+        <main className="flex-1 p-6 md:p-8">
           <Routes>
-            <Route path="/" element={<Navigate to="/checkout" replace />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/refunds" element={<RefundPortalPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="*" element={<Navigate to="/checkout" replace />} />
+            <Route path="/" element={<IntakePage />} />
+            <Route path="/housing" element={<HousingPage />} />
+            <Route path="/movements" element={<MovementsPage />} />
+            <Route path="/releases" element={<ReleasesPage />} />
           </Routes>
         </main>
-        <footer className="bg-slate-900 text-slate-400 border-t border-slate-800 py-6 text-center text-xs">
-          <div className="max-w-7xl mx-auto px-4">
-            <p>
-              © {new Date().getFullYear()} PayGateway Service. PCI-DSS Level 1
-              Merchant Security.
-            </p>
-          </div>
+        <footer className="bg-[#0F172A] border-t border-[#334155] py-4 px-6 text-center text-xs text-[#94A3B8]">
+          Jail Management System (JMS Enterprise) &bull; NIST SP 800-53
+          Compliant &bull; Facility Security Operations
         </footer>
       </div>
     </Router>
   );
 }
-
-export default App;
