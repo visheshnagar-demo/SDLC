@@ -10,6 +10,6 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY server /app/server
 
-EXPOSE 8000 8080
+EXPOSE 8080 8000
 
-CMD ["uvicorn", "server.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn server.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
