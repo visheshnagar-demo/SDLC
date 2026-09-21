@@ -4,8 +4,10 @@
 
 body {
   margin: 0;
+  background-color: #090d16;
+  color: #f8fafc;
   font-family:
-    "Inter",
+    "Chivo",
     system-ui,
     -apple-system,
     sans-serif;
