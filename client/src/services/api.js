@@ -7,85 +7,56 @@ export const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Standardized error payload extractions
-    const message =
-      error.response?.data?.detail ||
-      error.message ||
-      "An unexpected network error occurred";
-    return Promise.reject(
-      new Error(
-        typeof message === "object" ? JSON.stringify(message) : message,
-      ),
-    );
-  },
-);
-
-export const createCheckoutSession = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/checkout-session",
-    payload,
-  );
+export const getInmates = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/inmates", { params });
   return response.data;
 };
 
-export const payWithDigitalWallet = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/digital-wallet",
-    payload,
-  );
+export const createInmate = async (data) => {
+  const response = await apiClient.post("/api/v1/inmates", data);
   return response.data;
 };
 
-export const getExchangeRates = async (baseCurrency = "USD") => {
-  const response = await apiClient.get("/api/v1/payments/rates", {
-    params: { base_currency: baseCurrency },
+export const getInmateById = async (id) => {
+  const response = await apiClient.get(`/api/v1/inmates/${id}`);
+  return response.data;
+};
+
+export const updateInmate = async (id, data) => {
+  const response = await apiClient.put(`/api/v1/inmates/${id}`, data);
+  return response.data;
+};
+
+export const getCells = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/cells", { params });
+  return response.data;
+};
+
+export const assignCell = async (data) => {
+  const response = await apiClient.post("/api/v1/cells/assign", data);
+  return response.data;
+};
+
+export const getVisitorLogs = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/visitors/check-in", { params });
+  return response.data;
+};
+
+export const checkInVisitor = async (data) => {
+  const response = await apiClient.post("/api/v1/visitors/check-in", data);
+  return response.data;
+};
+
+export const checkOutVisitor = async (id) => {
+  const response = await apiClient.post(`/api/v1/visitors/check-out`, {
+    visitor_log_id: id,
   });
   return response.data;
 };
 
-export const listTransactions = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/payments/transactions", {
-    params,
-  });
-  return response.data;
-};
-
-export const getTransactionDetail = async (transactionId) => {
-  const response = await apiClient.get(
-    `/api/v1/payments/transactions/${transactionId}`,
-  );
-  return response.data;
-};
-
-export const createRefund = async (payload) => {
-  const response = await apiClient.post("/api/v1/refunds", payload);
-  return response.data;
-};
-
-export const listRefunds = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/refunds", { params });
-  return response.data;
-};
-
-export const listAuditLogs = async (params = {}) => {
+export const getAuditLogs = async (params = {}) => {
   const response = await apiClient.get("/api/v1/audit-logs", { params });
   return response.data;
-};
-
-export default {
-  apiClient,
-  createCheckoutSession,
-  payWithDigitalWallet,
-  getExchangeRates,
-  listTransactions,
-  getTransactionDetail,
-  createRefund,
-  listRefunds,
-  listAuditLogs,
 };

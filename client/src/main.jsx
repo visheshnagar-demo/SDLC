@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App";
+import App from "./App.jsx";
 import "./index.css";
 
 class ErrorBoundary extends React.Component {
@@ -13,8 +13,8 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
-  componentDidCatch(_error, _errorInfo) {
-    // Error logged for boundary tracking
+  componentDidCatch(error, errorInfo) {
+    console.error("Uncaught error in ErrorBoundary:", error, errorInfo);
   }
 
   render() {
@@ -23,29 +23,27 @@ class ErrorBoundary extends React.Component {
         <div
           style={{
             padding: "2rem",
-            textAlign: "center",
-            fontFamily: "sans-serif",
+            backgroundColor: "#020617",
+            color: "#f8fafc",
+            fontFamily: "monospace",
           }}
         >
-          <h2>Something went wrong.</h2>
-          <p style={{ color: "#666" }}>
-            {this.state.error?.message ||
-              "An unexpected rendering error occurred."}
+          <h2 style={{ color: "#ef4444" }}>⚠️ Application Render Error</h2>
+          <p style={{ marginTop: "1rem", color: "#94a3b8" }}>
+            Something went wrong while rendering the UI.
           </p>
-          <button
-            onClick={() => window.location.reload()}
+          <pre
             style={{
               marginTop: "1rem",
-              padding: "0.5rem 1rem",
-              backgroundColor: "#4F46E5",
-              color: "#fff",
-              border: "none",
-              borderRadius: "0.375rem",
-              cursor: "pointer",
+              padding: "1rem",
+              backgroundColor: "#0f172a",
+              border: "1px solid #1e293b",
+              borderRadius: "4px",
+              overflowX: "auto",
             }}
           >
-            Reload Page
-          </button>
+            {this.state.error?.toString()}
+          </pre>
         </div>
       );
     }
