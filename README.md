@@ -1,88 +1,63 @@
-# Project
+# SCRUM-333: ETL Data Pipeline (GCS to BigQuery)
 
-## Server
+## Overview
+Automated ETL pipeline designed to ingest CSV transactional datasets from Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/test_dynamic_etl_gmt.csv`), apply deterministic business transformations, and load the resulting dataset into Google BigQuery table `test3` within dataset `analytics` under GCP project `upbeat-repeater-477110-q6`.
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+## Transformations Implemented
+1. **Rank Sorting**:
+   - Casts the `rank` field into numeric values.
+   - Sorts records in ascending order.
+   - Positions invalid, non-numeric (e.g. `'a'`), or missing values at the end (`NULLS LAST`).
+2. **Currency Conversion (USD to INR)**:
+   - Sanitizes `amount` values (removes currency symbols, commas).
+   - Multiplies USD amounts by the runtime exchange rate (default: `83.50` or configured via `EXCHANGE_RATE`).
+   - Generates `amount_inr` and records `exchange_rate`.
+3. **GMT to IST Timezone Conversion & Splitting**:
+   - Parses GMT/UTC timestamps from `us_time`.
+   - Converts timestamps into Indian Standard Time (`Asia/Kolkata`, UTC+05:30).
+   - Splits into `indian_date` (`YYYY-MM-DD`) and `indian_time` (`HH:MM:SS`).
+4. **Audit Trail**:
+   - Populates `ingested_at` with current UTC timestamp.
 
-### Setup
-
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+## Project Structure
+```
+├── app.py                         # Root execution entry point
+├── dags/
+│   └── test3_etl_dag.py           # Airflow DAG for orchestration
+├── Dockerfile                     # Cloud Run Job container specification
+├── env.deploy.json                # Deployment environment configuration
+├── pipeline/
+│   ├── __init__.py
+│   ├── extractor.py               # GCS extraction module
+│   ├── transformer.py             # Business transformations module
+│   ├── loader.py                  # BigQuery loading module
+│   ├── run_etl.py                 # Standalone ETL pipeline runner
+│   └── run_test3_etl.py           # Connector runner script
+├── requirements.txt               # Dependencies
+├── schemas/
+│   └── test3_schema.json          # Target BigQuery schema JSON
+├── sql/
+│   └── ddl/
+│       └── test3.sql              # Target BigQuery DDL
+├── tests/
+│   ├── __init__.py
+│   ├── test_etl_pipeline.py       # Transformation & unit tests
+│   └── test_test3_etl_pipeline.py # Connector & syntax tests
+└── transformation_spec.json       # Persisted transformation specification
 ```
 
-2. Install dependencies:
+## Local Execution
 ```bash
-cd server
+# Install dependencies
 pip install -r requirements.txt
-cd ..
+
+# Run unit tests
+pytest tests/
+
+# Execute pipeline
+python -m pipeline.run_etl
 ```
 
-### Running Tests
-```bash
-cd server
-python -m pytest -v
-cd ..
-```
-
-### Starting the Development Server
-```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
-```bash
-# Copy the example environment file
-cp .env.example .env
-```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-
+## Cloud Run Job Deployment
+Packaged as a serverless container executed via Cloud Run Job.
+No idle HTTP server or long-running scheduler is required.

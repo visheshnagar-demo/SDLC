@@ -1,0 +1,62 @@
+[
+  {
+    "name": "rank",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Rank index sorted ascending with invalid/nulls at end"
+  },
+  {
+    "name": "name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Customer/entity name"
+  },
+  {
+    "name": "quantity",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Quantity"
+  },
+  {
+    "name": "amount",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Original amount in USD"
+  },
+  {
+    "name": "amount_inr",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Converted amount in INR"
+  },
+  {
+    "name": "exchange_rate",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Exchange rate multiplier used for USD to INR"
+  },
+  {
+    "name": "us_time",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Source timestamp in GMT"
+  },
+  {
+    "name": "indian_date",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Converted IST date (YYYY-MM-DD)"
+  },
+  {
+    "name": "indian_time",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Converted IST time (HH:MM:SS)"
+  },
+  {
+    "name": "ingested_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "UTC timestamp when record was ingested"
+  }
+]

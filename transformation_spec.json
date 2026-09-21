@@ -1,0 +1,61 @@
+{
+  "columns": [
+    {
+      "source_name": "rank",
+      "target_name": "rank",
+      "target_type": "INTEGER",
+      "transform": "parse_integer_nulls_last"
+    },
+    {
+      "source_name": "amount",
+      "target_name": "amount",
+      "target_type": "FLOAT",
+      "transform": "clean_currency_usd"
+    },
+    {
+      "source_name": "us_time",
+      "target_name": "us_time",
+      "target_type": "STRING",
+      "transform": "parse_gmt_timestamp"
+    },
+    {
+      "source_name": "name",
+      "target_name": "name",
+      "target_type": "STRING",
+      "transform": "identity"
+    },
+    {
+      "source_name": "quantity",
+      "target_name": "quantity",
+      "target_type": "INTEGER",
+      "transform": "parse_integer"
+    }
+  ],
+  "derived_columns": [
+    {
+      "target_name": "amount_inr",
+      "target_type": "FLOAT",
+      "expression": "amount * exchange_rate"
+    },
+    {
+      "target_name": "exchange_rate",
+      "target_type": "FLOAT",
+      "expression": "runtime_exchange_rate"
+    },
+    {
+      "target_name": "indian_date",
+      "target_type": "STRING",
+      "expression": "to_ist(us_time).date"
+    },
+    {
+      "target_name": "indian_time",
+      "target_type": "STRING",
+      "expression": "to_ist(us_time).time"
+    },
+    {
+      "target_name": "ingested_at",
+      "target_type": "TIMESTAMP",
+      "expression": "now_utc()"
+    }
+  ]
+}
