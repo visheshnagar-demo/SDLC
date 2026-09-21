@@ -1,38 +1,81 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Navigate,
+  useLocation,
 } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import CheckoutPage from "./pages/CheckoutPage";
-import RefundPortalPage from "./pages/RefundPortalPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
+import { Sidebar } from "./components/Sidebar";
+import { Header } from "./components/Header";
+import { Dashboard } from "./pages/Dashboard";
+import { Flocks } from "./pages/Flocks";
+import { EggCollections } from "./pages/EggCollections";
+import { FeedInventory } from "./pages/FeedInventory";
+import { HealthLogs } from "./pages/HealthLogs";
+import { getFeedInventory } from "./services/api";
+
+function AppLayout() {
+  const location = useLocation();
+  const [lowStockAlerts, setLowStockAlerts] = useState(0);
+
+  useEffect(() => {
+    async function checkStock() {
+      try {
+        const feedRes = await getFeedInventory();
+        const low = (feedRes || []).filter(
+          (f) => f.quantity_kg <= f.reorder_threshold_kg,
+        ).length;
+        setLowStockAlerts(low);
+      } catch (err) {
+        console.warn("Could not check stock alerts for header", err);
+      }
+    }
+    checkStock();
+  }, [location.pathname]);
+
+  const getPageTitle = (path) => {
+    switch (path) {
+      case "/":
+        return "Farm Operations Dashboard";
+      case "/flocks":
+        return "Flock Registry & House Allocation";
+      case "/egg-collections":
+        return "Daily Egg Collection & Quality Grading";
+      case "/feed-inventory":
+        return "Feed Inventory & Consumption Tracking";
+      case "/health-logs":
+        return "Flock Health, Vaccination & Mortality Logs";
+      default:
+        return "Hens Management System";
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen bg-slate-50 font-sans text-slate-900">
+      <Sidebar />
+      <div className="flex-1 flex flex-col min-w-0">
+        <Header
+          title={getPageTitle(location.pathname)}
+          lowStockAlerts={lowStockAlerts}
+        />
+        <main className="flex-1 bg-[#FAF8FF]">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/flocks" element={<Flocks />} />
+            <Route path="/egg-collections" element={<EggCollections />} />
+            <Route path="/feed-inventory" element={<FeedInventory />} />
+            <Route path="/health-logs" element={<HealthLogs />} />
+          </Routes>
+        </main>
+      </div>
+    </div>
+  );
+}
 
 export function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-        <Navbar />
-        <main className="flex-1">
-          <Routes>
-            <Route path="/" element={<Navigate to="/checkout" replace />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/refunds" element={<RefundPortalPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="*" element={<Navigate to="/checkout" replace />} />
-          </Routes>
-        </main>
-        <footer className="bg-slate-900 text-slate-400 border-t border-slate-800 py-6 text-center text-xs">
-          <div className="max-w-7xl mx-auto px-4">
-            <p>
-              © {new Date().getFullYear()} PayGateway Service. PCI-DSS Level 1
-              Merchant Security.
-            </p>
-          </div>
-        </footer>
-      </div>
+      <AppLayout />
     </Router>
   );
 }
