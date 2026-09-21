@@ -2,9 +2,9 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from server.api.v1 import api_v1_router
+
 from server.database import init_db
-from server.config import settings
+from server.routers import inmates, cells, visitors, audit, auth
 
 
 @asynccontextmanager
@@ -14,7 +14,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
+    title="Prison Management System API",
+    description="APIs for inmate management, cell capacity, visitor screening, and audit logging.",
+    version="1.0.0",
     lifespan=lifespan,
 )
 
@@ -33,9 +35,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(api_v1_router)
+app.include_router(inmates.router)
+app.include_router(cells.router)
+app.include_router(visitors.router)
+app.include_router(audit.router)
+app.include_router(auth.router)
 
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "service": "payment-gateway-service"}
+    return {"status": "ok", "service": "prison-management-service"}

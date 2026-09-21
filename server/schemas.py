@@ -1,113 +1,207 @@
-from typing import Any, Optional
-from pydantic import BaseModel, ConfigDict, Field
+import json
+from typing import List, Optional, Any, Dict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from datetime import datetime
 
 
-class CartItem(BaseModel):
-    name: str
-    quantity: int = 1
-    unit_price: float
+# User & Auth Schemas
+class UserBase(BaseModel):
+    email: str
+    role: str = "GUARD"
 
 
-class CheckoutSessionRequest(BaseModel):
-    amount: float = Field(gt=0, description="Amount in base currency")
-    currency: str = Field(default="USD", description="Settlement/target currency")
-    customer_email: str
-    items: Optional[list[CartItem]] = Field(default_factory=list)
+class UserCreate(UserBase):
+    password: str
 
 
-class CheckoutSessionResponse(BaseModel):
-    session_id: str
-    payment_intent_id: str
-    client_secret: str
-    base_amount: float
-    base_currency: str
-    target_amount: float
-    target_currency: str
-    exchange_rate: float
+class UserResponse(UserBase):
+    id: str
+    is_active: bool
+    is_verified: bool
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 
-class DigitalWalletPaymentRequest(BaseModel):
-    wallet_type: str = Field(description="apple_pay or google_pay")
-    payment_token: str
-    currency: str = "USD"
-    amount: float = Field(gt=0)
-    customer_email: Optional[str] = "customer@example.com"
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
 
-class DigitalWalletPaymentResponse(BaseModel):
-    transaction_id: str
-    payment_intent_id: str
-    wallet_type: str
-    amount: float
-    currency: str
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    role: str
+    email: str
+
+
+# Cell Schemas
+class CellBase(BaseModel):
+    cell_number: str
+    block_name: str
+    capacity: int = 2
+    security_tier: str = "MEDIUM"  # MINIMUM, MEDIUM, MAXIMUM, HIGH_SECURITY
+
+
+class CellCreate(CellBase):
+    pass
+
+
+class CellUpdate(BaseModel):
+    cell_number: Optional[str] = None
+    block_name: Optional[str] = None
+    capacity: Optional[int] = None
+    security_tier: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class CellAssignmentRequest(BaseModel):
+    inmate_id: str
+    cell_id: str
+
+
+class CellAssignmentResponse(BaseModel):
     status: str
+    message: str
+    assigned_at: str
+    inmate_id: str
+    cell_id: str
 
 
-class ExchangeRatesResponse(BaseModel):
-    base_currency: str
-    rates: dict[str, float]
-    timestamp: str
+class CellResponse(CellBase):
+    id: str
+    current_occupancy: int
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 
-class RefundRequest(BaseModel):
-    transaction_id: str
-    amount: float = Field(gt=0)
+# Inmate Schemas
+class InmateBase(BaseModel):
+    inmate_number: str
+    first_name: str
+    last_name: str
+    date_of_birth: str  # YYYY-MM-DD
+    security_tier: str = "MEDIUM"  # MINIMUM, MEDIUM, MAXIMUM, HIGH_SECURITY
+
+
+class InmateCreate(InmateBase):
+    cell_id: Optional[str] = None
+    medical_alerts: List[str] = Field(default_factory=list)
+    offense_history: List[Dict[str, Any]] = Field(default_factory=list)
+    emergency_contacts: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class InmateUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    security_tier: Optional[str] = None
+    cell_id: Optional[str] = None
+    medical_alerts: Optional[List[str]] = None
+    offense_history: Optional[List[Dict[str, Any]]] = None
+    emergency_contacts: Optional[List[Dict[str, Any]]] = None
+
+
+class InmateResponse(InmateBase):
+    id: str
+    cell_id: Optional[str] = None
+    medical_alerts: List[str] = Field(default_factory=list)
+    offense_history: List[Dict[str, Any]] = Field(default_factory=list)
+    emergency_contacts: List[Dict[str, Any]] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("medical_alerts", mode="before")
+    @classmethod
+    def parse_medical_alerts(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except Exception:
+                return []
+        return v or []
+
+    @field_validator("offense_history", mode="before")
+    @classmethod
+    def parse_offense_history(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except Exception:
+                return []
+        return v or []
+
+    @field_validator("emergency_contacts", mode="before")
+    @classmethod
+    def parse_emergency_contacts(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except Exception:
+                return []
+        return v or []
+
+
+class InmateListResponse(BaseModel):
+    items: List[InmateResponse]
+    total: int
+    skip: int
+    limit: int
+
+
+# Visitor Schemas
+class VisitorCheckInRequest(BaseModel):
+    visitor_id_number: str
+    visitor_name: str
+    inmate_id: str
+
+
+class VisitorCheckOutRequest(BaseModel):
+    visitor_log_id: str
+
+
+class VisitorLogResponse(BaseModel):
+    id: str
+    visitor_id_number: str
+    visitor_name: str
+    inmate_id: str
+    check_in_time: datetime
+    check_out_time: Optional[datetime] = None
+    status: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class VisitorBlacklistCreate(BaseModel):
+    visitor_id_number: str
     reason: str
-    memo: Optional[str] = None
 
 
-class RefundSummary(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class VisitorBlacklistResponse(BaseModel):
     id: str
-    transaction_id: str
-    refund_amount: float
-    currency: str
+    visitor_id_number: str
     reason: str
-    memo: Optional[str] = None
-    status: str
-    created_at: Optional[datetime] = None
+    banned_at: datetime
 
-
-class TransactionSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+
+# Audit Log Schemas
+class AuditLogResponse(BaseModel):
     id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    currency: str
-    status: str
-    created_at: Optional[datetime] = None
+    user_id: Optional[str] = None
+    user_role: Optional[str] = None
+    action: str
+    resource_type: str
+    resource_id: Optional[str] = None
+    payload_before: str
+    payload_after: str
+    created_at: datetime
 
-
-class TransactionDetail(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    base_currency: str
-    target_currency: str
-    converted_amount: float
-    exchange_rate: float
-    status: str
-    refunded_amount: float
-    remaining_refundable_balance: float
-    refunds: list[RefundSummary] = Field(default_factory=list)
-    created_at: Optional[datetime] = None
-
-
-class AuditLogEntry(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    transaction_id: Optional[str] = None
-    event_type: str
-    ip_address: str
-    masked_payload: dict[str, Any]
-    created_at: Optional[datetime] = None
