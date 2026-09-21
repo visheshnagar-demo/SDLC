@@ -13,7 +13,6 @@ export const apiClient = axios.create({
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Standardized error payload extractions
     const message =
       error.response?.data?.detail ||
       error.message ||
@@ -26,66 +25,92 @@ apiClient.interceptors.response.use(
   },
 );
 
-export const createCheckoutSession = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/checkout-session",
-    payload,
-  );
+// Stock & Inventory
+export const getInventory = async (params = {}) => {
+  try {
+    const response = await apiClient.get("/api/v1/inventory", { params });
+    return response.data;
+  } catch (err) {
+    console.warn("API getInventory fallback/error:", err.message);
+    throw err;
+  }
+};
+
+// Item Catalog
+export const getItems = async (params = {}) => {
+  try {
+    const response = await apiClient.get("/api/v1/items", { params });
+    return response.data;
+  } catch (err) {
+    console.warn("API getItems fallback/error:", err.message);
+    throw err;
+  }
+};
+
+export const createItem = async (payload) => {
+  const response = await apiClient.post("/api/v1/items", payload);
   return response.data;
 };
 
-export const payWithDigitalWallet = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/digital-wallet",
-    payload,
-  );
+export const getItem = async (itemId) => {
+  const response = await apiClient.get(`/api/v1/items/${itemId}`);
   return response.data;
 };
 
-export const getExchangeRates = async (baseCurrency = "USD") => {
-  const response = await apiClient.get("/api/v1/payments/rates", {
-    params: { base_currency: baseCurrency },
-  });
+export const updateItem = async (itemId, payload) => {
+  const response = await apiClient.put(`/api/v1/items/${itemId}`, payload);
   return response.data;
 };
 
-export const listTransactions = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/payments/transactions", {
-    params,
-  });
+// Adjustments & Audit Logs
+export const adjustStock = async (payload) => {
+  const response = await apiClient.post("/api/v1/inventory/adjust", payload);
   return response.data;
 };
 
-export const getTransactionDetail = async (transactionId) => {
-  const response = await apiClient.get(
-    `/api/v1/payments/transactions/${transactionId}`,
-  );
-  return response.data;
+export const getAuditLogs = async (params = {}) => {
+  try {
+    const response = await apiClient.get("/api/v1/inventory/audit-logs", {
+      params,
+    });
+    return response.data;
+  } catch (err) {
+    console.warn("API getAuditLogs error:", err.message);
+    throw err;
+  }
 };
 
-export const createRefund = async (payload) => {
-  const response = await apiClient.post("/api/v1/refunds", payload);
-  return response.data;
+// Low Stock Alerts
+export const getAlerts = async () => {
+  try {
+    const response = await apiClient.get("/api/v1/alerts");
+    return response.data;
+  } catch (err) {
+    console.warn("API getAlerts error:", err.message);
+    throw err;
+  }
 };
 
-export const listRefunds = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/refunds", { params });
-  return response.data;
-};
-
-export const listAuditLogs = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/audit-logs", { params });
-  return response.data;
+// Warehouses
+export const getWarehouses = async () => {
+  try {
+    const response = await apiClient.get("/api/v1/warehouses");
+    return response.data;
+  } catch (err) {
+    console.warn("API getWarehouses error:", err.message);
+    throw err;
+  }
 };
 
 export default {
   apiClient,
-  createCheckoutSession,
-  payWithDigitalWallet,
-  getExchangeRates,
-  listTransactions,
-  getTransactionDetail,
-  createRefund,
-  listRefunds,
-  listAuditLogs,
+  getInventory,
+  getItems,
+  createItem,
+  getItem,
+  updateItem,
+  adjustStock,
+  getAuditLogs,
+  getAlerts,
+  getWarehouses,
 };
