@@ -30,8 +30,6 @@ graph TD
 
 ## Backend Modules (server/)
 - server/__init__.py
-- server/api/__init__.py
-- server/api/v1/__init__.py
 - server/config.py
 - server/database.py
 - server/main.py
@@ -41,6 +39,7 @@ graph TD
 - server/models/item.py
 - server/models/user.py
 - server/models/warehouse.py
+- server/notifications.py
 - server/routers/__init__.py
 - server/routers/adjustments.py
 - server/routers/alerts.py
@@ -53,10 +52,6 @@ graph TD
 - server/schemas/inventory.py
 - server/schemas/item.py
 - server/schemas/warehouse.py
-- server/services/__init__.py
-- server/services/audit_service.py
-- server/services/currency_service.py
-- server/services/wallet_service.py
 - server/tests/__init__.py
 - server/tests/conftest.py
 - server/tests/test_adjustments.py

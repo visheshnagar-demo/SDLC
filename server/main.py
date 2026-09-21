@@ -1,52 +1,58 @@
-import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, APIRouter
-from starlette.middleware.cors import CORSMiddleware
-from server.database import init_db
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from server.config import settings
-from server.routers.items import router as items_router
-from server.routers.inventory import router as inventory_router
-from server.routers.adjustments import router as adjustments_router
-from server.routers.alerts import router as alerts_router
-from server.routers.warehouses import router as warehouses_router
+from server.database import init_db, seed_data, SessionLocal
+from server.routers import (
+    items_router,
+    warehouses_router,
+    inventory_router,
+    adjustments_router,
+    alerts_router,
+)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Initialize database tables and seed data
     init_db()
+    db = SessionLocal()
+    try:
+        seed_data(db)
+    finally:
+        db.close()
     yield
 
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan,
 )
 
-allowed_origins_raw = os.getenv(
-    "ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000"
-)
+# Mandatory CORS configuration for full-stack integration
 allowed_origins = [
-    origin.strip() for origin in allowed_origins_raw.split(",") if origin.strip()
+    origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",") if origin.strip()
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=allowed_origins if allowed_origins else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-api_v1_router = APIRouter(prefix="/api/v1")
-api_v1_router.include_router(items_router)
-api_v1_router.include_router(inventory_router)
-api_v1_router.include_router(adjustments_router)
-api_v1_router.include_router(alerts_router)
-api_v1_router.include_router(warehouses_router)
-
-app.include_router(api_v1_router)
+# Include API routers
+app.include_router(items_router)
+app.include_router(warehouses_router)
+app.include_router(inventory_router)
+app.include_router(adjustments_router)
+app.include_router(alerts_router)
 
 
-@app.get("/health")
+@app.get("/health", tags=["health"])
+@app.get("/api/v1/health", tags=["health"])
 def health_check():
-    return {"status": "ok", "service": "inventory-management-service"}
+    return {"status": "ok", "project": settings.PROJECT_NAME}

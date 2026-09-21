@@ -1,12 +1,12 @@
-from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel, Field
+from typing import Optional
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class WarehouseBase(BaseModel):
-    code: str = Field(..., example="WH-MAIN")
-    name: str = Field(..., example="Main Warehouse")
-    location: Optional[str] = Field(None, example="Building A")
+    code: str = Field(..., description="Unique warehouse code")
+    name: str = Field(..., description="Warehouse name")
+    location: Optional[str] = Field(None, description="Location details")
 
 
 class WarehouseCreate(WarehouseBase):
@@ -17,5 +17,4 @@ class WarehouseResponse(WarehouseBase):
     id: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

@@ -1,23 +1,21 @@
-def test_list_warehouses(client):
-    response = client.get("/api/v1/warehouses")
-    assert response.status_code == 200
-    warehouses = response.json()
-    assert isinstance(warehouses, list)
-    assert len(warehouses) >= 1  # seeded main warehouse
+def test_list_and_create_warehouse(client):
+    # Warehouses should include seeded ones WH-MAIN and WH-WEST
+    res = client.get("/api/v1/warehouses")
+    assert res.status_code == 200
+    warehouses = res.json()
+    assert len(warehouses) >= 2
 
-
-def test_create_and_get_warehouse(client):
-    payload = {
-        "code": "WH-NORTH",
-        "name": "North Precinct Depot",
-        "location": "Sector 4",
+    # Create new warehouse
+    new_wh = {
+        "code": "WH-EAST",
+        "name": "East Coast Depot",
+        "location": "Building C, East Sector",
     }
-    res_create = client.post("/api/v1/warehouses", json=payload)
-    assert res_create.status_code == 201
-    wh = res_create.json()
-    assert wh["code"] == "WH-NORTH"
-    wh_id = wh["id"]
+    create_res = client.post("/api/v1/warehouses", json=new_wh)
+    assert create_res.status_code == 201
+    assert create_res.json()["code"] == "WH-EAST"
 
-    res_get = client.get(f"/api/v1/warehouses/{wh_id}")
-    assert res_get.status_code == 200
-    assert res_get.json()["name"] == "North Precinct Depot"
+    # Get warehouse by ID/code
+    get_res = client.get("/api/v1/warehouses/WH-EAST")
+    assert get_res.status_code == 200
+    assert get_res.json()["name"] == "East Coast Depot"

@@ -1,9 +1,9 @@
-from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel
+from typing import Optional
+from pydantic import BaseModel, ConfigDict
 
 
-class AuditLogResponse(BaseModel):
+class StockAdjustmentResponse(BaseModel):
     id: str
     item_id: str
     warehouse_id: str
@@ -14,9 +14,8 @@ class AuditLogResponse(BaseModel):
     reason_code: str
     notes: Optional[str] = None
     created_at: datetime
-    item_sku: Optional[str] = None
+    sku: Optional[str] = None
     item_name: Optional[str] = None
     warehouse_name: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

@@ -1,20 +1,24 @@
-from server.schemas.item import ItemCreate, ItemUpdate, ItemResponse
-from server.schemas.warehouse import WarehouseCreate, WarehouseResponse
+from server.schemas.item import ItemBase, ItemCreate, ItemUpdate, ItemResponse
+from server.schemas.warehouse import WarehouseBase, WarehouseCreate, WarehouseResponse
 from server.schemas.inventory import (
-    StockAdjustmentCreate,
+    InventoryStockBase,
     InventoryStockResponse,
-    StockAdjustmentResponse,
+    StockAdjustmentCreate,
 )
-from server.schemas.alert import LowStockAlertResponse
+from server.schemas.audit_log import StockAdjustmentResponse
+from server.schemas.alert import LowStockAlert
 
 __all__ = [
+    "ItemBase",
     "ItemCreate",
     "ItemUpdate",
     "ItemResponse",
+    "WarehouseBase",
     "WarehouseCreate",
     "WarehouseResponse",
-    "StockAdjustmentCreate",
+    "InventoryStockBase",
     "InventoryStockResponse",
+    "StockAdjustmentCreate",
     "StockAdjustmentResponse",
-    "LowStockAlertResponse",
+    "LowStockAlert",
 ]

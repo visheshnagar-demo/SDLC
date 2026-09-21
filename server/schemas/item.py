@@ -1,15 +1,15 @@
-from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel, Field
+from typing import Optional
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ItemBase(BaseModel):
-    sku: str = Field(..., example="SKU-9901")
-    name: str = Field(..., example="Tactical Vest")
-    category: Optional[str] = Field(None, example="Gear")
-    unit_price: float = Field(0.0, ge=0.0, example="150.00")
-    reorder_threshold: int = Field(10, ge=0, example=10)
-    reorder_quantity: int = Field(50, ge=1, example=50)
+    sku: str = Field(..., description="Unique Stock Keeping Unit")
+    name: str = Field(..., description="Item name")
+    category: Optional[str] = Field(None, description="Item category")
+    unit_price: float = Field(0.0, ge=0.0, description="Unit price")
+    reorder_threshold: int = Field(10, ge=0, description="Reorder threshold quantity")
+    reorder_quantity: int = Field(50, ge=1, description="Standard reorder quantity")
 
 
 class ItemCreate(ItemBase):
@@ -17,6 +17,7 @@ class ItemCreate(ItemBase):
 
 
 class ItemUpdate(BaseModel):
+    sku: Optional[str] = None
     name: Optional[str] = None
     category: Optional[str] = None
     unit_price: Optional[float] = Field(None, ge=0.0)
@@ -28,6 +29,6 @@ class ItemResponse(ItemBase):
     id: str
     created_at: datetime
     updated_at: datetime
+    total_stock: int = 0
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

@@ -1,8 +1,8 @@
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
-class LowStockAlertResponse(BaseModel):
+class LowStockAlert(BaseModel):
     item_id: str
     sku: str
     item_name: str
@@ -12,7 +12,4 @@ class LowStockAlertResponse(BaseModel):
     reorder_threshold: int
     deficit: int
     suggested_reorder_quantity: int
-    status: str = Field("LOW_STOCK", example="LOW_STOCK")
-
-    class Config:
-        from_attributes = True
+    status: str = "LOW_STOCK"
