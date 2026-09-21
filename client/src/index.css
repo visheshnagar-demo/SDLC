@@ -5,8 +5,10 @@
 body {
   margin: 0;
   font-family:
+    "Plus Jakarta Sans",
     "Inter",
     system-ui,
     -apple-system,
     sans-serif;
+  background-color: #faf8ff;
 }
