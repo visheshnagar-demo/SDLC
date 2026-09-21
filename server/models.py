@@ -141,3 +141,153 @@ class WebhookEvent(Base):
     id = Column(String, primary_key=True)
     event_type = Column(String, nullable=False)
     processed_at = Column(DateTime, default=get_utc_now, nullable=False)
+
+
+# Rainwater Harvesting Management System Models
+
+
+class Tank(Base):
+    __tablename__ = "tanks"
+
+    id = Column(
+        String, primary_key=True, default=lambda: f"tank_{uuid.uuid4().hex[:8]}"
+    )
+    name = Column(String, nullable=False)
+    location = Column(String, nullable=False)
+    total_capacity_liters = Column(Float, nullable=False)
+    current_volume_liters = Column(Float, default=0.0, nullable=False)
+    net_inflow_rate_lpm = Column(Float, default=0.0, nullable=False)
+    net_outflow_rate_lpm = Column(Float, default=0.0, nullable=False)
+    status = Column(
+        String, default="ACTIVE", nullable=False
+    )  # ACTIVE, MAINTENANCE, OVERFLOW, WARNING, OFFLINE
+    supply_pump_active = Column(Boolean, default=False, nullable=False)
+    overflow_valve_open = Column(Boolean, default=False, nullable=False)
+    municipal_backup_active = Column(Boolean, default=False, nullable=False)
+    clean_valve_open = Column(Boolean, default=True, nullable=False)
+    pump_operating_hours = Column(Float, default=0.0, nullable=False)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    updated_at = Column(
+        DateTime, default=get_utc_now, onupdate=get_utc_now, nullable=False
+    )
+
+    sensors = relationship(
+        "Sensor", back_populates="tank", cascade="all, delete-orphan"
+    )
+    telemetry_logs = relationship(
+        "TelemetryLog", back_populates="tank", cascade="all, delete-orphan"
+    )
+    quality_metrics = relationship(
+        "QualityMetric", back_populates="tank", cascade="all, delete-orphan"
+    )
+    alerts = relationship("Alert", back_populates="tank", cascade="all, delete-orphan")
+
+
+class Sensor(Base):
+    __tablename__ = "sensors"
+
+    id = Column(String, primary_key=True, default=lambda: f"sen_{uuid.uuid4().hex[:8]}")
+    tank_id = Column(String, ForeignKey("tanks.id"), nullable=False)
+    sensor_type = Column(
+        String, nullable=False
+    )  # level, flow, ph, turbidity, tds, rain_gauge
+    hardware_id = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    updated_at = Column(
+        DateTime, default=get_utc_now, onupdate=get_utc_now, nullable=False
+    )
+
+    tank = relationship("Tank", back_populates="sensors")
+    telemetry_logs = relationship(
+        "TelemetryLog", back_populates="sensor", cascade="all, delete-orphan"
+    )
+
+
+class TelemetryLog(Base):
+    __tablename__ = "telemetry_logs"
+
+    id = Column(
+        String, primary_key=True, default=lambda: f"telem_{uuid.uuid4().hex[:8]}"
+    )
+    sensor_id = Column(String, ForeignKey("sensors.id"), nullable=True)
+    tank_id = Column(String, ForeignKey("tanks.id"), nullable=False)
+    timestamp = Column(DateTime, default=get_utc_now, nullable=False)
+    water_level_liters = Column(Float, nullable=False)
+    flow_rate_lpm = Column(Float, default=0.0, nullable=False)
+    ph_level = Column(Float, nullable=True)
+    turbidity_ntu = Column(Float, nullable=True)
+    tds_ppm = Column(Float, nullable=True)
+    precipitation_mm = Column(Float, default=0.0, nullable=True)
+    head_pressure_psi = Column(Float, default=0.0, nullable=True)
+    water_temp_c = Column(Float, default=20.0, nullable=True)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+
+    sensor = relationship("Sensor", back_populates="telemetry_logs")
+    tank = relationship("Tank", back_populates="telemetry_logs")
+
+
+class QualityMetric(Base):
+    __tablename__ = "quality_metrics"
+
+    id = Column(String, primary_key=True, default=lambda: f"qm_{uuid.uuid4().hex[:8]}")
+    tank_id = Column(String, ForeignKey("tanks.id"), nullable=False)
+    ph_level = Column(Float, nullable=False)
+    turbidity_ntu = Column(Float, nullable=False)
+    tds_ppm = Column(Float, nullable=False)
+    pass_status = Column(Boolean, default=True, nullable=False)
+    backwash_scheduled = Column(Boolean, default=False, nullable=False)
+    timestamp = Column(DateTime, default=get_utc_now, nullable=False)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+
+    tank = relationship("Tank", back_populates="quality_metrics")
+
+
+class YieldAnalytic(Base):
+    __tablename__ = "yield_analytics"
+
+    id = Column(
+        String, primary_key=True, default=lambda: f"yield_{uuid.uuid4().hex[:8]}"
+    )
+    tank_id = Column(String, ForeignKey("tanks.id"), nullable=True)
+    catchment_area_sqm = Column(Float, nullable=False)
+    precipitation_mm = Column(Float, nullable=False)
+    efficiency_factor = Column(Float, default=0.9, nullable=False)
+    harvested_liters = Column(Float, nullable=False)
+    recorded_date = Column(DateTime, default=get_utc_now, nullable=False)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+
+
+class Alert(Base):
+    __tablename__ = "alerts"
+
+    id = Column(String, primary_key=True, default=lambda: f"alt_{uuid.uuid4().hex[:8]}")
+    tank_id = Column(String, ForeignKey("tanks.id"), nullable=True)
+    severity = Column(String, nullable=False)  # LOW, MEDIUM, HIGH, CRITICAL, WARNING
+    category = Column(
+        String, nullable=False
+    )  # MAINTENANCE, QUALITY, OVERFLOW, HARDWARE, PUMP
+    message = Column(Text, nullable=False)
+    is_acknowledged = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    updated_at = Column(
+        DateTime, default=get_utc_now, onupdate=get_utc_now, nullable=False
+    )
+
+    tank = relationship("Tank", back_populates="alerts")
+
+
+class BackwashLog(Base):
+    __tablename__ = "backwash_logs"
+
+    id = Column(String, primary_key=True, default=lambda: f"bw_{uuid.uuid4().hex[:8]}")
+    tank_id = Column(String, ForeignKey("tanks.id"), nullable=False)
+    unit_name = Column(String, default="Filtration Unit 1", nullable=False)
+    status = Column(
+        String, default="COMPLETED", nullable=False
+    )  # IN_PROGRESS, COMPLETED, FAILED
+    triggered_by = Column(
+        String, default="AUTOMATED", nullable=False
+    )  # AUTOMATED, MANUAL
+    timestamp = Column(DateTime, default=get_utc_now, nullable=False)
+    notes = Column(Text, nullable=True)

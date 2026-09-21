@@ -548,6 +548,520 @@
         }
       }
     },
+    "/api/v1/tanks": {
+      "get": {
+        "tags": [
+          "tanks"
+        ],
+        "summary": "List Tanks",
+        "operationId": "list_tanks_api_v1_tanks_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TankResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Tanks Api V1 Tanks Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "tanks"
+        ],
+        "summary": "Create Or Update Tank",
+        "operationId": "create_or_update_tank_api_v1_tanks_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TankCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TankResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tanks/{tank_id}/status": {
+      "get": {
+        "tags": [
+          "tanks"
+        ],
+        "summary": "Get Tank Status",
+        "operationId": "get_tank_status_api_v1_tanks__tank_id__status_get",
+        "parameters": [
+          {
+            "name": "tank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tank Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TankStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sensors/telemetry": {
+      "post": {
+        "tags": [
+          "sensors"
+        ],
+        "summary": "Ingest Telemetry",
+        "operationId": "ingest_telemetry_api_v1_sensors_telemetry_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TelemetryIngest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/quality": {
+      "get": {
+        "tags": [
+          "quality"
+        ],
+        "summary": "Get Quality Overview",
+        "operationId": "get_quality_overview_api_v1_quality_get",
+        "parameters": [
+          {
+            "name": "tank_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tank Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QualityOverviewResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/quality/backwash": {
+      "post": {
+        "tags": [
+          "quality"
+        ],
+        "summary": "Trigger Backwash",
+        "operationId": "trigger_backwash_api_v1_quality_backwash_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackwashRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackwashResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/yield": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Get Yield Analytics",
+        "operationId": "get_yield_analytics_api_v1_analytics_yield_get",
+        "parameters": [
+          {
+            "name": "tank_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tank Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/YieldAnalyticResponse"
+                  },
+                  "title": "Response Get Yield Analytics Api V1 Analytics Yield Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/calculate": {
+      "post": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Calculate Yield Forecast",
+        "operationId": "calculate_yield_forecast_api_v1_analytics_calculate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/YieldCalculateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/YieldCalculateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "List Alerts",
+        "operationId": "list_alerts_api_v1_alerts_get",
+        "parameters": [
+          {
+            "name": "tank_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tank Id"
+            }
+          },
+          {
+            "name": "is_acknowledged",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Is Acknowledged"
+            }
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Severity"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlertResponse"
+                  },
+                  "title": "Response List Alerts Api V1 Alerts Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Create Alert",
+        "operationId": "create_alert_api_v1_alerts_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/{alert_id}/acknowledge": {
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Acknowledge Alert",
+        "operationId": "acknowledge_alert_api_v1_alerts__alert_id__acknowledge_post",
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Alert Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/AlertAcknowledgeRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
@@ -567,6 +1081,115 @@
   },
   "components": {
     "schemas": {
+      "AlertAcknowledgeRequest": {
+        "properties": {
+          "is_acknowledged": {
+            "type": "boolean",
+            "title": "Is Acknowledged",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "AlertAcknowledgeRequest"
+      },
+      "AlertCreate": {
+        "properties": {
+          "tank_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tank Id"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "LOW, MEDIUM, HIGH, CRITICAL, or WARNING"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "description": "MAINTENANCE, QUALITY, OVERFLOW, HARDWARE, or PUMP"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "severity",
+          "category",
+          "message"
+        ],
+        "title": "AlertCreate"
+      },
+      "AlertResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "tank_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tank Id"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "is_acknowledged": {
+            "type": "boolean",
+            "title": "Is Acknowledged"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "severity",
+          "category",
+          "message",
+          "is_acknowledged",
+          "created_at"
+        ],
+        "title": "AlertResponse"
+      },
       "AuditLogEntry": {
         "properties": {
           "id": {
@@ -618,6 +1241,98 @@
           "masked_payload"
         ],
         "title": "AuditLogEntry"
+      },
+      "BackwashRequest": {
+        "properties": {
+          "tank_id": {
+            "type": "string",
+            "title": "Tank Id"
+          },
+          "unit_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Name",
+            "default": "Filtration Unit 1"
+          },
+          "triggered_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Triggered By",
+            "default": "MANUAL"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tank_id"
+        ],
+        "title": "BackwashRequest"
+      },
+      "BackwashResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "tank_id": {
+            "type": "string",
+            "title": "Tank Id"
+          },
+          "unit_name": {
+            "type": "string",
+            "title": "Unit Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "triggered_by": {
+            "type": "string",
+            "title": "Triggered By"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tank_id",
+          "unit_name",
+          "status",
+          "triggered_by",
+          "timestamp",
+          "message"
+        ],
+        "title": "BackwashResponse"
       },
       "CartItem": {
         "properties": {
@@ -849,6 +1564,110 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "QualityMetricResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "tank_id": {
+            "type": "string",
+            "title": "Tank Id"
+          },
+          "ph_level": {
+            "type": "number",
+            "title": "Ph Level"
+          },
+          "turbidity_ntu": {
+            "type": "number",
+            "title": "Turbidity Ntu"
+          },
+          "tds_ppm": {
+            "type": "number",
+            "title": "Tds Ppm"
+          },
+          "pass_status": {
+            "type": "boolean",
+            "title": "Pass Status"
+          },
+          "backwash_scheduled": {
+            "type": "boolean",
+            "title": "Backwash Scheduled"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tank_id",
+          "ph_level",
+          "turbidity_ntu",
+          "tds_ppm",
+          "pass_status",
+          "backwash_scheduled",
+          "timestamp"
+        ],
+        "title": "QualityMetricResponse"
+      },
+      "QualityOverviewResponse": {
+        "properties": {
+          "average_ph": {
+            "type": "number",
+            "title": "Average Ph"
+          },
+          "average_turbidity_ntu": {
+            "type": "number",
+            "title": "Average Turbidity Ntu"
+          },
+          "average_tds_ppm": {
+            "type": "number",
+            "title": "Average Tds Ppm"
+          },
+          "overall_pass_status": {
+            "type": "boolean",
+            "title": "Overall Pass Status"
+          },
+          "active_filtration_units": {
+            "type": "integer",
+            "title": "Active Filtration Units"
+          },
+          "recent_backwashes_count": {
+            "type": "integer",
+            "title": "Recent Backwashes Count"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/QualityMetricResponse"
+            },
+            "type": "array",
+            "title": "Metrics"
+          },
+          "recent_backwash_logs": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Recent Backwash Logs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "average_ph",
+          "average_turbidity_ntu",
+          "average_tds_ppm",
+          "overall_pass_status",
+          "active_filtration_units",
+          "recent_backwashes_count",
+          "metrics",
+          "recent_backwash_logs"
+        ],
+        "title": "QualityOverviewResponse"
+      },
       "RefundRequest": {
         "properties": {
           "transaction_id": {
@@ -944,6 +1763,505 @@
           "status"
         ],
         "title": "RefundSummary"
+      },
+      "TankCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location"
+          },
+          "total_capacity_liters": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Total Capacity Liters",
+            "description": "Total tank volume capacity in liters"
+          },
+          "current_volume_liters": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Volume Liters",
+            "description": "Initial water volume in liters",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "location",
+          "total_capacity_liters"
+        ],
+        "title": "TankCreate"
+      },
+      "TankResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location"
+          },
+          "total_capacity_liters": {
+            "type": "number",
+            "title": "Total Capacity Liters"
+          },
+          "current_volume_liters": {
+            "type": "number",
+            "title": "Current Volume Liters"
+          },
+          "fill_percentage": {
+            "type": "number",
+            "title": "Fill Percentage",
+            "default": 0.0
+          },
+          "net_inflow_rate_lpm": {
+            "type": "number",
+            "title": "Net Inflow Rate Lpm",
+            "default": 0.0
+          },
+          "net_outflow_rate_lpm": {
+            "type": "number",
+            "title": "Net Outflow Rate Lpm",
+            "default": 0.0
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "supply_pump_active": {
+            "type": "boolean",
+            "title": "Supply Pump Active",
+            "default": false
+          },
+          "overflow_valve_open": {
+            "type": "boolean",
+            "title": "Overflow Valve Open",
+            "default": false
+          },
+          "municipal_backup_active": {
+            "type": "boolean",
+            "title": "Municipal Backup Active",
+            "default": false
+          },
+          "clean_valve_open": {
+            "type": "boolean",
+            "title": "Clean Valve Open",
+            "default": true
+          },
+          "pump_operating_hours": {
+            "type": "number",
+            "title": "Pump Operating Hours",
+            "default": 0.0
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "location",
+          "total_capacity_liters",
+          "current_volume_liters",
+          "status"
+        ],
+        "title": "TankResponse"
+      },
+      "TankStatusResponse": {
+        "properties": {
+          "tank_id": {
+            "type": "string",
+            "title": "Tank Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "total_capacity_liters": {
+            "type": "number",
+            "title": "Total Capacity Liters"
+          },
+          "current_volume_liters": {
+            "type": "number",
+            "title": "Current Volume Liters"
+          },
+          "fill_percentage": {
+            "type": "number",
+            "title": "Fill Percentage"
+          },
+          "net_inflow_rate_lpm": {
+            "type": "number",
+            "title": "Net Inflow Rate Lpm"
+          },
+          "net_outflow_rate_lpm": {
+            "type": "number",
+            "title": "Net Outflow Rate Lpm"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "head_pressure_psi": {
+            "type": "number",
+            "title": "Head Pressure Psi",
+            "default": 0.0
+          },
+          "water_temp_c": {
+            "type": "number",
+            "title": "Water Temp C",
+            "default": 20.0
+          },
+          "ph_level": {
+            "type": "number",
+            "title": "Ph Level",
+            "default": 7.2
+          },
+          "turbidity_ntu": {
+            "type": "number",
+            "title": "Turbidity Ntu",
+            "default": 1.0
+          },
+          "tds_ppm": {
+            "type": "number",
+            "title": "Tds Ppm",
+            "default": 120.0
+          },
+          "supply_pump_active": {
+            "type": "boolean",
+            "title": "Supply Pump Active"
+          },
+          "overflow_valve_open": {
+            "type": "boolean",
+            "title": "Overflow Valve Open"
+          },
+          "municipal_backup_active": {
+            "type": "boolean",
+            "title": "Municipal Backup Active"
+          },
+          "clean_valve_open": {
+            "type": "boolean",
+            "title": "Clean Valve Open"
+          },
+          "pump_operating_hours": {
+            "type": "number",
+            "title": "Pump Operating Hours"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tank_id",
+          "name",
+          "total_capacity_liters",
+          "current_volume_liters",
+          "fill_percentage",
+          "net_inflow_rate_lpm",
+          "net_outflow_rate_lpm",
+          "status",
+          "supply_pump_active",
+          "overflow_valve_open",
+          "municipal_backup_active",
+          "clean_valve_open",
+          "pump_operating_hours"
+        ],
+        "title": "TankStatusResponse"
+      },
+      "TelemetryIngest": {
+        "properties": {
+          "sensor_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sensor Id"
+          },
+          "tank_id": {
+            "type": "string",
+            "title": "Tank Id"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          },
+          "water_level_liters": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Water Level Liters"
+          },
+          "flow_rate_lpm": {
+            "type": "number",
+            "title": "Flow Rate Lpm",
+            "default": 0.0
+          },
+          "ph_level": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 14.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ph Level",
+            "default": 7.2
+          },
+          "turbidity_ntu": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turbidity Ntu",
+            "default": 1.0
+          },
+          "tds_ppm": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tds Ppm",
+            "default": 120.0
+          },
+          "precipitation_mm": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precipitation Mm",
+            "default": 0.0
+          },
+          "catchment_area_sqm": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catchment Area Sqm",
+            "default": 500.0
+          },
+          "head_pressure_psi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Head Pressure Psi",
+            "default": 35.0
+          },
+          "water_temp_c": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Water Temp C",
+            "default": 18.5
+          }
+        },
+        "type": "object",
+        "required": [
+          "tank_id",
+          "water_level_liters"
+        ],
+        "title": "TelemetryIngest"
+      },
+      "TelemetryResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "sensor_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sensor Id"
+          },
+          "tank_id": {
+            "type": "string",
+            "title": "Tank Id"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          },
+          "water_level_liters": {
+            "type": "number",
+            "title": "Water Level Liters"
+          },
+          "flow_rate_lpm": {
+            "type": "number",
+            "title": "Flow Rate Lpm"
+          },
+          "ph_level": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ph Level"
+          },
+          "turbidity_ntu": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turbidity Ntu"
+          },
+          "tds_ppm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tds Ppm"
+          },
+          "precipitation_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precipitation Mm"
+          },
+          "head_pressure_psi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Head Pressure Psi"
+          },
+          "water_temp_c": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Water Temp C"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tank_id",
+          "timestamp",
+          "water_level_liters",
+          "flow_rate_lpm"
+        ],
+        "title": "TelemetryResponse"
       },
       "TransactionDetail": {
         "properties": {
@@ -1126,6 +2444,126 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "YieldAnalyticResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "tank_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tank Id"
+          },
+          "catchment_area_sqm": {
+            "type": "number",
+            "title": "Catchment Area Sqm"
+          },
+          "precipitation_mm": {
+            "type": "number",
+            "title": "Precipitation Mm"
+          },
+          "efficiency_factor": {
+            "type": "number",
+            "title": "Efficiency Factor"
+          },
+          "harvested_liters": {
+            "type": "number",
+            "title": "Harvested Liters"
+          },
+          "recorded_date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Recorded Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "catchment_area_sqm",
+          "precipitation_mm",
+          "efficiency_factor",
+          "harvested_liters",
+          "recorded_date"
+        ],
+        "title": "YieldAnalyticResponse"
+      },
+      "YieldCalculateRequest": {
+        "properties": {
+          "catchment_area_sqm": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Catchment Area Sqm",
+            "description": "Catchment area in square meters"
+          },
+          "precipitation_mm": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Precipitation Mm",
+            "description": "Precipitation depth in millimeters"
+          },
+          "efficiency_factor": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Efficiency Factor",
+            "description": "Runoff efficiency coefficient",
+            "default": 0.9
+          }
+        },
+        "type": "object",
+        "required": [
+          "catchment_area_sqm",
+          "precipitation_mm"
+        ],
+        "title": "YieldCalculateRequest"
+      },
+      "YieldCalculateResponse": {
+        "properties": {
+          "catchment_area_sqm": {
+            "type": "number",
+            "title": "Catchment Area Sqm"
+          },
+          "precipitation_mm": {
+            "type": "number",
+            "title": "Precipitation Mm"
+          },
+          "efficiency_factor": {
+            "type": "number",
+            "title": "Efficiency Factor"
+          },
+          "estimated_harvested_liters": {
+            "type": "number",
+            "title": "Estimated Harvested Liters"
+          },
+          "formula": {
+            "type": "string",
+            "title": "Formula",
+            "default": "harvested_liters = catchment_area_sqm * precipitation_mm * efficiency_factor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "catchment_area_sqm",
+          "precipitation_mm",
+          "efficiency_factor",
+          "estimated_harvested_liters"
+        ],
+        "title": "YieldCalculateResponse"
       }
     }
   }

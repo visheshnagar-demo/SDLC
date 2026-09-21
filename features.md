@@ -17,3 +17,15 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-335 - Rainwater Harvesting Management System
+
+### Feature Summary
+Enables facility managers to monitor rainwater tank levels, water quality parameters, and rainfall forecasts in real time, while automating distribution pumps, overflow valves, and maintenance alerts.
+
+### Key Features
+- Tank Level & Capacity Monitoring
+- Filtration & Water Quality Assurance
+- Rainfall Telemetry & Yield Analytics
+- Automated Distribution & Overflow Management
+- Maintenance & Alert Notification Management
