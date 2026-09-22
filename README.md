@@ -1,53 +1,49 @@
-# PostgreSQL to BigQuery Data Pipeline (SCRUM-342)
+# PostgreSQL to BigQuery ETL Pipeline (`test5`)
 
-## Overview
-Automated ETL pipeline designed to clean, transform, and load dataset `test_data` from PostgreSQL (`sdlc-etl-demo-db`, database `postgres`) into Google BigQuery table `test4` (`upbeat-repeater-477110-q6.analytics.test4`).
+## 1. Overview
+Production-grade data cleaning and ETL pipeline for **SCRUM-349**.
+- **Source**: Cloud SQL PostgreSQL (`instance: sdlc-etl-demo-db`, `database: postgre`, `table: test_data`)
+- **Target**: Google BigQuery (`project: upbeat-repeater-477110-q6`, `dataset: analytics`, `table: test5`)
+- **Execution Mode**: Decoupled Staging / Cloud Run Job batch runner
 
-## Pipeline Architecture
-- **Source**: PostgreSQL Table `test_data` (Cloud SQL instance `upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db`, IAM Auth, Private IP)
-- **Destination**: BigQuery Table `upbeat-repeater-477110-q6.analytics.test4`
-- **Orchestration / Execution Mode**: Standalone Cloud Run Job & Cloud Composer / Apache Airflow DAG
-- **Staging / Parquet Storage**: Intermediate local / GCS Parquet storage
+## 2. Fundamental Transformations Applied
+- **Whitespace Sanitization**: Trims leading and trailing whitespace on all string fields (`id`, `status`, `raw_data`).
+- **Null Normalization**: Standardizes sentinel null strings (`"nan"`, `"none"`, `"null"`, `"n/a"`, `""`) to native SQL `NULL`.
+- **Numeric Casting**: Normalizes numeric values with currency/separator stripping into BigQuery `FLOAT64`.
+- **Timestamp Standardization**: Parses timestamps into UTC ISO 8601 timestamps (`TIMESTAMP`).
+- **Audit Fields**: Adds `ingested_at` timestamp tracking ingestion time.
+- **Fail-Fast & Zero-Mock Policy**: Strict validation with zero mock data and circuit breaker halting upon 100% invalid rows.
 
-## Data Transformations
-1. **Column Standardization**: Snake_case column normalization.
-2. **String Trimming & Cleaning**: Trims leading/trailing whitespace, maps empty/nan strings to null.
-3. **Case Normalization**:
-   - `email`: lowercased.
-   - `status`: converted to uppercase (`UNKNOWN` default if null).
-   - `name`: title-cased.
-4. **Data Type Coercion**:
-   - `amount`: coerced to `FLOAT64`.
-   - `created_at` & `updated_at`: parsed to UTC timestamps.
-5. **Ingestion Metadata**:
-   - Injects `ingested_at` timestamp for auditability.
-
-## Project Structure
+## 3. Project Structure
 ```
-├── Dockerfile
-├── requirements.txt
-├── transformation_spec.json
-├── env.deploy.json
+├── Dockerfile                                  # Python 3.11 container entrypoint for Cloud Run Job
+├── env.deploy.json                             # Production deployment configuration
+├── requirements.txt                            # Pipeline runtime dependencies
+├── transformation_spec.json                    # Schema mapping and transformation rules
 ├── dags/
-│   └── postgres_to_bq_test4_dag.py
+│   ├── __init__.py
+│   └── postgres_to_bigquery_test5_dag.py       # Airflow orchestration DAG
 ├── pipeline/
-│   └── run_postgres_to_bq_test4.py
+│   ├── __init__.py
+│   └── run_postgres_to_bigquery_test5.py       # Standalone batch job runner
 ├── schemas/
-│   └── test4_schema.json
+│   └── test5_schema.json                       # BigQuery JSON schema definition
 ├── sql/
 │   └── ddl/
-│       └── test4.sql
+│       └── test5.sql                           # BigQuery DDL definition
 └── tests/
-    └── test_postgres_to_bq_test4_pipeline.py
+    ├── __init__.py
+    └── test_postgres_to_bigquery_test5_pipeline.py # Pytest test suite
 ```
 
-## Running the Pipeline Locally
+## 4. Local Execution & Testing
 ```bash
+# 1. Install dependencies
 pip install -r requirements.txt
-python -m pipeline.run_postgres_to_bq_test4
-```
 
-## Running Unit & Regression Tests
-```bash
+# 2. Run unit tests
 pytest tests/
+
+# 3. Execute batch runner locally
+python -m pipeline.run_postgres_to_bigquery_test5
 ```
