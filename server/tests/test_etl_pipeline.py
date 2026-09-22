@@ -50,8 +50,8 @@ def test_transformer_whitespace_and_null_normalization():
     assert len(df_cleaned) == 4
     assert len(df_quarantine) == 0
     assert df_cleaned.iloc[0]["data_val"] == "sample_a"
-    assert df_cleaned.iloc[1]["data_val"] is None
-    assert df_cleaned.iloc[2]["data_val"] is None
+    assert pd.isna(df_cleaned.iloc[1]["data_val"])
+    assert pd.isna(df_cleaned.iloc[2]["data_val"])
     assert df_cleaned.iloc[3]["data_val"] == "valid_text"
     assert metrics["cleaned"] == 4
     assert "_etl_loaded_at" in df_cleaned.columns
