@@ -1,0 +1,44 @@
+[
+  {
+    "name": "id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Primary identifier"
+  },
+  {
+    "name": "status",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Cleaned record status"
+  },
+  {
+    "name": "value",
+    "type": "FLOAT64",
+    "mode": "NULLABLE",
+    "description": "Cleaned numeric value"
+  },
+  {
+    "name": "raw_data",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Sanitized raw data string"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Record creation timestamp (UTC)"
+  },
+  {
+    "name": "updated_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Record update timestamp (UTC)"
+  },
+  {
+    "name": "ingested_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "ETL ingestion timestamp (UTC)"
+  }
+]

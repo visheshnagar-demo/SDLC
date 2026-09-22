@@ -1,0 +1,38 @@
+[
+  {
+    "name": "id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Target field id"
+  },
+  {
+    "name": "status",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Target field status"
+  },
+  {
+    "name": "value",
+    "type": "FLOAT64",
+    "mode": "NULLABLE",
+    "description": "Target field value"
+  },
+  {
+    "name": "raw_data",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Target field raw_data"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Target field created_at"
+  },
+  {
+    "name": "updated_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Target field updated_at"
+  }
+]
