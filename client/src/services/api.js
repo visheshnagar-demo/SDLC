@@ -2,7 +2,7 @@ import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-export const apiClient = axios.create({
+const apiClient = axios.create({
   baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
@@ -10,82 +10,84 @@ export const apiClient = axios.create({
   timeout: 10000,
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Standardized error payload extractions
-    const message =
-      error.response?.data?.detail ||
-      error.message ||
-      "An unexpected network error occurred";
-    return Promise.reject(
-      new Error(
-        typeof message === "object" ? JSON.stringify(message) : message,
-      ),
-    );
+// Attach JWT token to requests if available in localStorage
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem("cloudpulse_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export const authApi = {
+  login: async (email, password) => {
+    const response = await apiClient.post("/api/v1/auth/login", {
+      email,
+      password,
+    });
+    return response.data;
   },
-);
-
-export const createCheckoutSession = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/checkout-session",
-    payload,
-  );
-  return response.data;
+  getMe: async () => {
+    const response = await apiClient.get("/api/v1/auth/me");
+    return response.data;
+  },
 };
 
-export const payWithDigitalWallet = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/digital-wallet",
-    payload,
-  );
-  return response.data;
+export const providersApi = {
+  getProviders: async () => {
+    const response = await apiClient.get("/api/v1/providers");
+    return response.data;
+  },
+  createProvider: async (providerData) => {
+    const response = await apiClient.post("/api/v1/providers", providerData);
+    return response.data;
+  },
 };
 
-export const getExchangeRates = async (baseCurrency = "USD") => {
-  const response = await apiClient.get("/api/v1/payments/rates", {
-    params: { base_currency: baseCurrency },
-  });
-  return response.data;
+export const instancesApi = {
+  getInstances: async (params = {}) => {
+    const response = await apiClient.get("/api/v1/instances", { params });
+    return response.data;
+  },
+  getInstance: async (instanceId) => {
+    const response = await apiClient.get(`/api/v1/instances/${instanceId}`);
+    return response.data;
+  },
+  provisionInstance: async (instanceData) => {
+    const response = await apiClient.post("/api/v1/instances", instanceData);
+    return response.data;
+  },
+  executeAction: async (instanceId, action) => {
+    const response = await apiClient.post(
+      `/api/v1/instances/${instanceId}/action`,
+      { action },
+    );
+    return response.data;
+  },
 };
 
-export const listTransactions = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/payments/transactions", {
-    params,
-  });
-  return response.data;
+export const metricsApi = {
+  getInstanceMetrics: async (instanceId, params = {}) => {
+    const response = await apiClient.get(
+      `/api/v1/instances/${instanceId}/metrics`,
+      { params },
+    );
+    return response.data;
+  },
 };
 
-export const getTransactionDetail = async (transactionId) => {
-  const response = await apiClient.get(
-    `/api/v1/payments/transactions/${transactionId}`,
-  );
-  return response.data;
+export const auditApi = {
+  getAuditLogs: async (params = {}) => {
+    const response = await apiClient.get("/api/v1/audit-logs", { params });
+    return response.data;
+  },
 };
 
-export const createRefund = async (payload) => {
-  const response = await apiClient.post("/api/v1/refunds", payload);
-  return response.data;
+export const systemApi = {
+  healthCheck: async () => {
+    const response = await apiClient.get("/health");
+    return response.data;
+  },
 };
 
-export const listRefunds = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/refunds", { params });
-  return response.data;
-};
-
-export const listAuditLogs = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/audit-logs", { params });
-  return response.data;
-};
-
-export default {
-  apiClient,
-  createCheckoutSession,
-  payWithDigitalWallet,
-  getExchangeRates,
-  listTransactions,
-  getTransactionDetail,
-  createRefund,
-  listRefunds,
-  listAuditLogs,
-};
+export default apiClient;
