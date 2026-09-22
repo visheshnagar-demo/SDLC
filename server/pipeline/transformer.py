@@ -70,7 +70,7 @@ class DataCleanerTransformer:
                 if val is None or pd.isna(val):
                     return None
                 if isinstance(val, (bool, np.bool_)):
-                    return bool(val)
+                    return True if bool(val) else False
                 s = str(val).strip().lower()
                 if s in ["true", "1", "1.0", "t", "yes", "y"]:
                     return True
@@ -84,9 +84,16 @@ class DataCleanerTransformer:
             )
 
         if "created_at" in transformed_df.columns:
-            transformed_df["created_at"] = pd.to_datetime(
-                transformed_df["created_at"], errors="coerce"
-            )
+            def parse_ts(val):
+                if val is None or pd.isna(val):
+                    return pd.NaT
+                s = str(val).strip()
+                if s in ["", "None", "nan", "null", "NULL", "NaN", "NaT"]:
+                    return pd.NaT
+                res = pd.to_datetime(val, errors="coerce")
+                return res if not pd.isna(res) else pd.NaT
+
+            transformed_df["created_at"] = transformed_df["created_at"].apply(parse_ts)
 
         return transformed_df
 

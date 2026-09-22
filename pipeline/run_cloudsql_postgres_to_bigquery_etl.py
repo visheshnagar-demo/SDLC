@@ -131,10 +131,14 @@ class PipelineRunner:
 
         # 2. Coerce known columns if present
         if "id" in df.columns:
-            df["id"] = df["id"].astype(str)
+            df["id"] = df["id"].apply(
+                lambda x: str(x).strip() if x is not None and not pd.isna(x) and str(x).strip() not in ["", "None", "nan", "null", "NULL", "NaN"] else None
+            )
 
         if "raw_text" in df.columns:
-            df["raw_text"] = df["raw_text"].astype(str).str.strip().replace({"None": None, "nan": None, "": None})
+            df["raw_text"] = df["raw_text"].apply(
+                lambda x: str(x).strip() if x is not None and not pd.isna(x) and str(x).strip() not in ["", "None", "nan", "null", "NULL", "NaN"] else None
+            )
 
         if "numeric_val" in df.columns:
             df["numeric_val"] = pd.to_numeric(df["numeric_val"], errors="coerce")
@@ -144,7 +148,7 @@ class PipelineRunner:
                 if pd.isna(val) or val is None:
                     return None
                 if isinstance(val, (bool, np.bool_)):
-                    return bool(val)
+                    return True if bool(val) else False
                 s = str(val).strip().lower()
                 if s in ["true", "1", "1.0", "t", "yes", "y"]:
                     return True
@@ -155,7 +159,15 @@ class PipelineRunner:
             df["is_active"] = pd.Series(bool_vals, index=df.index, dtype=object)
 
         if "created_at" in df.columns:
-            df["created_at"] = pd.to_datetime(df["created_at"], errors="coerce")
+            def _to_ts(val):
+                if val is None or pd.isna(val):
+                    return pd.NaT
+                s = str(val).strip()
+                if s in ["", "None", "nan", "null", "NULL", "NaN", "NaT"]:
+                    return pd.NaT
+                res = pd.to_datetime(val, errors="coerce")
+                return res if not pd.isna(res) else pd.NaT
+            df["created_at"] = df["created_at"].apply(_to_ts)
 
         # 3. Validity filter: drop rows where all columns are null
         df_valid = df.dropna(how="all")

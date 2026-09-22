@@ -111,6 +111,7 @@ def test_timestamp_coercion_and_nat_handling(transformer):
         "created_at": [
             "2026-05-18T12:00:00Z",
             "2026-05-19 14:30:00",
+            "2026-09-22 15:47:48",
             "invalid_date",
             None,
             "",
@@ -123,13 +124,15 @@ def test_timestamp_coercion_and_nat_handling(transformer):
     # Valid dates
     assert not pd.isna(result["created_at"].iloc[0])
     assert not pd.isna(result["created_at"].iloc[1])
-    assert not pd.isna(result["created_at"].iloc[5])
+    assert not pd.isna(result["created_at"].iloc[2])
+    assert result["created_at"].iloc[2] == pd.Timestamp("2026-09-22 15:47:48")
+    assert not pd.isna(result["created_at"].iloc[6])
 
     # Invalid / null dates coerce to NaT (pd.isna is True)
-    assert pd.isna(result["created_at"].iloc[2])
-    assert result["created_at"].iloc[2] is pd.NaT or pd.isna(result["created_at"].iloc[2])
     assert pd.isna(result["created_at"].iloc[3])
+    assert result["created_at"].iloc[3] is pd.NaT or pd.isna(result["created_at"].iloc[3])
     assert pd.isna(result["created_at"].iloc[4])
+    assert pd.isna(result["created_at"].iloc[5])
 
 
 def test_full_transform_success(transformer):
@@ -138,7 +141,7 @@ def test_full_transform_success(transformer):
         "raw_text": ["  clean me  ", "another row"],
         "numeric_val": ["42.5", "99.0"],
         "is_active": ["true", "false"],
-        "created_at": ["2026-05-18 10:00:00", "2026-05-18 11:00:00"],
+        "created_at": ["2026-09-22 15:47:48", "2026-05-18 11:00:00"],
     }
     df = pd.DataFrame(data)
     result = transformer.transform(df)
@@ -150,6 +153,7 @@ def test_full_transform_success(transformer):
     assert result["is_active"].tolist() == [True, False]
     assert result["is_active"].iloc[0] is True
     assert result["is_active"].iloc[1] is False
+    assert result["created_at"].iloc[0] == pd.Timestamp("2026-09-22 15:47:48")
 
 
 def test_transform_empty_dataframe(transformer):
