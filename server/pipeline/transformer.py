@@ -1,0 +1,124 @@
+"""Data cleansing, sanitization, and type coercion transformer."""
+import pandas as pd
+from server.config import ETLConfig
+from server.utils.logger import get_logger
+from server.utils.exceptions import TransformationError
+
+logger = get_logger("sdlc-etl-transformer")
+
+
+class DataCleanerTransformer:
+    """Cleans raw extracted records, strips whitespace, sanitizes nulls, and coerces types."""
+
+    def __init__(self, config: ETLConfig):
+        self.config = config
+
+    def strip_whitespace_and_sanitize_nulls(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Trims leading/trailing whitespace and converts placeholder null strings to None."""
+        cleaned_df = df.copy()
+
+        null_equivalents = {
+            "nan": None,
+            "NaN": None,
+            "None": None,
+            "none": None,
+            "null": None,
+            "NULL": None,
+            "N/A": None,
+            "n/a": None,
+            "": None,
+        }
+
+        for col in cleaned_df.select_dtypes(include=["object", "string"]).columns:
+            cleaned_df[col] = (
+                cleaned_df[col]
+                .astype(str)
+                .str.strip()
+                .replace(null_equivalents)
+            )
+
+        return cleaned_df
+
+    def coerce_types(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Coerces columns to their target schema types."""
+        transformed_df = df.copy()
+
+        if "id" in transformed_df.columns:
+            transformed_df["id"] = transformed_df["id"].apply(
+                lambda x: str(x) if x is not None and not pd.isna(x) else None
+            )
+
+        if "raw_text" in transformed_df.columns:
+            transformed_df["raw_text"] = transformed_df["raw_text"].apply(
+                lambda x: str(x).strip() if x is not None and not pd.isna(x) else None
+            )
+
+        if "numeric_val" in transformed_df.columns:
+            transformed_df["numeric_val"] = pd.to_numeric(
+                transformed_df["numeric_val"], errors="coerce"
+            )
+
+        if "is_active" in transformed_df.columns:
+            def parse_bool(val):
+                if pd.isna(val) or val is None:
+                    return None
+                if isinstance(val, bool):
+                    return val
+                s = str(val).strip().lower()
+                if s in ["true", "1", "t", "yes", "y"]:
+                    return True
+                if s in ["false", "0", "f", "no", "n"]:
+                    return False
+                return None
+
+            transformed_df["is_active"] = transformed_df["is_active"].apply(parse_bool)
+
+        if "created_at" in transformed_df.columns:
+            transformed_df["created_at"] = pd.to_datetime(
+                transformed_df["created_at"], errors="coerce"
+            )
+
+        return transformed_df
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Executes the full transformation pipeline on the input DataFrame."""
+        if df is None:
+            raise TransformationError("Input DataFrame cannot be None.")
+
+        raw_count = len(df)
+        if raw_count == 0:
+            logger.warning("Input DataFrame is empty. Skipping transformation.")
+            return df
+
+        logger.info("Transforming %d raw records...", raw_count)
+
+        try:
+            # Step 1: Whitespace stripping & null sanitization
+            sanitized_df = self.strip_whitespace_and_sanitize_nulls(df)
+
+            # Step 2: Type coercion
+            coerced_df = self.coerce_types(sanitized_df)
+
+            # Step 3: Remove fully null records
+            valid_df = coerced_df.dropna(how="all").copy()
+            quarantined_count = raw_count - len(valid_df)
+
+            if quarantined_count > 0:
+                logger.warning("Quarantined %d completely empty rows.", quarantined_count)
+
+            if raw_count > 0 and len(valid_df) == 0:
+                raise TransformationError(
+                    f"Fatal: 100% of {raw_count} extracted rows failed validation or were empty."
+                )
+
+            logger.info(
+                "Transformation complete: %d raw records -> %d clean valid records.",
+                raw_count,
+                len(valid_df),
+            )
+            return valid_df
+
+        except TransformationError:
+            raise
+        except Exception as exc:
+            raise TransformationError(f"Unexpected transformation failure: {exc}") from exc

@@ -1,0 +1,32 @@
+[
+  {
+    "name": "id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Primary record identifier"
+  },
+  {
+    "name": "raw_text",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Cleaned raw text string"
+  },
+  {
+    "name": "numeric_val",
+    "type": "FLOAT64",
+    "mode": "NULLABLE",
+    "description": "Cleaned numeric value"
+  },
+  {
+    "name": "is_active",
+    "type": "BOOLEAN",
+    "mode": "NULLABLE",
+    "description": "Active boolean flag"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Timestamp of record creation"
+  }
+]
