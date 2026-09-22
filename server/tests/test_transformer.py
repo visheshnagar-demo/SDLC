@@ -106,6 +106,22 @@ def test_boolean_coercion_strict_primitives(transformer):
         assert val is None
 
 
+def test_boolean_coercion_from_pure_bool_dtype(transformer):
+    # Tests that pure bool dtype Series does not result in np.True_
+    df = pd.DataFrame({"is_active": [True, False]})
+    result_coerced = transformer.coerce_types(df)
+    assert result_coerced["is_active"].iloc[0] is True
+    assert type(result_coerced["is_active"].iloc[0]) is bool
+    assert result_coerced["is_active"].iloc[1] is False
+    assert type(result_coerced["is_active"].iloc[1]) is bool
+
+    result_transformed = transformer.transform(df)
+    assert result_transformed["is_active"].iloc[0] is True
+    assert type(result_transformed["is_active"].iloc[0]) is bool
+    assert result_transformed["is_active"].iloc[1] is False
+    assert type(result_transformed["is_active"].iloc[1]) is bool
+
+
 def test_timestamp_coercion_and_nat_handling(transformer):
     data = {
         "created_at": [

@@ -22,24 +22,30 @@ class DataCleanerTransformer:
         cleaned_df = df.copy()
 
         null_equivalents = {
-            "nan": None,
-            "NaN": None,
-            "None": None,
-            "none": None,
-            "null": None,
-            "NULL": None,
-            "N/A": None,
-            "n/a": None,
-            "": None,
+            "nan",
+            "NaN",
+            "None",
+            "none",
+            "null",
+            "NULL",
+            "N/A",
+            "n/a",
+            "",
         }
 
-        for col in cleaned_df.select_dtypes(include=["object", "string"]).columns:
-            cleaned_df[col] = (
-                cleaned_df[col]
-                .astype(str)
-                .str.strip()
-                .replace(null_equivalents)
-            )
+        for col in cleaned_df.columns:
+            if col in cleaned_df.select_dtypes(include=["object", "string"]).columns:
+                def _clean_val(x):
+                    if x is None or pd.isna(x):
+                        return None
+                    if isinstance(x, (bool, np.bool_)):
+                        return True if bool(x) else False
+                    s = str(x).strip()
+                    if s in null_equivalents:
+                        return None
+                    return s
+
+                cleaned_df[col] = cleaned_df[col].apply(_clean_val)
 
         return cleaned_df
 
@@ -79,6 +85,7 @@ class DataCleanerTransformer:
                 return None
 
             bool_vals = [parse_bool(v) for v in transformed_df["is_active"]]
+            transformed_df.drop(columns=["is_active"], inplace=True)
             transformed_df["is_active"] = pd.Series(
                 bool_vals, index=transformed_df.index, dtype=object
             )
@@ -127,6 +134,23 @@ class DataCleanerTransformer:
                 raise TransformationError(
                     f"Fatal: 100% of {raw_count} extracted rows failed validation or were empty."
                 )
+
+            if "is_active" in valid_df.columns:
+                def _to_strict_bool(val):
+                    if val is None or pd.isna(val):
+                        return None
+                    if isinstance(val, (bool, np.bool_)):
+                        return True if bool(val) else False
+                    s = str(val).strip().lower()
+                    if s in ["true", "1", "1.0", "t", "yes", "y"]:
+                        return True
+                    if s in ["false", "0", "0.0", "f", "no", "n"]:
+                        return False
+                    return None
+
+                final_bools = [_to_strict_bool(v) for v in valid_df["is_active"]]
+                valid_df.drop(columns=["is_active"], inplace=True)
+                valid_df["is_active"] = pd.Series(final_bools, index=valid_df.index, dtype=object)
 
             logger.info(
                 "Transformation complete: %d raw records -> %d clean valid records.",

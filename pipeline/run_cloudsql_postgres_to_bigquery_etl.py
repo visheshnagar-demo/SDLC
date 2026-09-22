@@ -156,6 +156,7 @@ class PipelineRunner:
                     return False
                 return None
             bool_vals = [_to_bool(v) for v in df["is_active"]]
+            df.drop(columns=["is_active"], inplace=True)
             df["is_active"] = pd.Series(bool_vals, index=df.index, dtype=object)
 
         if "created_at" in df.columns:
