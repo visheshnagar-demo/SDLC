@@ -1,41 +1,62 @@
-import os
+"""Main FastAPI application entrypoint."""
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from server.api.v1 import api_v1_router
-from server.database import init_db
-from server.config import settings
+
+from server.config import ALLOWED_ORIGINS
+from server.database import SessionLocal, init_db, seed_data
+from server.routers import audit, auth, instances, providers
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Application lifespan context manager for startup and shutdown events."""
+    # Startup: Initialize DB schema and seed initial data
     init_db()
+    db = SessionLocal()
+    try:
+        seed_data(db)
+    finally:
+        db.close()
     yield
+    # Shutdown logic (if any)
 
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
+    title="Greenfield Cloud Management System API",
+    version="1.0.0",
+    description="Centralized multi-cloud infrastructure, instance management, and telemetry platform.",
     lifespan=lifespan,
 )
 
-allowed_origins_raw = os.getenv(
-    "ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000"
-)
-allowed_origins = [
-    origin.strip() for origin in allowed_origins_raw.split(",") if origin.strip()
-]
-
+# CORS Middleware for fullstack integration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(api_v1_router)
+# Register API Routers
+app.include_router(auth.router, prefix="/api/v1")
+app.include_router(providers.router, prefix="/api/v1")
+app.include_router(instances.router, prefix="/api/v1")
+app.include_router(audit.router, prefix="/api/v1")
 
 
-@app.get("/health")
+@app.get("/", response_model=dict)
+def root():
+    """Root health check endpoint."""
+    return {
+        "service": "Greenfield Cloud Management System",
+        "status": "online",
+        "version": "1.0.0",
+    }
+
+
+@app.get("/health", response_model=dict)
 def health_check():
-    return {"status": "ok", "service": "payment-gateway-service"}
+    """Health check endpoint."""
+    return {"status": "healthy"}

@@ -1,54 +1,89 @@
+"""Pytest test fixtures and configuration."""
+
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from fastapi.testclient import TestClient
 
+from server.auth import create_access_token
 from server.database import Base, get_db, seed_data
-import server.models  # noqa: F401
 from server.main import app
 
-# In-memory SQLite for testing with StaticPool
 TEST_DATABASE_URL = "sqlite:///:memory:"
 
-test_engine = create_engine(
+engine = create_engine(
     TEST_DATABASE_URL,
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup_database():
-    Base.metadata.create_all(bind=test_engine)
-    db = TestingSessionLocal()
+def _setup_test_database():
+    """Create schema and seed baseline data once for test session."""
+    Base.metadata.create_all(bind=engine)
+    session = TestingSessionLocal()
     try:
-        seed_data(db)
+        seed_data(session)
     finally:
-        db.close()
+        session.close()
     yield
-    Base.metadata.drop_all(bind=test_engine)
+    Base.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture
-def db_session():
-    db = TestingSessionLocal()
+def db():
+    """Provides a transactional database session for tests."""
+    session = TestingSessionLocal()
     try:
-        yield db
+        yield session
     finally:
-        db.close()
+        session.close()
+
+
+def _override_get_db():
+    session = TestingSessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
+
+
+app.dependency_overrides[get_db] = _override_get_db
 
 
 @pytest.fixture
-def client(db_session):
-    def override_get_db():
-        try:
-            yield db_session
-        finally:
-            pass
-
-    app.dependency_overrides[get_db] = override_get_db
+def client():
+    """FastAPI TestClient fixture."""
     with TestClient(app) as test_client:
         yield test_client
-    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def admin_token():
+    """Generate a JWT token for the seeded admin user."""
+    return create_access_token(
+        data={"sub": "admin@example.com", "role": "admin", "uid": "admin-id"}
+    )
+
+
+@pytest.fixture
+def user_token():
+    """Generate a JWT token for the seeded read-only user."""
+    return create_access_token(
+        data={"sub": "test@example.com", "role": "read_only", "uid": "user-id"}
+    )
+
+
+@pytest.fixture
+def admin_headers(admin_token):
+    """Authorization headers for admin user."""
+    return {"Authorization": f"Bearer {admin_token}"}
+
+
+@pytest.fixture
+def user_headers(user_token):
+    """Authorization headers for read-only user."""
+    return {"Authorization": f"Bearer {user_token}"}
