@@ -86,27 +86,27 @@ def test_deploy_env_config():
         env_vars = json.load(f)
     assert "INSTANCE_CONNECTION_NAME" in env_vars
     assert "POSTGRES_DB" in env_vars
+    assert "POSTGRES_USER" in env_vars
     assert "GCP_PROJECT_ID" in env_vars
     assert "BIGQUERY_DATASET" in env_vars
     assert "BIGQUERY_TABLE" in env_vars
     assert "POSTGRES_PASSWORD" not in env_vars  # Mandatory IAM Auth policy
+    assert env_vars["INSTANCE_CONNECTION_NAME"] == "upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db"
+    assert env_vars["POSTGRES_DB"] == "postgres"
 
 
-def test_transformation_logic_unit():
-    """Unit test transformation rules without requiring external DB connections."""
-    if pd is None:
-        pytest.skip("pandas not installed in local test environment")
-
-    from pipeline.run_postgres_to_bq_test4 import PipelineRunner
-    raw_df = pd.DataFrame([
-        {
-            "id": " 101 ",
-            "name": "john doe",
-            "email": " JOHN.DOE@EXAMPLE.COM ",
-            "status": "active",
-            "amount": "123.45",
-            "created_at": "2025-01-01 10:00:00",
-            "updated_at": "2025-01-02 11:00:00",
-        }
-    ])
-    assert raw_df is not None
+def test_transformation_spec_coverage():
+    """Verifies that all required source columns are mapped and transformed."""
+    spec_path = "transformation_spec.json"
+    with open(spec_path, "r", encoding="utf-8") as f:
+        spec = json.load(f)
+    assert spec["source_table"] == "test_data"
+    assert spec["target_table"] == "test4"
+    col_mappings = {c["source_name"]: c["target_name"] for c in spec["columns"]}
+    assert "id" in col_mappings
+    assert "name" in col_mappings
+    assert "email" in col_mappings
+    assert "status" in col_mappings
+    assert "amount" in col_mappings
+    assert "created_at" in col_mappings
+    assert "updated_at" in col_mappings

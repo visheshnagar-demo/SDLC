@@ -42,6 +42,7 @@ class PipelineRunner:
         """Extracts data from real PostgreSQL into staging format.
         
         Zero-mock policy: if credentials or sources are unavailable, raises an error immediately.
+        Uses Cloud SQL Python Connector with IAM database authentication.
         """
         logger.info("Starting real extraction from source: PostgreSQL...")
         if pd is None:
@@ -57,74 +58,45 @@ class PipelineRunner:
             or os.getenv("CLOUD_SQL_CONNECTION_NAME")
             or "upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db"
         )
-        host = os.getenv("POSTGRES_HOST") or os.getenv("DB_HOST", "")
-        if not instance_connection_name and host and host.count(":") == 2:
-            instance_connection_name = host
-            host = ""
-
-        port = os.getenv("POSTGRES_PORT") or os.getenv("DB_PORT", "5432")
+        dbname = os.getenv("POSTGRES_DB") or os.getenv("DB_NAME", "postgres")
         user = os.getenv("POSTGRES_USER") or os.getenv("DB_USER", "postgres")
-        password = os.getenv("POSTGRES_PASSWORD") or os.getenv("DB_PASSWORD", "")
-        dbname = os.getenv("POSTGRES_DB") or os.getenv("DB_NAME", "postgre")
 
-        # Approach 1: Official Google Cloud SQL Python Connector (Connection Name + IAM auth / direct auth)
-        if instance_connection_name and user and not db_url:
-            try:
-                import sqlalchemy
-                from google.cloud.sql.connector import Connector, IPTypes
-                logger.info("Connecting via Google Cloud SQL Connector for %s", instance_connection_name)
-                sql_connector = Connector()
-                _is_iam = not bool(password)
-                _ip_type = IPTypes.PRIVATE if (os.getenv("CLOUD_SQL_IP_TYPE", "PUBLIC").upper() == "PRIVATE") else IPTypes.PUBLIC
+        # Approach 1: Official Google Cloud SQL Python Connector with IAM Authentication
+        if instance_connection_name and not db_url:
+            import sqlalchemy
+            from google.cloud.sql.connector import Connector, IPTypes
+            logger.info(
+                "Connecting via Google Cloud SQL Connector for instance %s with IAM Auth (db=%s, user=%s)",
+                instance_connection_name, dbname, user
+            )
+            sql_connector = Connector()
+            _ip_type = IPTypes.PRIVATE if (os.getenv("CLOUD_SQL_IP_TYPE", "PUBLIC").upper() == "PRIVATE") else IPTypes.PUBLIC
 
-                def _getconn():
-                    return sql_connector.connect(
-                        instance_connection_name,
-                        "pg8000",
-                        user=user,
-                        password=password if password else None,
-                        db=dbname,
-                        enable_iam_auth=_is_iam,
-                        ip_type=_ip_type,
-                    )
+            def _getconn():
+                return sql_connector.connect(
+                    instance_connection_name,
+                    "pg8000",
+                    user=user,
+                    db=dbname,
+                    enable_iam_auth=True,
+                    ip_type=_ip_type,
+                )
 
-                sql_engine = sqlalchemy.create_engine("postgresql+pg8000://", creator=_getconn)
-            except (ImportError, ModuleNotFoundError) as pkg_err:
-                logger.warning("Cloud SQL Python Connector package not found, falling back to direct URL: %s", pkg_err)
-
-        # Approach 2: Direct connection URL (host/IP fallback)
-        if not sql_engine and not db_url:
-            _is_iam = False
-            if not password and user:
-                try:
-                    import google.auth
-                    from google.auth.transport.requests import Request
-                    _iam_creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/sqlservice.admin"])
-                    _iam_creds.refresh(Request())
-                    if _iam_creds.token:
-                        password = _iam_creds.token
-                        _is_iam = True
-                        logger.info("Generated ephemeral Google IAM OAuth2 token for Cloud SQL authentication")
-                except (ImportError, ModuleNotFoundError) as auth_err:
-                    logger.warning("Google auth library skipped: %s", auth_err)
-
-            if user and host and dbname:
-                import urllib.parse
-                _enc_pw = urllib.parse.quote_plus(password) if password else ""
-                _ssl = "?sslmode=require" if _is_iam else ""
-                db_url = f"postgresql://{user}:{_enc_pw}@{host}:{port}/{dbname}{_ssl}"
-
-        con_target = sql_engine if sql_engine is not None else db_url
-        if not con_target:
+            sql_engine = sqlalchemy.create_engine("postgresql+pg8000://", creator=_getconn)
+        elif db_url:
+            import sqlalchemy
+            sql_engine = sqlalchemy.create_engine(db_url)
+        else:
             raise EnvironmentError(
-                "FATAL: Database connection parameters missing. Provide INSTANCE_CONNECTION_NAME, "
-                "DATABASE_URL, or POSTGRES_* environment variables. Mock dummy data is disabled."
+                "FATAL: Database connection parameters missing or invalid. "
+                "Provide INSTANCE_CONNECTION_NAME with IAM authentication or DATABASE_URL. "
+                "Mock dummy data is disabled."
             )
 
         query = "SELECT * FROM test_data"
         logger.info("Executing extraction query against PostgreSQL: %s", query)
         try:
-            df = pd.read_sql(query, con=con_target)
+            df = pd.read_sql(query, con=sql_engine)
         finally:
             if sql_engine is not None:
                 sql_engine.dispose()
