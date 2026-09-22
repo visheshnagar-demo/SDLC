@@ -9,6 +9,21 @@ logger = logging.getLogger(__name__)
 NULL_SENTINELS = {"", "null", "none", "n/a", "nan", "nil", "undefined"}
 
 
+def _parse_timestamp_series(series: pd.Series) -> pd.Series:
+    """Parses a series of mixed timestamps (ISO UTC, naive YYYY-MM-DD HH:MM:SS, dates) into UTC timestamps."""
+    if series is None or series.empty:
+        return series
+
+    # If already datetime with UTC tz
+    if pd.api.types.is_datetime64_any_dtype(series):
+        if getattr(series.dt, "tz", None) is None:
+            return series.dt.tz_localize("UTC")
+        return series.dt.tz_convert("UTC")
+
+    # Use format='mixed' with utc=True and errors='coerce' to flexibly parse mixed naive & ISO formats
+    return pd.to_datetime(series, format="mixed", utc=True, errors="coerce")
+
+
 class DataCleaner:
     """Cleans, sanitizes, and standardizes raw sales order DataFrames."""
 
@@ -61,14 +76,23 @@ class DataCleaner:
         # Standardize created_at and derive order_date
         current_utc = execution_time or datetime.now(timezone.utc)
 
+        # Parse created_at if present
         if "created_at" in clean_df.columns:
-            clean_df["created_at"] = pd.to_datetime(clean_df["created_at"], utc=True, errors="coerce")
-            # For records with valid created_at, derive order_date; otherwise default to current UTC date
-            clean_df["order_date"] = clean_df["created_at"].dt.date
-            clean_df["order_date"] = clean_df["order_date"].fillna(current_utc.date())
+            clean_df["created_at"] = _parse_timestamp_series(clean_df["created_at"])
         else:
             clean_df["created_at"] = pd.NaT
-            clean_df["order_date"] = current_utc.date()
+
+        # Derive or parse order_date
+        if "order_date" in clean_df.columns and clean_df["order_date"].notna().any():
+            parsed_order_date = _parse_timestamp_series(clean_df["order_date"]).dt.date
+            derived_date = clean_df["created_at"].dt.date if clean_df["created_at"].notna().any() else None
+            if derived_date is not None:
+                clean_df["order_date"] = parsed_order_date.fillna(derived_date).fillna(current_utc.date())
+            else:
+                clean_df["order_date"] = parsed_order_date.fillna(current_utc.date())
+        else:
+            derived_date = clean_df["created_at"].dt.date
+            clean_df["order_date"] = derived_date.fillna(current_utc.date())
 
         # Add ingested_at audit column
         clean_df["ingested_at"] = current_utc
