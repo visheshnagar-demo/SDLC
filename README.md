@@ -1,88 +1,53 @@
-# Project
+# PostgreSQL to BigQuery Data Pipeline (SCRUM-342)
 
-## Server
+## Overview
+Automated ETL pipeline designed to clean, transform, and load dataset `test_data` from PostgreSQL (`sdlc-etl-demo-db`, database `postgre`) into Google BigQuery table `test4` (`upbeat-repeater-477110-q6.analytics.test4`).
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+## Pipeline Architecture
+- **Source**: PostgreSQL Table `test_data`
+- **Destination**: BigQuery Table `upbeat-repeater-477110-q6.analytics.test4`
+- **Orchestration / Execution Mode**: Standalone Cloud Run Job & Cloud Composer / Apache Airflow DAG
+- **Staging / Parquet Storage**: Intermediate local / GCS Parquet storage
 
-### Setup
+## Data Transformations
+1. **Column Standardization**: Snake_case column normalization.
+2. **String Trimming & Cleaning**: Trims leading/trailing whitespace, maps empty/nan strings to null.
+3. **Case Normalization**:
+   - `email`: lowercased.
+   - `status`: converted to uppercase (`UNKNOWN` default if null).
+   - `name`: title-cased.
+4. **Data Type Coercion**:
+   - `amount`: coerced to `FLOAT64`.
+   - `created_at` & `updated_at`: parsed to UTC timestamps.
+5. **Ingestion Metadata**:
+   - Injects `ingested_at` timestamp for auditability.
 
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+## Project Structure
+```
+├── Dockerfile
+├── requirements.txt
+├── transformation_spec.json
+├── env.deploy.json
+├── dags/
+│   └── postgres_to_bq_test4_dag.py
+├── pipeline/
+│   └── run_postgres_to_bq_test4.py
+├── schemas/
+│   └── test4_schema.json
+├── sql/
+│   └── ddl/
+│       └── test4.sql
+└── tests/
+    └── test_postgres_to_bq_test4_pipeline.py
 ```
 
-2. Install dependencies:
+## Running the Pipeline Locally
 ```bash
-cd server
 pip install -r requirements.txt
-cd ..
+python -m pipeline.run_postgres_to_bq_test4
 ```
 
-### Running Tests
+## Running Unit & Regression Tests
 ```bash
-cd server
-python -m pytest -v
-cd ..
+pytest tests/
 ```
-
-### Starting the Development Server
-```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
-```bash
-# Copy the example environment file
-cp .env.example .env
-```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-
