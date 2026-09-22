@@ -17,3 +17,16 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-341 - Second-Hand Branded Watches E-Commerce Platform
+
+### Feature Summary
+This feature allows watch enthusiasts and luxury buyers to discover, filter, inspect verified condition and certificates, and securely purchase authentic second-hand branded watches with tracked courier delivery.
+
+### Key Features
+- Multi-attribute catalog filtering (brand, model, condition, price range, year, box/papers, movement)
+- Comprehensive watch detail pages with high-resolution imagery and authenticity certification reports
+- Shopping cart with 15-minute temporary reservation hold for unique single-inventory items
+- Secure checkout workflow supporting address entry and insured shipping tiers
+- Order management dashboard with real-time fulfillment status and shipment tracking
+- User authentication, profile management, and wishlist capability
