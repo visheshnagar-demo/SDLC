@@ -1,15 +1,18 @@
+import json
 import uuid
-import datetime
 from sqlalchemy import (
     Column,
     String,
+    Integer,
     Float,
     Boolean,
     DateTime,
     ForeignKey,
     Text,
+    func,
 )
 from sqlalchemy.orm import relationship
+
 from server.database import Base
 
 
@@ -17,127 +20,189 @@ def generate_uuid() -> str:
     return str(uuid.uuid4())
 
 
-def get_utc_now() -> datetime.datetime:
-    return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-
-
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(String, primary_key=True, default=generate_uuid)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    role = Column(String, default="user", nullable=False)
+    id = Column(String(36), primary_key=True, default=generate_uuid, index=True)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    hashed_password = Column(String(255), nullable=False)
+    full_name = Column(String(255), nullable=False)
+    role = Column(String(50), default="customer", nullable=False)  # "customer", "admin"
     is_active = Column(Boolean, default=True, nullable=False)
-    is_verified = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(
-        DateTime,
-        default=get_utc_now,
-        onupdate=get_utc_now,
-        nullable=False,
+        DateTime, server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    transactions = relationship("Transaction", back_populates="user")
-    refunds = relationship("Refund", back_populates="actor")
+    addresses = relationship(
+        "UserAddress", back_populates="user", cascade="all, delete-orphan"
+    )
+    orders = relationship("Order", back_populates="user")
+    cart_items = relationship(
+        "CartItem", back_populates="user", cascade="all, delete-orphan"
+    )
+    wishlist_items = relationship(
+        "WishlistItem", back_populates="user", cascade="all, delete-orphan"
+    )
+    reserved_watches = relationship(
+        "Watch",
+        back_populates="reserved_by_user",
+        foreign_keys="Watch.reserved_by_user_id",
+    )
 
 
-class CheckoutSession(Base):
-    __tablename__ = "checkout_sessions"
+class UserAddress(Base):
+    __tablename__ = "user_addresses"
 
-    id = Column(String, primary_key=True, default=lambda: f"cs_{uuid.uuid4().hex[:16]}")
-    session_id = Column(String, unique=True, index=True, nullable=False)
-    payment_intent_id = Column(String, index=True, nullable=False)
-    client_secret = Column(String, nullable=False)
-    customer_email = Column(String, index=True, nullable=False)
-    amount = Column(Float, nullable=False)
-    currency = Column(String, nullable=False)
-    target_amount = Column(Float, nullable=False)
-    target_currency = Column(String, nullable=False)
-    exchange_rate = Column(Float, default=1.0, nullable=False)
-    items_json = Column(Text, default="[]", nullable=False)
-    status = Column(String, default="PENDING", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    id = Column(String(36), primary_key=True, default=generate_uuid, index=True)
+    user_id = Column(
+        String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    street_address = Column(String(255), nullable=False)
+    city = Column(String(100), nullable=False)
+    state = Column(String(100), nullable=False)
+    postal_code = Column(String(50), nullable=False)
+    country = Column(String(100), default="United States", nullable=False)
+    is_default = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    user = relationship("User", back_populates="addresses")
 
 
-class Transaction(Base):
-    __tablename__ = "transactions"
+class Watch(Base):
+    __tablename__ = "watches"
 
-    id = Column(String, primary_key=True, default=lambda: f"tx_{uuid.uuid4().hex[:12]}")
-    payment_intent_id = Column(String, index=True, nullable=False)
-    user_id = Column(String, ForeignKey("users.id"), nullable=True)
-    customer_email = Column(String, index=True, nullable=False)
-    payment_method = Column(String, default="card", nullable=False)
-    amount = Column(Float, nullable=False)
-    base_currency = Column(String, default="USD", nullable=False)
-    target_currency = Column(String, default="USD", nullable=False)
-    converted_amount = Column(Float, nullable=False)
-    exchange_rate = Column(Float, default=1.0, nullable=False)
-    status = Column(String, default="COMPLETED", nullable=False)
-    refunded_amount = Column(Float, default=0.0, nullable=False)
-    remaining_refundable_balance = Column(Float, nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    id = Column(String(36), primary_key=True, default=generate_uuid, index=True)
+    brand = Column(String(100), index=True, nullable=False)
+    model = Column(String(150), index=True, nullable=False)
+    reference_number = Column(String(100), index=True, nullable=False)
+    serial_number = Column(String(100), unique=True, index=True, nullable=False)
+    year_of_manufacture = Column(Integer, nullable=False)
+    condition_score = Column(Float, nullable=False)  # e.g. 9.8
+    condition_grade = Column(String(50), nullable=False)  # Mint, Near Mint, etc.
+    price = Column(Float, index=True, nullable=False)
+    movement_type = Column(String(50), nullable=False)  # Automatic, Manual, Quartz
+    case_size_mm = Column(Float, nullable=False)  # e.g. 41.0
+    dial_color = Column(String(50), nullable=False)
+    bezel_material = Column(String(100), nullable=False)
+    strap_material = Column(String(100), nullable=False)
+    box_included = Column(Boolean, default=True, nullable=False)
+    papers_included = Column(Boolean, default=True, nullable=False)
+    authentication_status = Column(
+        String(50), default="VERIFIED", nullable=False
+    )  # VERIFIED, PENDING_VERIFICATION
+    certificate_number = Column(
+        String(100), unique=True, nullable=False
+    )  # e.g. CERT-99281
+    authenticator_notes = Column(Text, nullable=True)
+    _image_urls = Column("image_urls", Text, nullable=False, default="[]")
+    status = Column(
+        String(50), default="AVAILABLE", index=True, nullable=False
+    )  # AVAILABLE, RESERVED, SOLD
+    reserved_by_user_id = Column(
+        String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    hold_expires_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(
-        DateTime,
-        default=get_utc_now,
-        onupdate=get_utc_now,
-        nullable=False,
+        DateTime, server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    user = relationship("User", back_populates="transactions")
-    refunds = relationship(
-        "Refund", back_populates="transaction", cascade="all, delete-orphan"
+    reserved_by_user = relationship(
+        "User", back_populates="reserved_watches", foreign_keys=[reserved_by_user_id]
     )
-    audit_logs = relationship("AuditLog", back_populates="transaction")
-
-
-class Refund(Base):
-    __tablename__ = "refunds"
-
-    id = Column(
-        String, primary_key=True, default=lambda: f"ref_{uuid.uuid4().hex[:12]}"
+    orders = relationship("Order", back_populates="watch")
+    cart_items = relationship(
+        "CartItem", back_populates="watch", cascade="all, delete-orphan"
     )
-    transaction_id = Column(String, ForeignKey("transactions.id"), nullable=False)
-    actor_id = Column(String, ForeignKey("users.id"), nullable=True)
-    refund_amount = Column(Float, nullable=False)
-    currency = Column(String, default="USD", nullable=False)
-    reason = Column(String, nullable=False)
-    memo = Column(String, nullable=True)
-    status = Column(String, default="COMPLETED", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
-
-    transaction = relationship("Transaction", back_populates="refunds")
-    actor = relationship("User", back_populates="refunds")
-
-
-class AuditLog(Base):
-    __tablename__ = "audit_logs"
-
-    id = Column(
-        String, primary_key=True, default=lambda: f"log_{uuid.uuid4().hex[:12]}"
+    wishlist_items = relationship(
+        "WishlistItem", back_populates="watch", cascade="all, delete-orphan"
     )
-    transaction_id = Column(String, ForeignKey("transactions.id"), nullable=True)
-    event_type = Column(String, index=True, nullable=False)
-    ip_address = Column(String, default="127.0.0.1", nullable=False)
-    masked_payload = Column(Text, default="{}", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
 
-    transaction = relationship("Transaction", back_populates="audit_logs")
+    @property
+    def image_urls(self):
+        try:
+            return json.loads(self._image_urls) if self._image_urls else []
+        except Exception:
+            return []
+
+    @image_urls.setter
+    def image_urls(self, value):
+        if isinstance(value, list):
+            self._image_urls = json.dumps(value)
+        elif isinstance(value, str):
+            self._image_urls = value
+        else:
+            self._image_urls = "[]"
 
 
-class ExchangeRateCache(Base):
-    __tablename__ = "exchange_rate_caches"
+class CartItem(Base):
+    __tablename__ = "cart_items"
 
-    id = Column(String, primary_key=True, default=generate_uuid)
-    base_currency = Column(String, index=True, nullable=False)
-    rates_json = Column(Text, nullable=False)
-    fetched_at = Column(DateTime, default=get_utc_now, nullable=False)
+    id = Column(String(36), primary_key=True, default=generate_uuid, index=True)
+    user_id = Column(
+        String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    watch_id = Column(
+        String(36), ForeignKey("watches.id", ondelete="CASCADE"), nullable=False
+    )
+    reserved_at = Column(DateTime, server_default=func.now(), nullable=False)
     expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    user = relationship("User", back_populates="cart_items")
+    watch = relationship("Watch", back_populates="cart_items")
 
 
-class WebhookEvent(Base):
-    __tablename__ = "webhook_events"
+class Order(Base):
+    __tablename__ = "orders"
 
-    id = Column(String, primary_key=True)
-    event_type = Column(String, nullable=False)
-    processed_at = Column(DateTime, default=get_utc_now, nullable=False)
+    id = Column(String(36), primary_key=True, default=generate_uuid, index=True)
+    order_number = Column(String(100), unique=True, index=True, nullable=False)
+    user_id = Column(
+        String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    watch_id = Column(
+        String(36), ForeignKey("watches.id", ondelete="RESTRICT"), nullable=False
+    )
+    total_amount = Column(Float, nullable=False)
+    shipping_fee = Column(Float, default=0.0, nullable=False)
+    shipping_tier = Column(String(100), nullable=False)
+    shipping_address_id = Column(
+        String(36), ForeignKey("user_addresses.id", ondelete="SET NULL"), nullable=True
+    )
+    payment_status = Column(
+        String(50), default="PAID", nullable=False
+    )  # PENDING, PAID, FAILED, REFUNDED
+    fulfillment_status = Column(
+        String(50), default="PENDING_VERIFICATION", nullable=False
+    )
+    # PENDING_VERIFICATION, PACKAGING, COURIER_DISPATCH, OUT_FOR_DELIVERY, DELIVERED, CANCELLED
+    tracking_number = Column(String(100), nullable=True)
+    courier_name = Column(String(100), nullable=True)
+    handover_pin = Column(String(20), nullable=True)
+    certificate_url = Column(String(255), nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime, server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    user = relationship("User", back_populates="orders")
+    watch = relationship("Watch", back_populates="orders")
+    shipping_address = relationship("UserAddress")
+
+
+class WishlistItem(Base):
+    __tablename__ = "wishlist_items"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid, index=True)
+    user_id = Column(
+        String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    watch_id = Column(
+        String(36), ForeignKey("watches.id", ondelete="CASCADE"), nullable=False
+    )
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    user = relationship("User", back_populates="wishlist_items")
+    watch = relationship("Watch", back_populates="wishlist_items")
