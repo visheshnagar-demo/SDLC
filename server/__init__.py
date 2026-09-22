@@ -1,1 +1,1 @@
-"""Server package."""
+"""Cloud Management System Backend Package."""

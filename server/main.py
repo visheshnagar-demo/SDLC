@@ -1,17 +1,18 @@
-"""Main FastAPI Application Entrypoint."""
+"""Main FastAPI application entrypoint."""
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from server.config import settings
-from server.database import init_db, seed_data, SessionLocal
-from server.routers import auth, providers, instances, metrics, audit
+from server.config import ALLOWED_ORIGINS
+from server.database import SessionLocal, init_db, seed_data
+from server.routers import audit, auth, instances, providers
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: initialize database tables and seed default users/providers/instances
+    """Application lifespan context manager for startup and shutdown events."""
+    # Startup: Initialize DB schema and seed initial data
     init_db()
     db = SessionLocal()
     try:
@@ -19,48 +20,43 @@ async def lifespan(app: FastAPI):
     finally:
         db.close()
     yield
-    # Shutdown: clean up resources if needed
+    # Shutdown logic (if any)
 
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    description="Greenfield Multi-Cloud Management System REST API",
+    title="Greenfield Cloud Management System API",
     version="1.0.0",
+    description="Centralized multi-cloud infrastructure, instance management, and telemetry platform.",
     lifespan=lifespan,
 )
 
-# Configure CORS Middleware
-allowed_origins_list = [
-    origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",") if origin.strip()
-]
-if not allowed_origins_list:
-    allowed_origins_list = ["http://localhost:5173", "http://localhost:3000"]
-
+# CORS Middleware for fullstack integration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins_list,
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Register API Routers
+app.include_router(auth.router, prefix="/api/v1")
+app.include_router(providers.router, prefix="/api/v1")
+app.include_router(instances.router, prefix="/api/v1")
+app.include_router(audit.router, prefix="/api/v1")
 
-@app.get("/health", tags=["Health"])
-@app.get(f"{settings.API_V1_STR}/health", tags=["Health"])
+
+@app.get("/", response_model=dict)
+def root():
+    """Root health check endpoint."""
+    return {
+        "service": "Greenfield Cloud Management System",
+        "status": "online",
+        "version": "1.0.0",
+    }
+
+
+@app.get("/health", response_model=dict)
 def health_check():
-    """Service healthcheck probe."""
-    return {"status": "healthy", "service": settings.PROJECT_NAME, "version": "1.0.0"}
-
-
-# Mount API v1 Routers
-app.include_router(auth.router, prefix=settings.API_V1_STR)
-app.include_router(providers.router, prefix=settings.API_V1_STR)
-app.include_router(instances.router, prefix=settings.API_V1_STR)
-app.include_router(metrics.router, prefix=settings.API_V1_STR)
-app.include_router(audit.router, prefix=settings.API_V1_STR)
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run("server.main:app", host="0.0.0.0", port=8000, reload=True)
+    """Health check endpoint."""
+    return {"status": "healthy"}

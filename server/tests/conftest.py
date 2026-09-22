@@ -1,4 +1,4 @@
-"""Shared test configuration and fixtures."""
+"""Pytest test fixtures and configuration."""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -6,38 +6,36 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from server.database import get_db, init_db, seed_data
+from server.auth import create_access_token
+from server.database import Base, get_db, seed_data
 from server.main import app
-from server.models import Base
-from server.security import create_access_token
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+TEST_DATABASE_URL = "sqlite:///:memory:"
 
-test_engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
+engine = create_engine(
+    TEST_DATABASE_URL,
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup_test_db():
-    """Create all tables and seed default users once for the session."""
-    init_db(engine_to_use=test_engine)
-    db = TestingSessionLocal()
+def _setup_test_database():
+    """Create schema and seed baseline data once for test session."""
+    Base.metadata.create_all(bind=engine)
+    session = TestingSessionLocal()
     try:
-        seed_data(db)
+        seed_data(session)
     finally:
-        db.close()
+        session.close()
     yield
-    Base.metadata.drop_all(bind=test_engine)
+    Base.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture
-def db_session():
-    """Provide a database session for a test."""
+def db():
+    """Provides a transactional database session for tests."""
     session = TestingSessionLocal()
     try:
         yield session
@@ -45,35 +43,47 @@ def db_session():
         session.close()
 
 
+def _override_get_db():
+    session = TestingSessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
+
+
+app.dependency_overrides[get_db] = _override_get_db
+
+
 @pytest.fixture
-def client(db_session):
-    """FastAPI TestClient with overridden get_db dependency."""
-
-    def override_get_db():
-        try:
-            yield db_session
-        finally:
-            pass
-
-    app.dependency_overrides[get_db] = override_get_db
+def client():
+    """FastAPI TestClient fixture."""
     with TestClient(app) as test_client:
         yield test_client
-    app.dependency_overrides.clear()
 
 
 @pytest.fixture
-def admin_token_headers():
-    """Return authorization header with an Admin user JWT."""
-    token = create_access_token(
-        data={"sub": "admin-id", "email": "admin@example.com", "role": "ADMIN"}
+def admin_token():
+    """Generate a JWT token for the seeded admin user."""
+    return create_access_token(
+        data={"sub": "admin@example.com", "role": "admin", "uid": "admin-id"}
     )
-    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
-def readonly_token_headers():
-    """Return authorization header with a Read-Only user JWT."""
-    token = create_access_token(
-        data={"sub": "readonly-id", "email": "test@example.com", "role": "READ_ONLY"}
+def user_token():
+    """Generate a JWT token for the seeded read-only user."""
+    return create_access_token(
+        data={"sub": "test@example.com", "role": "read_only", "uid": "user-id"}
     )
-    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def admin_headers(admin_token):
+    """Authorization headers for admin user."""
+    return {"Authorization": f"Bearer {admin_token}"}
+
+
+@pytest.fixture
+def user_headers(user_token):
+    """Authorization headers for read-only user."""
+    return {"Authorization": f"Bearer {user_token}"}

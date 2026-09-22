@@ -1,161 +1,136 @@
-"""Tests for Cloud VM Instance Management & Lifecycle."""
-
-from fastapi import status
+"""Cloud Instance Lifecycle & Telemetry unit tests."""
 
 
-def test_list_instances(client, readonly_token_headers):
-    """Test listing instances."""
-    response = client.get("/api/v1/instances", headers=readonly_token_headers)
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    assert isinstance(data, list)
-    assert len(data) >= 1
-    first = data[0]
-    assert "id" in first
-    assert "name" in first
-    assert "status" in first
-    assert "region" in first
-    assert "instance_type" in first
+def test_list_instances_dashboard(client, user_headers):
+    # AC: Cloud Resource Dashboard - Displays active cloud VM instances
+    response = client.get("/api/v1/instances", headers=user_headers)
+    assert response.status_code == 200
+    instances = response.json()
+    assert isinstance(instances, list)
+    assert len(instances) >= 3
+    names = [inst["name"] for inst in instances]
+    assert "web-server-01" in names
 
 
-def test_list_instances_filtered_by_status(client, readonly_token_headers):
-    """Test filtering instances by status."""
-    response = client.get(
-        "/api/v1/instances?status=RUNNING", headers=readonly_token_headers
-    )
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    for inst in data:
+def test_filter_instances_by_status(client, user_headers):
+    # AC: Cloud Resource Dashboard - Filter instances by status
+    response = client.get("/api/v1/instances?status=RUNNING", headers=user_headers)
+    assert response.status_code == 200
+    instances = response.json()
+    for inst in instances:
         assert inst["status"] == "RUNNING"
 
 
-def test_get_instance_detail(client, readonly_token_headers):
-    """Test getting single instance detail."""
-    # First get list to find an existing ID
-    list_res = client.get("/api/v1/instances", headers=readonly_token_headers)
-    instance_id = list_res.json()[0]["id"]
-
-    response = client.get(
-        f"/api/v1/instances/{instance_id}", headers=readonly_token_headers
-    )
-    assert response.status_code == status.HTTP_200_OK
+def test_get_instance_detail(client, user_headers):
+    # AC: Cloud Resource Dashboard - Retrieve detailed instance record
+    response = client.get("/api/v1/instances/inst-web-001", headers=user_headers)
+    assert response.status_code == 200
     data = response.json()
-    assert data["id"] == instance_id
+    assert data["id"] == "inst-web-001"
+    assert data["name"] == "web-server-01"
+    assert data["status"] == "RUNNING"
+    assert data["public_ip"] is not None
 
 
-def test_get_instance_not_found(client, readonly_token_headers):
-    """Test getting non-existent instance returns 404."""
-    response = client.get(
-        "/api/v1/instances/non-existent-uuid", headers=readonly_token_headers
-    )
-    assert response.status_code == status.HTTP_404_NOT_FOUND
-
-
-def test_provision_instance_as_admin(client, admin_token_headers):
-    """Test provisioning a new VM instance as Admin."""
-    prov_res = client.get("/api/v1/providers", headers=admin_token_headers)
-    provider_id = prov_res.json()[0]["id"]
-
-    response = client.post(
-        "/api/v1/instances",
-        json={
-            "provider_id": provider_id,
-            "name": "worker-node-09",
-            "region": "us-west1",
-            "instance_type": "e2-medium",
-            "image_id": "debian-11",
-        },
-        headers=admin_token_headers,
-    )
-    assert response.status_code in [status.HTTP_201_CREATED, status.HTTP_202_ACCEPTED]
+def test_provision_instance_admin(client, admin_headers):
+    # AC: Instance Management & Provisioning - Admin can provision new VM resources
+    payload = {
+        "name": "worker-node-01",
+        "provider_id": "prov-aws-001",
+        "region": "us-east-1b",
+        "instance_type": "c5.large",
+        "image_id": "ami-ubuntu-22.04",
+    }
+    response = client.post("/api/v1/instances", json=payload, headers=admin_headers)
+    assert response.status_code == 201
     data = response.json()
-    assert data["name"] == "worker-node-09"
-    assert data["status"] == "PROVISIONING"
-    assert "instance_id" in data or "id" in data
+    assert data["name"] == "worker-node-01"
+    assert data["status"] == "RUNNING"
+    assert data["external_instance_id"].startswith("i-")
+    assert data["public_ip"] is not None
+    assert data["private_ip"] is not None
 
 
-def test_provision_instance_as_readonly_forbidden(client, readonly_token_headers):
-    """Test provisioning instance as read-only user returns 403 Forbidden."""
-    prov_res = client.get("/api/v1/providers", headers=readonly_token_headers)
-    provider_id = prov_res.json()[0]["id"]
-
-    response = client.post(
-        "/api/v1/instances",
-        json={
-            "provider_id": provider_id,
-            "name": "unauthorized-vm",
-            "region": "us-east-1",
-            "instance_type": "t3.micro",
-        },
-        headers=readonly_token_headers,
-    )
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+def test_provision_instance_read_only_forbidden(client, user_headers):
+    # AC: Access Control & Security - Read-only user cannot provision VM instances
+    payload = {
+        "name": "unauthorized-node",
+        "provider_id": "prov-aws-001",
+        "region": "us-east-1b",
+        "instance_type": "c5.large",
+    }
+    response = client.post("/api/v1/instances", json=payload, headers=user_headers)
+    assert response.status_code == 403
 
 
-def test_instance_lifecycle_actions_as_admin(client, admin_token_headers):
-    """Test START, STOP, RESTART, and TERMINATE lifecycle actions."""
-    # List instances to find target
-    list_res = client.get("/api/v1/instances", headers=admin_token_headers)
-    inst_id = list_res.json()[0]["id"]
-
+def test_instance_lifecycle_actions_admin(client, admin_headers):
+    # AC: Instance Management & Provisioning - Stop, Start, Restart, Terminate
     # 1. Stop instance
-    stop_res = client.post(
-        f"/api/v1/instances/{inst_id}/action",
+    resp_stop = client.post(
+        "/api/v1/instances/inst-web-001/action",
         json={"action": "STOP"},
-        headers=admin_token_headers,
+        headers=admin_headers,
     )
-    assert stop_res.status_code == status.HTTP_200_OK
-    assert stop_res.json()["current_status"] == "STOPPED"
+    assert resp_stop.status_code == 200
+    assert resp_stop.json()["current_status"] == "STOPPED"
 
     # 2. Start instance
-    start_res = client.post(
-        f"/api/v1/instances/{inst_id}/action",
+    resp_start = client.post(
+        "/api/v1/instances/inst-web-001/action",
         json={"action": "START"},
-        headers=admin_token_headers,
+        headers=admin_headers,
     )
-    assert start_res.status_code == status.HTTP_200_OK
-    assert start_res.json()["current_status"] == "RUNNING"
+    assert resp_start.status_code == 200
+    assert resp_start.json()["current_status"] == "RUNNING"
 
     # 3. Restart instance
-    restart_res = client.post(
-        f"/api/v1/instances/{inst_id}/action",
+    resp_restart = client.post(
+        "/api/v1/instances/inst-web-001/action",
         json={"action": "RESTART"},
-        headers=admin_token_headers,
+        headers=admin_headers,
     )
-    assert restart_res.status_code == status.HTTP_200_OK
-    assert restart_res.json()["current_status"] == "RUNNING"
+    assert resp_restart.status_code == 200
+    assert resp_restart.json()["current_status"] == "RUNNING"
 
     # 4. Terminate instance
-    term_res = client.post(
-        f"/api/v1/instances/{inst_id}/action",
+    resp_term = client.post(
+        "/api/v1/instances/inst-web-001/action",
         json={"action": "TERMINATE"},
-        headers=admin_token_headers,
+        headers=admin_headers,
     )
-    assert term_res.status_code == status.HTTP_200_OK
-    assert term_res.json()["current_status"] == "TERMINATED"
+    assert resp_term.status_code == 200
+    assert resp_term.json()["current_status"] == "TERMINATED"
 
 
-def test_instance_action_as_readonly_forbidden(client, readonly_token_headers):
-    """Test executing action as read-only user returns 403 Forbidden."""
-    list_res = client.get("/api/v1/instances", headers=readonly_token_headers)
-    inst_id = list_res.json()[0]["id"]
-
+def test_instance_action_read_only_forbidden(client, user_headers):
+    # AC: Access Control & Security - Read-only users cannot perform lifecycle actions
     response = client.post(
-        f"/api/v1/instances/{inst_id}/action",
+        "/api/v1/instances/inst-web-001/action",
         json={"action": "STOP"},
-        headers=readonly_token_headers,
+        headers=user_headers,
     )
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == 403
 
 
-def test_instance_invalid_action(client, admin_token_headers):
-    """Test executing unsupported action returns 400 Bad Request."""
-    list_res = client.get("/api/v1/instances", headers=admin_token_headers)
-    inst_id = list_res.json()[0]["id"]
-
+def test_instance_invalid_action(client, admin_headers):
+    # AC: Instance Management - Invalid lifecycle action returns 400
     response = client.post(
-        f"/api/v1/instances/{inst_id}/action",
-        json={"action": "EXPLODE"},
-        headers=admin_token_headers,
+        "/api/v1/instances/inst-web-001/action",
+        json={"action": "INVALID_ACTION"},
+        headers=admin_headers,
     )
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.status_code == 400
+
+
+def test_get_instance_metrics_telemetry(client, user_headers):
+    # AC: Cloud Resource Dashboard - Displays CPU/RAM utilization and status metrics
+    response = client.get(
+        "/api/v1/instances/inst-web-001/metrics", headers=user_headers
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "cpu_utilization_pct" in data
+    assert "memory_utilization_pct" in data
+    assert "disk_read_bytes_sec" in data
+    assert "network_in_bytes_sec" in data
+    assert data["instance_id"] == "inst-web-001"

@@ -1,28 +1,28 @@
-"""Tests for Audit and Compliance Logging."""
-
-from fastapi import status
+"""Audit logs viewing unit tests."""
 
 
-def test_list_audit_logs(client, admin_token_headers):
-    """Test retrieving audit logs."""
-    response = client.get("/api/v1/audit-logs", headers=admin_token_headers)
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    assert isinstance(data, list)
-    if len(data) > 0:
-        log = data[0]
-        assert "action" in log
-        assert "target_resource" in log
-        assert "status" in log
-        assert "user_email" in log
+def test_list_audit_logs(client, user_headers):
+    # AC: Access Control & Security - Audit logs capture system actions
+    response = client.get("/api/v1/audit-logs", headers=user_headers)
+    assert response.status_code == 200
+    logs = response.json()
+    assert isinstance(logs, list)
+    assert len(logs) >= 1
+    assert "action" in logs[0]
+    assert "user_email" in logs[0]
+    assert "status" in logs[0]
 
 
-def test_audit_logs_filter_by_action(client, admin_token_headers):
-    """Test filtering audit logs by action."""
+def test_filter_audit_logs_by_action(client, user_headers):
     response = client.get(
-        "/api/v1/audit-logs?action=USER_LOGIN", headers=admin_token_headers
+        "/api/v1/audit-logs?action=SYSTEM_INITIALIZE", headers=user_headers
     )
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    for log in data:
-        assert log["action"] == "USER_LOGIN"
+    assert response.status_code == 200
+    logs = response.json()
+    for log in logs:
+        assert log["action"] == "SYSTEM_INITIALIZE"
+
+
+def test_list_audit_logs_unauthenticated(client):
+    response = client.get("/api/v1/audit-logs")
+    assert response.status_code == 401

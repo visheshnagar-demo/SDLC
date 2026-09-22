@@ -1,64 +1,39 @@
-"""Authentication and User Profile Router."""
+"""Authentication and User Profile router."""
 
-from typing import Optional
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
+from server.auth import create_access_token, get_current_user, verify_password
 from server.database import get_db
-from server.models import User, AuditLog
-from server.schemas import UserLogin, UserCreate, UserOut, TokenResponse
-from server.security import (
-    verify_password,
-    get_password_hash,
-    create_access_token,
-    get_current_user,
-)
+from server.models import AuditLog, User
+from server.schemas import LoginRequest, TokenResponse, UserResponse
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(
-    request: Request,
-    login_data: Optional[UserLogin] = None,
-    form_data: Optional[OAuth2PasswordRequestForm] = Depends(lambda: None),
-    db: Session = Depends(get_db),
-):
-    """Authenticate user with email/username and password."""
-    email = None
-    password = None
+def login(request_body: LoginRequest, req: Request, db: Session = Depends(get_db)):
+    """Authenticate user with email and password and return JWT token."""
+    user = db.query(User).filter(User.email == request_body.email).first()
+    client_ip = req.client.host if req.client else "127.0.0.1"
 
-    if form_data and form_data.username:
-        email = form_data.username
-        password = form_data.password
-    elif login_data:
-        email = login_data.username or login_data.email
-        password = login_data.password
-
-    if not email or not password:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email/username and password are required",
-        )
-
-    user = db.query(User).filter(User.email == email).first()
-    client_ip = request.client.host if request.client else "127.0.0.1"
-
-    if not user or not verify_password(password, user.hashed_password):
-        # Audit log failed login
+    if not user or not verify_password(request_body.password, user.hashed_password):
         audit = AuditLog(
+            id=str(uuid.uuid4()),
             user_id=user.id if user else None,
-            user_email=email,
-            action="USER_LOGIN",
-            target_resource="AUTH",
+            user_email=request_body.email,
+            action="USER_LOGIN_FAILED",
+            target_resource="AUTH_SERVICE",
             status="FAILED",
-            details="Invalid credentials provided",
             ip_address=client_ip,
+            details="Invalid username or password",
         )
         db.add(audit)
-        db.commit()
-
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -66,78 +41,54 @@ def login(
         )
 
     if not user.is_active:
+        audit = AuditLog(
+            id=str(uuid.uuid4()),
+            user_id=user.id,
+            user_email=user.email,
+            action="USER_LOGIN_DENIED",
+            target_resource="AUTH_SERVICE",
+            status="DENIED",
+            ip_address=client_ip,
+            details="User account is deactivated",
+        )
+        db.add(audit)
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Inactive user account",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is inactive",
         )
 
     access_token = create_access_token(
-        data={"sub": user.id, "email": user.email, "role": user.role}
+        data={"sub": user.email, "role": user.role, "uid": user.id}
     )
 
-    # Audit log successful login
     audit = AuditLog(
+        id=str(uuid.uuid4()),
         user_id=user.id,
         user_email=user.email,
-        action="USER_LOGIN",
-        target_resource="AUTH",
+        action="USER_LOGIN_SUCCESS",
+        target_resource="AUTH_SERVICE",
         status="SUCCESS",
-        details="User logged in successfully",
         ip_address=client_ip,
+        details=f"User logged in successfully with role {user.role}",
     )
     db.add(audit)
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
 
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
-        role=user.role,
-        user_id=user.id,
+        user=UserResponse.model_validate(user),
     )
 
 
-@router.get("/me", response_model=UserOut)
+@router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
-    """Retrieve profile information for the authenticated user."""
+    """Return the profile of the currently authenticated user."""
     return current_user
-
-
-@router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
-def register_user(
-    request: Request,
-    user_in: UserCreate,
-    db: Session = Depends(get_db),
-):
-    """Register a new user account."""
-    existing_user = db.query(User).filter(User.email == user_in.email).first()
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User with this email already exists",
-        )
-
-    user = User(
-        email=user_in.email,
-        hashed_password=get_password_hash(user_in.password),
-        full_name=user_in.full_name,
-        role=user_in.role if user_in.role in ["ADMIN", "READ_ONLY"] else "READ_ONLY",
-        is_active=True,
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-
-    client_ip = request.client.host if request.client else "127.0.0.1"
-    audit = AuditLog(
-        user_id=user.id,
-        user_email=user.email,
-        action="USER_REGISTER",
-        target_resource=f"USER:{user.id}",
-        status="SUCCESS",
-        details=f"User registered with role {user.role}",
-        ip_address=client_ip,
-    )
-    db.add(audit)
-    db.commit()
-
-    return user

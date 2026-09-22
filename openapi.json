@@ -1,75 +1,28 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Greenfield Cloud Management System",
-    "description": "Greenfield Multi-Cloud Management System REST API",
+    "title": "Greenfield Cloud Management System API",
+    "description": "Centralized multi-cloud infrastructure, instance management, and telemetry platform.",
     "version": "1.0.0"
   },
   "paths": {
-    "/api/v1/health": {
-      "get": {
-        "tags": [
-          "Health"
-        ],
-        "summary": "Health Check",
-        "description": "Service healthcheck probe.",
-        "operationId": "health_check_api_v1_health_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      }
-    },
-    "/health": {
-      "get": {
-        "tags": [
-          "Health"
-        ],
-        "summary": "Health Check",
-        "description": "Service healthcheck probe.",
-        "operationId": "health_check_health_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/auth/login": {
       "post": {
         "tags": [
-          "Authentication"
+          "auth"
         ],
         "summary": "Login",
-        "description": "Authenticate user with email/username and password.",
+        "description": "Authenticate user with email and password and return JWT token.",
         "operationId": "login_api_v1_auth_login_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "anyOf": [
-                  {
-                    "$ref": "#/components/schemas/UserLogin"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "title": "Login Data"
+                "$ref": "#/components/schemas/LoginRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -98,10 +51,10 @@
     "/api/v1/auth/me": {
       "get": {
         "tags": [
-          "Authentication"
+          "auth"
         ],
         "summary": "Get Me",
-        "description": "Retrieve profile information for the authenticated user.",
+        "description": "Return the profile of the currently authenticated user.",
         "operationId": "get_me_api_v1_auth_me_get",
         "responses": {
           "200": {
@@ -109,7 +62,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserOut"
+                  "$ref": "#/components/schemas/UserResponse"
                 }
               }
             }
@@ -117,175 +70,25 @@
         },
         "security": [
           {
-            "OAuth2PasswordBearer": []
+            "HTTPBearer": []
           }
         ]
-      }
-    },
-    "/api/v1/auth/register": {
-      "post": {
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "Register User",
-        "description": "Register a new user account.",
-        "operationId": "register_user_api_v1_auth_register_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserCreate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserOut"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/api/v1/providers": {
       "get": {
         "tags": [
-          "Cloud Providers"
+          "providers"
         ],
         "summary": "List Providers",
-        "description": "List all registered cloud provider accounts (without exposing raw secrets).",
+        "description": "List all registered cloud provider accounts (Available for all authenticated users).",
         "operationId": "list_providers_api_v1_providers_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/CloudProviderOut"
-                  },
-                  "type": "array",
-                  "title": "Response List Providers Api V1 Providers Get"
-                }
-              }
-            }
-          }
-        },
         "security": [
           {
-            "OAuth2PasswordBearer": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "Cloud Providers"
-        ],
-        "summary": "Create Provider",
-        "description": "Register a new cloud provider account (Admin only).",
-        "operationId": "create_provider_api_v1_providers_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CloudProviderCreate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CloudProviderOut"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/instances": {
-      "get": {
-        "tags": [
-          "Instances"
-        ],
-        "summary": "List Instances",
-        "description": "List VM instances with optional provider, status filters and pagination.",
-        "operationId": "list_instances_api_v1_instances_get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
+            "HTTPBearer": []
           }
         ],
         "parameters": [
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Provider"
-            }
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Status"
-            }
-          },
           {
             "name": "skip",
             "in": "query",
@@ -303,9 +106,9 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 500,
               "minimum": 1,
-              "default": 20,
+              "default": 100,
               "title": "Limit"
             }
           }
@@ -318,7 +121,198 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/CloudInstanceOut"
+                    "$ref": "#/components/schemas/CloudProviderResponse"
+                  },
+                  "title": "Response List Providers Api V1 Providers Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "providers"
+        ],
+        "summary": "Create Provider",
+        "description": "Register a new cloud provider account (Admin only).",
+        "operationId": "create_provider_api_v1_providers_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloudProviderCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CloudProviderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/providers/{provider_id}": {
+      "get": {
+        "tags": [
+          "providers"
+        ],
+        "summary": "Get Provider",
+        "description": "Retrieve details for a specific cloud provider.",
+        "operationId": "get_provider_api_v1_providers__provider_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "provider_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Provider Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CloudProviderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instances": {
+      "get": {
+        "tags": [
+          "instances"
+        ],
+        "summary": "List Instances",
+        "description": "List cloud VM instances with pagination and optional filters.",
+        "operationId": "list_instances_api_v1_instances_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Provider Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CloudInstanceResponse"
                   },
                   "title": "Response List Instances Api V1 Instances Get"
                 }
@@ -339,14 +333,14 @@
       },
       "post": {
         "tags": [
-          "Instances"
+          "instances"
         ],
         "summary": "Provision Instance",
-        "description": "Provision a new cloud virtual machine instance (Admin only).",
+        "description": "Provision a new Cloud VM instance (Admin only).",
         "operationId": "provision_instance_api_v1_instances_post",
         "security": [
           {
-            "OAuth2PasswordBearer": []
+            "HTTPBearer": []
           }
         ],
         "requestBody": {
@@ -364,7 +358,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/CloudInstanceResponse"
+                }
               }
             }
           },
@@ -384,14 +380,14 @@
     "/api/v1/instances/{instance_id}": {
       "get": {
         "tags": [
-          "Instances"
+          "instances"
         ],
         "summary": "Get Instance",
-        "description": "Retrieve details for a single VM instance.",
+        "description": "Get detailed instance metadata.",
         "operationId": "get_instance_api_v1_instances__instance_id__get",
         "security": [
           {
-            "OAuth2PasswordBearer": []
+            "HTTPBearer": []
           }
         ],
         "parameters": [
@@ -411,7 +407,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CloudInstanceOut"
+                  "$ref": "#/components/schemas/CloudInstanceResponse"
                 }
               }
             }
@@ -432,14 +428,14 @@
     "/api/v1/instances/{instance_id}/action": {
       "post": {
         "tags": [
-          "Instances"
+          "instances"
         ],
         "summary": "Execute Instance Action",
         "description": "Execute lifecycle action on VM instance: START, STOP, RESTART, TERMINATE (Admin only).",
         "operationId": "execute_instance_action_api_v1_instances__instance_id__action_post",
         "security": [
           {
-            "OAuth2PasswordBearer": []
+            "HTTPBearer": []
           }
         ],
         "parameters": [
@@ -458,7 +454,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CloudInstanceActionRequest"
+                "$ref": "#/components/schemas/InstanceActionRequest"
               }
             }
           }
@@ -469,7 +465,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CloudInstanceActionResponse"
+                  "$ref": "#/components/schemas/InstanceActionResponse"
                 }
               }
             }
@@ -490,14 +486,14 @@
     "/api/v1/instances/{instance_id}/metrics": {
       "get": {
         "tags": [
-          "Metrics"
+          "instances"
         ],
         "summary": "Get Instance Metrics",
-        "description": "Retrieve telemetry metrics for an instance.",
+        "description": "Retrieve the latest telemetry metrics for an instance.",
         "operationId": "get_instance_metrics_api_v1_instances__instance_id__metrics_get",
         "security": [
           {
-            "OAuth2PasswordBearer": []
+            "HTTPBearer": []
           }
         ],
         "parameters": [
@@ -509,25 +505,6 @@
               "type": "string",
               "title": "Instance Id"
             }
-          },
-          {
-            "name": "time_range",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Time range (e.g., 1h, 6h, 24h, 7d)",
-              "default": "1h",
-              "title": "Time Range"
-            },
-            "description": "Time range (e.g., 1h, 6h, 24h, 7d)"
           }
         ],
         "responses": {
@@ -552,65 +529,19 @@
             }
           }
         }
-      },
-      "post": {
-        "tags": [
-          "Metrics"
-        ],
-        "summary": "Record Instance Metric",
-        "description": "Generate and record a live metric sample for an instance.",
-        "operationId": "record_instance_metric_api_v1_instances__instance_id__metrics_post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "instance_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Instance Id"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InstanceMetricOut"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/api/v1/audit-logs": {
       "get": {
         "tags": [
-          "Audit Logs"
+          "audit"
         ],
         "summary": "List Audit Logs",
-        "description": "Retrieve immutable audit event logs for compliance and security monitoring.",
+        "description": "Retrieve immutable security audit trail logs with filtering and pagination.",
         "operationId": "list_audit_logs_api_v1_audit_logs_get",
         "security": [
           {
-            "OAuth2PasswordBearer": []
+            "HTTPBearer": []
           }
         ],
         "parameters": [
@@ -631,9 +562,9 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 200,
+              "maximum": 500,
               "minimum": 1,
-              "default": 50,
+              "default": 100,
               "title": "Limit"
             }
           },
@@ -651,6 +582,22 @@
                 }
               ],
               "title": "Action"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
             }
           },
           {
@@ -678,7 +625,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AuditLogOut"
+                    "$ref": "#/components/schemas/AuditLogResponse"
                   },
                   "title": "Response List Audit Logs Api V1 Audit Logs Get"
                 }
@@ -697,11 +644,53 @@
           }
         }
       }
+    },
+    "/": {
+      "get": {
+        "summary": "Root",
+        "description": "Root health check endpoint.",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Root  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Health check endpoint.",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Check Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
-      "AuditLogOut": {
+      "AuditLogResponse": {
         "properties": {
           "id": {
             "type": "string",
@@ -734,17 +723,6 @@
             "type": "string",
             "title": "Status"
           },
-          "details": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Details"
-          },
           "ip_address": {
             "anyOf": [
               {
@@ -755,6 +733,17 @@
               }
             ],
             "title": "Ip Address"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
           },
           "created_at": {
             "type": "string",
@@ -771,69 +760,17 @@
           "status",
           "created_at"
         ],
-        "title": "AuditLogOut"
-      },
-      "CloudInstanceActionRequest": {
-        "properties": {
-          "action": {
-            "type": "string",
-            "title": "Action"
-          }
-        },
-        "type": "object",
-        "required": [
-          "action"
-        ],
-        "title": "CloudInstanceActionRequest"
-      },
-      "CloudInstanceActionResponse": {
-        "properties": {
-          "instance_id": {
-            "type": "string",
-            "title": "Instance Id"
-          },
-          "action": {
-            "type": "string",
-            "title": "Action"
-          },
-          "previous_status": {
-            "type": "string",
-            "title": "Previous Status"
-          },
-          "current_status": {
-            "type": "string",
-            "title": "Current Status"
-          },
-          "message": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Message"
-          }
-        },
-        "type": "object",
-        "required": [
-          "instance_id",
-          "action",
-          "previous_status",
-          "current_status"
-        ],
-        "title": "CloudInstanceActionResponse"
+        "title": "AuditLogResponse"
       },
       "CloudInstanceCreate": {
         "properties": {
-          "provider_id": {
-            "type": "string",
-            "title": "Provider Id"
-          },
           "name": {
             "type": "string",
             "title": "Name"
+          },
+          "provider_id": {
+            "type": "string",
+            "title": "Provider Id"
           },
           "region": {
             "type": "string",
@@ -852,36 +789,27 @@
                 "type": "null"
               }
             ],
-            "title": "Image Id",
-            "default": "ubuntu-2204-lts"
+            "title": "Image Id"
           }
         },
         "type": "object",
         "required": [
-          "provider_id",
           "name",
+          "provider_id",
           "region",
           "instance_type"
         ],
         "title": "CloudInstanceCreate"
       },
-      "CloudInstanceOut": {
+      "CloudInstanceResponse": {
         "properties": {
-          "id": {
+          "name": {
             "type": "string",
-            "title": "Id"
+            "title": "Name"
           },
           "provider_id": {
             "type": "string",
             "title": "Provider Id"
-          },
-          "external_instance_id": {
-            "type": "string",
-            "title": "External Instance Id"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
           },
           "region": {
             "type": "string",
@@ -890,6 +818,25 @@
           "instance_type": {
             "type": "string",
             "title": "Instance Type"
+          },
+          "image_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Id"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "external_instance_id": {
+            "type": "string",
+            "title": "External Instance Id"
           },
           "status": {
             "type": "string",
@@ -917,54 +864,30 @@
             ],
             "title": "Private Ip"
           },
-          "launch_time": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Launch Time"
-          },
           "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
           },
           "updated_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
-          "id",
-          "provider_id",
-          "external_instance_id",
           "name",
+          "provider_id",
           "region",
           "instance_type",
-          "status"
+          "id",
+          "external_instance_id",
+          "status",
+          "created_at",
+          "updated_at"
         ],
-        "title": "CloudInstanceOut"
+        "title": "CloudInstanceResponse"
       },
       "CloudProviderCreate": {
         "properties": {
@@ -976,17 +899,38 @@
             "type": "string",
             "title": "Provider Type"
           },
-          "credentials": {
+          "account_id": {
             "anyOf": [
               {
-                "additionalProperties": true,
-                "type": "object"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Credentials"
+            "title": "Account Id"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region"
+          },
+          "credentials_encrypted": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credentials Encrypted"
           }
         },
         "type": "object",
@@ -996,12 +940,8 @@
         ],
         "title": "CloudProviderCreate"
       },
-      "CloudProviderOut": {
+      "CloudProviderResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
           "name": {
             "type": "string",
             "title": "Name"
@@ -1010,43 +950,57 @@
             "type": "string",
             "title": "Provider Type"
           },
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
           "is_active": {
             "type": "boolean",
             "title": "Is Active"
           },
           "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
           },
           "updated_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
-          "id",
           "name",
           "provider_type",
-          "is_active"
+          "id",
+          "is_active",
+          "created_at",
+          "updated_at"
         ],
-        "title": "CloudProviderOut"
+        "title": "CloudProviderResponse"
       },
       "HTTPValidationError": {
         "properties": {
@@ -1061,27 +1015,57 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "InstanceMetricOut": {
+      "InstanceActionRequest": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "title": "Action",
+            "description": "Action: START, STOP, RESTART, TERMINATE"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "title": "InstanceActionRequest"
+      },
+      "InstanceActionResponse": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "previous_status": {
+            "type": "string",
+            "title": "Previous Status"
+          },
+          "current_status": {
+            "type": "string",
+            "title": "Current Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action",
+          "previous_status",
+          "current_status",
+          "message"
+        ],
+        "title": "InstanceActionResponse"
+      },
+      "InstanceMetricsResponse": {
         "properties": {
           "id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
             "title": "Id"
           },
           "instance_id": {
             "type": "string",
             "title": "Instance Id"
-          },
-          "timestamp": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Timestamp"
           },
           "cpu_utilization_pct": {
             "type": "number",
@@ -1092,45 +1076,49 @@
             "title": "Memory Utilization Pct"
           },
           "disk_read_bytes_sec": {
-            "type": "integer",
-            "title": "Disk Read Bytes Sec",
-            "default": 0
+            "type": "number",
+            "title": "Disk Read Bytes Sec"
           },
           "network_in_bytes_sec": {
-            "type": "integer",
-            "title": "Network In Bytes Sec",
-            "default": 0
-          }
-        },
-        "type": "object",
-        "required": [
-          "instance_id",
-          "timestamp",
-          "cpu_utilization_pct",
-          "memory_utilization_pct"
-        ],
-        "title": "InstanceMetricOut"
-      },
-      "InstanceMetricsResponse": {
-        "properties": {
-          "instance_id": {
-            "type": "string",
-            "title": "Instance Id"
+            "type": "number",
+            "title": "Network In Bytes Sec"
           },
-          "metrics": {
-            "items": {
-              "$ref": "#/components/schemas/InstanceMetricOut"
-            },
-            "type": "array",
-            "title": "Metrics"
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
           }
         },
         "type": "object",
         "required": [
+          "id",
           "instance_id",
-          "metrics"
+          "cpu_utilization_pct",
+          "memory_utilization_pct",
+          "disk_read_bytes_sec",
+          "network_in_bytes_sec",
+          "timestamp"
         ],
         "title": "InstanceMetricsResponse"
+      },
+      "LoginRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginRequest"
       },
       "TokenResponse": {
         "properties": {
@@ -1143,142 +1131,62 @@
             "title": "Token Type",
             "default": "bearer"
           },
-          "role": {
-            "type": "string",
-            "title": "Role"
-          },
-          "user_id": {
-            "type": "string",
-            "title": "User Id"
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
           }
         },
         "type": "object",
         "required": [
           "access_token",
-          "role",
-          "user_id"
+          "user"
         ],
         "title": "TokenResponse"
       },
-      "UserCreate": {
+      "UserResponse": {
         "properties": {
           "email": {
             "type": "string",
+            "format": "email",
             "title": "Email"
-          },
-          "password": {
-            "type": "string",
-            "title": "Password"
-          },
-          "full_name": {
-            "type": "string",
-            "title": "Full Name"
           },
           "role": {
             "type": "string",
             "title": "Role",
-            "default": "READ_ONLY"
-          }
-        },
-        "type": "object",
-        "required": [
-          "email",
-          "password",
-          "full_name"
-        ],
-        "title": "UserCreate"
-      },
-      "UserLogin": {
-        "properties": {
-          "username": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Username"
+            "default": "read_only"
           },
-          "email": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Email"
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
           },
-          "password": {
-            "type": "string",
-            "title": "Password"
-          }
-        },
-        "type": "object",
-        "required": [
-          "password"
-        ],
-        "title": "UserLogin"
-      },
-      "UserOut": {
-        "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "email": {
-            "type": "string",
-            "title": "Email"
-          },
-          "full_name": {
-            "type": "string",
-            "title": "Full Name"
-          },
-          "role": {
-            "type": "string",
-            "title": "Role"
-          },
-          "is_active": {
+          "is_verified": {
             "type": "boolean",
-            "title": "Is Active"
+            "title": "Is Verified"
           },
           "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
           },
           "updated_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
-          "id",
           "email",
-          "full_name",
-          "role",
-          "is_active"
+          "id",
+          "is_verified",
+          "created_at",
+          "updated_at"
         ],
-        "title": "UserOut"
+        "title": "UserResponse"
       },
       "ValidationError": {
         "properties": {
@@ -1322,14 +1230,9 @@
       }
     },
     "securitySchemes": {
-      "OAuth2PasswordBearer": {
-        "type": "oauth2",
-        "flows": {
-          "password": {
-            "scopes": {},
-            "tokenUrl": "/api/v1/auth/login"
-          }
-        }
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }

@@ -1,66 +1,94 @@
-"""Cloud Provider Credentials Management Router."""
+"""Cloud Provider management router."""
 
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+import uuid
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 
+from server.auth import get_current_user, require_admin
 from server.database import get_db
-from server.models import CloudProvider, AuditLog, User
-from server.schemas import CloudProviderCreate, CloudProviderOut
-from server.security import get_current_user, require_role
-from server.services.encryption import encrypt_credentials
+from server.models import AuditLog, CloudProvider, User
+from server.schemas import CloudProviderCreate, CloudProviderResponse
 
-router = APIRouter(prefix="/providers", tags=["Cloud Providers"])
+router = APIRouter(prefix="/providers", tags=["providers"])
 
 
-@router.get("", response_model=List[CloudProviderOut])
+@router.get("", response_model=List[CloudProviderResponse])
 def list_providers(
-    db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-    """List all registered cloud provider accounts (without exposing raw secrets)."""
-    providers = db.query(CloudProvider).all()
+    """List all registered cloud provider accounts (Available for all authenticated users)."""
+    providers = (
+        db.query(CloudProvider)
+        .order_by(CloudProvider.created_at.asc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
     return providers
 
 
-@router.post("", response_model=CloudProviderOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=CloudProviderResponse, status_code=status.HTTP_201_CREATED
+)
 def create_provider(
-    request: Request,
     provider_in: CloudProviderCreate,
+    req: Request,
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role("ADMIN")),
 ):
     """Register a new cloud provider account (Admin only)."""
-    provider_type = provider_in.provider_type.upper()
-    if provider_type not in ["AWS", "GCP", "AZURE"]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid provider_type. Must be AWS, GCP, or AZURE.",
-        )
-
-    encrypted_cred = encrypt_credentials(provider_in.credentials or {})
-
+    client_ip = req.client.host if req.client else "127.0.0.1"
     provider = CloudProvider(
+        id=str(uuid.uuid4()),
         name=provider_in.name,
-        provider_type=provider_type,
-        encrypted_credentials=encrypted_cred,
+        provider_type=provider_in.provider_type.upper(),
+        account_id=provider_in.account_id,
+        region=provider_in.region,
+        credentials_encrypted=provider_in.credentials_encrypted,
         is_active=True,
     )
     db.add(provider)
-    db.commit()
-    db.refresh(provider)
 
-    client_ip = request.client.host if request.client else "127.0.0.1"
     audit = AuditLog(
+        id=str(uuid.uuid4()),
         user_id=current_user.id,
         user_email=current_user.email,
-        action="CREDENTIAL_CREATE",
+        action="CLOUD_PROVIDER_REGISTERED",
         target_resource=f"PROVIDER:{provider.id}",
         status="SUCCESS",
-        details=f"Provider {provider.name} ({provider.provider_type}) registered",
         ip_address=client_ip,
+        details=f"Registered provider {provider.name} ({provider.provider_type})",
     )
     db.add(audit)
-    db.commit()
 
+    try:
+        db.commit()
+        db.refresh(provider)
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to register cloud provider: {str(exc)}",
+        )
+
+    return provider
+
+
+@router.get("/{provider_id}", response_model=CloudProviderResponse)
+def get_provider(
+    provider_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Retrieve details for a specific cloud provider."""
+    provider = db.query(CloudProvider).filter(CloudProvider.id == provider_id).first()
+    if not provider:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Provider with id '{provider_id}' not found",
+        )
     return provider

@@ -1,140 +1,133 @@
 """Pydantic schemas for request and response validation."""
 
 from datetime import datetime
-from typing import Optional, List, Any, Dict
-from pydantic import BaseModel, ConfigDict
+from typing import Optional
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
-# --- Auth & User Schemas ---
-class UserLogin(BaseModel):
-    username: Optional[str] = None
-    email: Optional[str] = None
-    password: str
+# -----------------------------
+# User & Auth Schemas
+# -----------------------------
+class UserBase(BaseModel):
+    email: EmailStr
+    role: str = "read_only"
+    is_active: bool = True
 
 
 class UserCreate(BaseModel):
-    email: str
-    password: str
-    full_name: str
-    role: str = "READ_ONLY"  # "ADMIN" or "READ_ONLY"
+    email: EmailStr
+    password: str = Field(..., min_length=6)
+    role: str = "read_only"
 
 
-class UserOut(BaseModel):
+class UserResponse(UserBase):
+    id: str
+    is_verified: bool
+    created_at: datetime
+    updated_at: datetime
+
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
-    email: str
-    full_name: str
-    role: str
-    is_active: bool
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
 
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
-    role: str
-    user_id: str
+    user: UserResponse
 
 
-class TokenData(BaseModel):
-    user_id: Optional[str] = None
-    email: Optional[str] = None
-    role: Optional[str] = None
-
-
-# --- Cloud Provider Schemas ---
-class CloudProviderCreate(BaseModel):
+# -----------------------------
+# Cloud Provider Schemas
+# -----------------------------
+class CloudProviderBase(BaseModel):
     name: str
-    provider_type: str  # 'AWS', 'GCP', 'AZURE'
-    credentials: Optional[Dict[str, Any]] = None
+    provider_type: str  # AWS, GCP, AZURE
+    account_id: Optional[str] = None
+    region: Optional[str] = None
 
 
-class CloudProviderOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+class CloudProviderCreate(CloudProviderBase):
+    credentials_encrypted: Optional[str] = None
 
+
+class CloudProviderResponse(CloudProviderBase):
     id: str
-    name: str
-    provider_type: str
     is_active: bool
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
 
-
-# --- Cloud Instance Schemas ---
-class CloudInstanceCreate(BaseModel):
-    provider_id: str
-    name: str
-    region: str
-    instance_type: str
-    image_id: Optional[str] = "ubuntu-2204-lts"
-
-
-class CloudInstanceActionRequest(BaseModel):
-    action: str  # 'START', 'STOP', 'RESTART', 'TERMINATE'
-
-
-class CloudInstanceActionResponse(BaseModel):
-    instance_id: str
-    action: str
-    previous_status: str
-    current_status: str
-    message: Optional[str] = None
-
-
-class CloudInstanceOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
-    provider_id: str
-    external_instance_id: str
+
+# -----------------------------
+# Cloud Instance Schemas
+# -----------------------------
+class CloudInstanceBase(BaseModel):
     name: str
+    provider_id: str
     region: str
     instance_type: str
+    image_id: Optional[str] = None
+
+
+class CloudInstanceCreate(CloudInstanceBase):
+    pass
+
+
+class CloudInstanceResponse(CloudInstanceBase):
+    id: str
+    external_instance_id: str
     status: str
     public_ip: Optional[str] = None
     private_ip: Optional[str] = None
-    launch_time: Optional[datetime] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 
-class ProvisionResponse(BaseModel):
-    instance_id: str
-    id: Optional[str] = None
-    status: str
+class InstanceActionRequest(BaseModel):
+    action: str = Field(..., description="Action: START, STOP, RESTART, TERMINATE")
+
+
+class InstanceActionResponse(BaseModel):
+    action: str
+    previous_status: str
+    current_status: str
     message: str
 
 
-# --- Instance Metrics Schemas ---
-class InstanceMetricOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: Optional[str] = None
+# -----------------------------
+# Telemetry Metrics Schemas
+# -----------------------------
+class InstanceMetricsResponse(BaseModel):
+    id: str
     instance_id: str
-    timestamp: datetime
     cpu_utilization_pct: float
     memory_utilization_pct: float
-    disk_read_bytes_sec: int = 0
-    network_in_bytes_sec: int = 0
+    disk_read_bytes_sec: float
+    network_in_bytes_sec: float
+    timestamp: datetime
 
-
-class InstanceMetricsResponse(BaseModel):
-    instance_id: str
-    metrics: List[InstanceMetricOut]
-
-
-# --- Audit Log Schemas ---
-class AuditLogOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+
+# -----------------------------
+# Audit Log Schemas
+# -----------------------------
+class AuditLogResponse(BaseModel):
     id: str
     user_id: Optional[str] = None
     user_email: str
     action: str
     target_resource: str
     status: str
-    details: Optional[str] = None
     ip_address: Optional[str] = None
+    details: Optional[str] = None
     created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

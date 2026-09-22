@@ -1,31 +1,32 @@
-"""Database connection and session management."""
+"""Database engine and session setup."""
 
-import json
-from datetime import datetime, timezone, timedelta
-import bcrypt
+import uuid
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import sessionmaker
 
-from server.config import settings
-from server.models import Base, User, CloudProvider, CloudInstance, InstanceMetric
+from server.config import DATABASE_URL
+from server.models import (
+    AuditLog,
+    Base,
+    CloudInstance,
+    CloudProvider,
+    InstanceMetrics,
+    User,
+)
 
-# Use StaticPool and check_same_thread=False for SQLite
-connect_args = {}
-if settings.DATABASE_URL.startswith("sqlite"):
-    connect_args = {"check_same_thread": False}
+connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
 
 engine = create_engine(
-    settings.DATABASE_URL,
+    DATABASE_URL,
     connect_args=connect_args,
-    pool_pre_ping=True,
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def get_db():
-    """Dependency for obtaining a database session."""
+    """FastAPI dependency for database session."""
     db = SessionLocal()
     try:
         yield db
@@ -33,190 +34,206 @@ def get_db():
         db.close()
 
 
-def get_password_hash(password: str) -> str:
-    """Hash a password using bcrypt."""
-    pwd_bytes = password.encode("utf-8")
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw(pwd_bytes, salt).decode("utf-8")
+def init_db():
+    """Create tables idempotently."""
+    Base.metadata.create_all(bind=engine)
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain password against a hashed password."""
-    try:
-        return bcrypt.checkpw(
-            plain_password.encode("utf-8"), hashed_password.encode("utf-8")
-        )
-    except Exception:
-        return False
-
-
-def init_db(engine_to_use=None):
-    """Initialize tables in the database."""
-    target_engine = engine_to_use or engine
-    Base.metadata.create_all(bind=target_engine)
-
-
-def seed_data(db: Session):
+def seed_data(db):
     """Seed initial users, providers, and instances idempotently."""
-    try:
-        # Seed Admin User
-        admin_user = db.query(User).filter(User.email == "admin@example.com").first()
-        if not admin_user:
-            admin_user = User(
-                email="admin@example.com",
-                hashed_password=get_password_hash("adminpassword"),
-                full_name="Cloud Administrator",
-                role="ADMIN",
-                is_active=True,
-            )
-            db.add(admin_user)
-            db.commit()
-            db.refresh(admin_user)
+    from server.auth import get_password_hash
 
-        # Seed Regular User
-        test_user = db.query(User).filter(User.email == "test@example.com").first()
-        if not test_user:
-            test_user = User(
-                email="test@example.com",
-                hashed_password=get_password_hash("testpassword"),
-                full_name="Test Operator",
-                role="READ_ONLY",
-                is_active=True,
-            )
-            db.add(test_user)
-            db.commit()
-            db.refresh(test_user)
+    # 1. Seed Users
+    seed_users = [
+        {"email": "test@example.com", "password": "testpassword", "role": "read_only"},
+        {"email": "admin@example.com", "password": "adminpassword", "role": "admin"},
+    ]
 
-        # Seed Providers if none exist
-        aws_provider = (
-            db.query(CloudProvider)
-            .filter(CloudProvider.name == "Production AWS")
+    for u in seed_users:
+        existing = db.query(User).filter(User.email == u["email"]).first()
+        if not existing:
+            new_user = User(
+                id=str(uuid.uuid4()),
+                email=u["email"],
+                hashed_password=get_password_hash(u["password"]),
+                role=u["role"],
+                is_active=True,
+                is_verified=True,
+            )
+            db.add(new_user)
+            try:
+                db.commit()
+            except IntegrityError:
+                db.rollback()
+
+    # 2. Seed Cloud Providers
+    seed_providers = [
+        {
+            "id": "prov-aws-001",
+            "name": "AWS Production Account",
+            "provider_type": "AWS",
+            "account_id": "123456789012",
+            "region": "us-east-1",
+            "is_active": True,
+        },
+        {
+            "id": "prov-gcp-001",
+            "name": "GCP Cloud Infrastructure",
+            "provider_type": "GCP",
+            "account_id": "sdlc-prod-2026",
+            "region": "us-central1",
+            "is_active": True,
+        },
+        {
+            "id": "prov-azure-001",
+            "name": "Azure Enterprise Cluster",
+            "provider_type": "AZURE",
+            "account_id": "sub-az-889021",
+            "region": "eastus",
+            "is_active": True,
+        },
+    ]
+
+    for p in seed_providers:
+        existing = db.query(CloudProvider).filter(CloudProvider.id == p["id"]).first()
+        if not existing:
+            provider = CloudProvider(
+                id=p["id"],
+                name=p["name"],
+                provider_type=p["provider_type"],
+                account_id=p["account_id"],
+                region=p["region"],
+                is_active=p["is_active"],
+            )
+            db.add(provider)
+            try:
+                db.commit()
+            except IntegrityError:
+                db.rollback()
+
+    # 3. Seed Cloud Instances
+    seed_instances = [
+        {
+            "id": "inst-web-001",
+            "external_instance_id": "i-03ab92fc112",
+            "name": "web-server-01",
+            "provider_id": "prov-aws-001",
+            "region": "us-east-1a",
+            "instance_type": "t3.medium",
+            "status": "RUNNING",
+            "public_ip": "54.210.12.34",
+            "private_ip": "10.0.1.15",
+            "image_id": "ami-0c55b159cbfafe1f0",
+        },
+        {
+            "id": "inst-db-001",
+            "external_instance_id": "inst-db-primary-99",
+            "name": "db-primary",
+            "provider_id": "prov-gcp-001",
+            "region": "us-central1-a",
+            "instance_type": "n2-standard-4",
+            "status": "RUNNING",
+            "public_ip": "34.120.45.67",
+            "private_ip": "10.128.0.5",
+            "image_id": "debian-11-bullseye",
+        },
+        {
+            "id": "inst-cache-001",
+            "external_instance_id": "az-vm-redis-02",
+            "name": "cache-cluster-01",
+            "provider_id": "prov-azure-001",
+            "region": "eastus-2",
+            "instance_type": "Standard_D2s_v3",
+            "status": "STOPPED",
+            "public_ip": "20.84.15.99",
+            "private_ip": "10.2.0.4",
+            "image_id": "Ubuntu-22_04-LTS",
+        },
+    ]
+
+    for inst in seed_instances:
+        existing = (
+            db.query(CloudInstance).filter(CloudInstance.id == inst["id"]).first()
+        )
+        if not existing:
+            instance = CloudInstance(
+                id=inst["id"],
+                external_instance_id=inst["external_instance_id"],
+                name=inst["name"],
+                provider_id=inst["provider_id"],
+                region=inst["region"],
+                instance_type=inst["instance_type"],
+                status=inst["status"],
+                public_ip=inst["public_ip"],
+                private_ip=inst["private_ip"],
+                image_id=inst["image_id"],
+            )
+            db.add(instance)
+            try:
+                db.commit()
+            except IntegrityError:
+                db.rollback()
+
+    # 4. Seed Metrics for Instances
+    seed_metrics = [
+        {
+            "instance_id": "inst-web-001",
+            "cpu_utilization_pct": 34.5,
+            "memory_utilization_pct": 62.1,
+            "disk_read_bytes_sec": 1024000.0,
+            "network_in_bytes_sec": 4500000.0,
+        },
+        {
+            "instance_id": "inst-db-001",
+            "cpu_utilization_pct": 78.2,
+            "memory_utilization_pct": 84.6,
+            "disk_read_bytes_sec": 8450000.0,
+            "network_in_bytes_sec": 12000000.0,
+        },
+        {
+            "instance_id": "inst-cache-001",
+            "cpu_utilization_pct": 0.0,
+            "memory_utilization_pct": 0.0,
+            "disk_read_bytes_sec": 0.0,
+            "network_in_bytes_sec": 0.0,
+        },
+    ]
+
+    for m in seed_metrics:
+        existing = (
+            db.query(InstanceMetrics)
+            .filter(InstanceMetrics.instance_id == m["instance_id"])
             .first()
         )
-        if not aws_provider:
-            aws_provider = CloudProvider(
-                name="Production AWS",
-                provider_type="AWS",
-                encrypted_credentials=json.dumps(
-                    {
-                        "access_key": "AKIA1234567890EXAMPLE",
-                        "secret_key": "encrypted_aws_key_xyz",
-                    }
-                ),
-                is_active=True,
+        if not existing:
+            metric = InstanceMetrics(
+                id=str(uuid.uuid4()),
+                instance_id=m["instance_id"],
+                cpu_utilization_pct=m["cpu_utilization_pct"],
+                memory_utilization_pct=m["memory_utilization_pct"],
+                disk_read_bytes_sec=m["disk_read_bytes_sec"],
+                network_in_bytes_sec=m["network_in_bytes_sec"],
             )
-            db.add(aws_provider)
-            db.commit()
-            db.refresh(aws_provider)
+            db.add(metric)
+            try:
+                db.commit()
+            except IntegrityError:
+                db.rollback()
 
-        gcp_provider = (
-            db.query(CloudProvider).filter(CloudProvider.name == "Primary GCP").first()
+    # 5. Seed Initial Audit Log
+    initial_log = db.query(AuditLog).first()
+    if not initial_log:
+        audit = AuditLog(
+            id=str(uuid.uuid4()),
+            user_email="system@cloudpulse.local",
+            action="SYSTEM_INITIALIZE",
+            target_resource="CORE_SYSTEM",
+            status="SUCCESS",
+            details="System bootstrap seed data initialized successfully",
+            ip_address="127.0.0.1",
         )
-        if not gcp_provider:
-            gcp_provider = CloudProvider(
-                name="Primary GCP",
-                provider_type="GCP",
-                encrypted_credentials=json.dumps(
-                    {
-                        "project_id": "gcp-prod-4892",
-                        "client_email": "sa@gcp-prod-4892.iam.gserviceaccount.com",
-                    }
-                ),
-                is_active=True,
-            )
-            db.add(gcp_provider)
+        db.add(audit)
+        try:
             db.commit()
-            db.refresh(gcp_provider)
-
-        azure_provider = (
-            db.query(CloudProvider)
-            .filter(CloudProvider.name == "Enterprise Azure")
-            .first()
-        )
-        if not azure_provider:
-            azure_provider = CloudProvider(
-                name="Enterprise Azure",
-                provider_type="AZURE",
-                encrypted_credentials=json.dumps(
-                    {"tenant_id": "tenant-uuid-1234", "client_id": "client-uuid-5678"}
-                ),
-                is_active=True,
-            )
-            db.add(azure_provider)
-            db.commit()
-            db.refresh(azure_provider)
-
-        # Seed Instances if none exist
-        if aws_provider:
-            inst1 = (
-                db.query(CloudInstance)
-                .filter(CloudInstance.name == "web-prod-01")
-                .first()
-            )
-            if not inst1:
-                inst1 = CloudInstance(
-                    provider_id=aws_provider.id,
-                    external_instance_id="i-01a2b3c4d5e6f7g8h",
-                    name="web-prod-01",
-                    region="us-east-1",
-                    instance_type="t3.large",
-                    status="RUNNING",
-                    public_ip="54.210.12.88",
-                    private_ip="10.0.1.24",
-                )
-                db.add(inst1)
-                db.commit()
-                db.refresh(inst1)
-
-                # Seed sample metrics
-                now = datetime.now(timezone.utc)
-                for i in range(5):
-                    metric = InstanceMetric(
-                        instance_id=inst1.id,
-                        timestamp=now - timedelta(minutes=i * 5),
-                        cpu_utilization_pct=35.5 + (i * 2.1),
-                        memory_utilization_pct=58.0 + (i * 1.5),
-                        disk_read_bytes_sec=1024 * (i + 1),
-                        network_in_bytes_sec=2048 * (i + 1),
-                    )
-                    db.add(metric)
-                db.commit()
-
-        if gcp_provider:
-            inst2 = (
-                db.query(CloudInstance)
-                .filter(CloudInstance.name == "api-server-02")
-                .first()
-            )
-            if not inst2:
-                inst2 = CloudInstance(
-                    provider_id=gcp_provider.id,
-                    external_instance_id="gcp-vm-9982341",
-                    name="api-server-02",
-                    region="us-central1",
-                    instance_type="n2-standard-2",
-                    status="RUNNING",
-                    public_ip="34.68.210.15",
-                    private_ip="10.128.0.5",
-                )
-                db.add(inst2)
-                db.commit()
-                db.refresh(inst2)
-
-                now = datetime.now(timezone.utc)
-                for i in range(5):
-                    metric = InstanceMetric(
-                        instance_id=inst2.id,
-                        timestamp=now - timedelta(minutes=i * 5),
-                        cpu_utilization_pct=42.0 + (i * 1.2),
-                        memory_utilization_pct=64.2 - (i * 0.8),
-                        disk_read_bytes_sec=4096 * (i + 1),
-                        network_in_bytes_sec=8192 * (i + 1),
-                    )
-                    db.add(metric)
-                db.commit()
-
-    except IntegrityError:
-        db.rollback()
-    except Exception:
-        db.rollback()
+        except IntegrityError:
+            db.rollback()

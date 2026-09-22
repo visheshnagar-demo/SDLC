@@ -30,6 +30,7 @@ graph TD
 
 ## Backend Modules (server/)
 - server/__init__.py
+- server/auth.py
 - server/config.py
 - server/database.py
 - server/main.py
@@ -38,19 +39,13 @@ graph TD
 - server/routers/audit.py
 - server/routers/auth.py
 - server/routers/instances.py
-- server/routers/metrics.py
 - server/routers/providers.py
 - server/schemas.py
-- server/security.py
-- server/services/__init__.py
-- server/services/cloud_adapter.py
-- server/services/encryption.py
 - server/tests/__init__.py
 - server/tests/conftest.py
 - server/tests/test_audit.py
 - server/tests/test_auth.py
 - server/tests/test_instances.py
-- server/tests/test_metrics.py
 - server/tests/test_providers.py
 
 ## Frontend Modules (client/)
