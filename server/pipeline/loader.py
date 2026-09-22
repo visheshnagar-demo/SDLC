@@ -1,5 +1,7 @@
 """BigQuery data loader engine."""
+import json
 import os
+from typing import List, Optional
 import pandas as pd
 from google.cloud import bigquery
 from server.config import ETLConfig
@@ -9,10 +11,30 @@ from server.utils.exceptions import LoadError, ConfigurationError
 logger = get_logger("sdlc-etl-loader")
 
 
+def load_schema_from_file(schema_path: str) -> List[bigquery.SchemaField]:
+    """Parses a BigQuery JSON schema file into a sequence of bigquery.SchemaField objects."""
+    with open(schema_path, "r", encoding="utf-8") as f:
+        schema_data = json.load(f)
+
+    schema_fields: List[bigquery.SchemaField] = []
+    if isinstance(schema_data, list):
+        for field in schema_data:
+            if isinstance(field, dict):
+                schema_fields.append(
+                    bigquery.SchemaField(
+                        name=field["name"],
+                        field_type=field.get("type", field.get("field_type", "STRING")),
+                        mode=field.get("mode", "NULLABLE"),
+                        description=field.get("description"),
+                    )
+                )
+    return schema_fields
+
+
 class BigQueryLoader:
     """Loads cleaned DataFrames into Google Cloud BigQuery."""
 
-    def __init__(self, config: ETLConfig, client: bigquery.Client = None):
+    def __init__(self, config: ETLConfig, client: Optional[bigquery.Client] = None):
         self.config = config
         self._client = client
 
@@ -27,6 +49,21 @@ class BigQueryLoader:
             except Exception as exc:
                 raise LoadError(f"Failed to initialize BigQuery client: {exc}") from exc
         return self._client
+
+    def _get_schema_file_path(self) -> Optional[str]:
+        """Locates the schema JSON file for the target table."""
+        candidates = [
+            os.path.join("schemas", f"{self.config.bq_table}_schema.json"),
+            os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                "schemas",
+                f"{self.config.bq_table}_schema.json",
+            ),
+        ]
+        for candidate in candidates:
+            if os.path.isfile(candidate):
+                return candidate
+        return None
 
     def load(self, df: pd.DataFrame) -> int:
         """Loads DataFrame into BigQuery target table."""
@@ -50,18 +87,13 @@ class BigQueryLoader:
 
         job_config = bigquery.LoadJobConfig(write_disposition=disposition)
 
-        schema_file = os.path.join("schemas", f"{self.config.bq_table}_schema.json")
-        if not os.path.exists(schema_file):
-            schema_file = os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                "schemas",
-                f"{self.config.bq_table}_schema.json",
-            )
-
-        if os.path.isfile(schema_file):
+        schema_file = self._get_schema_file_path()
+        if schema_file:
             try:
-                job_config.schema = self.client.schema_from_json(schema_file)
-                logger.info("Loaded schema definition from %s", schema_file)
+                schema_fields = load_schema_from_file(schema_file)
+                if schema_fields:
+                    job_config.schema = schema_fields
+                    logger.info("Loaded %d schema fields from %s", len(schema_fields), schema_file)
             except Exception as exc:
                 raise LoadError(f"Could not apply schema file {schema_file}: {exc}") from exc
 

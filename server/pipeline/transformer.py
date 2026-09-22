@@ -1,4 +1,5 @@
 """Data cleansing, sanitization, and type coercion transformer."""
+import numpy as np
 import pandas as pd
 from server.config import ETLConfig
 from server.utils.logger import get_logger
@@ -62,16 +63,19 @@ class DataCleanerTransformer:
             def parse_bool(val):
                 if pd.isna(val) or val is None:
                     return None
-                if isinstance(val, bool):
-                    return val
+                if isinstance(val, (bool, np.bool_)):
+                    return bool(val)
                 s = str(val).strip().lower()
-                if s in ["true", "1", "t", "yes", "y"]:
+                if s in ["true", "1", "1.0", "t", "yes", "y"]:
                     return True
-                if s in ["false", "0", "f", "no", "n"]:
+                if s in ["false", "0", "0.0", "f", "no", "n"]:
                     return False
                 return None
 
-            transformed_df["is_active"] = transformed_df["is_active"].apply(parse_bool)
+            bool_vals = [parse_bool(v) for v in transformed_df["is_active"]]
+            transformed_df["is_active"] = pd.Series(
+                bool_vals, index=transformed_df.index, dtype=object
+            )
 
         if "created_at" in transformed_df.columns:
             transformed_df["created_at"] = pd.to_datetime(

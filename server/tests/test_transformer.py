@@ -67,6 +67,10 @@ def test_coerce_types(transformer):
     assert result["is_active"].iloc[1] is False
     assert result["is_active"].iloc[2] is True
 
+    assert type(result["is_active"].iloc[0]) is bool
+    assert type(result["is_active"].iloc[1]) is bool
+    assert type(result["is_active"].iloc[2]) is bool
+
     assert not pd.isna(result["created_at"].iloc[0])
     assert not pd.isna(result["created_at"].iloc[1])
     assert pd.isna(result["created_at"].iloc[2])
@@ -88,6 +92,8 @@ def test_full_transform_success(transformer):
     assert result["raw_text"].tolist() == ["clean me", "another row"]
     assert result["numeric_val"].tolist() == [42.5, 99.0]
     assert result["is_active"].tolist() == [True, False]
+    assert result["is_active"].iloc[0] is True
+    assert result["is_active"].iloc[1] is False
 
 
 def test_transform_empty_dataframe(transformer):

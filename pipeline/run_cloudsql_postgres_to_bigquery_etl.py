@@ -7,6 +7,7 @@ import os
 import sys
 import logging
 import argparse
+import json
 from datetime import datetime
 import pandas as pd
 import pyarrow as pa
@@ -141,13 +142,16 @@ class PipelineRunner:
             def _to_bool(val):
                 if pd.isna(val) or val is None:
                     return None
+                if isinstance(val, bool):
+                    return val
                 s = str(val).strip().lower()
-                if s in ["true", "1", "t", "yes", "y"]:
+                if s in ["true", "1", "1.0", "t", "yes", "y"]:
                     return True
-                if s in ["false", "0", "f", "no", "n"]:
+                if s in ["false", "0", "0.0", "f", "no", "n"]:
                     return False
                 return None
-            df["is_active"] = df["is_active"].apply(_to_bool)
+            bool_vals = [_to_bool(v) for v in df["is_active"]]
+            df["is_active"] = pd.Series(bool_vals, index=df.index, dtype=object)
 
         if "created_at" in df.columns:
             df["created_at"] = pd.to_datetime(df["created_at"], errors="coerce")
@@ -205,7 +209,18 @@ class PipelineRunner:
         
         schema_file = os.path.join("schemas", "postgres_test1_schema.json")
         if os.path.isfile(schema_file):
-            job_config.schema = client.schema_from_json(schema_file)
+            with open(schema_file, "r", encoding="utf-8") as f:
+                schema_data = json.load(f)
+            if isinstance(schema_data, list):
+                job_config.schema = [
+                    bigquery.SchemaField(
+                        name=col["name"],
+                        field_type=col.get("type", "STRING"),
+                        mode=col.get("mode", "NULLABLE"),
+                        description=col.get("description"),
+                    )
+                    for col in schema_data if isinstance(col, dict)
+                ]
             logger.info("Attached explicit BigQuery schema from %s", schema_file)
 
         job = client.load_table_from_dataframe(df, table_ref, job_config=job_config)
