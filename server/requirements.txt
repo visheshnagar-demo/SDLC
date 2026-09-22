@@ -1,5 +1,5 @@
 google-cloud-bigquery>=3.14.0
-google-cloud-sql-connector[pg8000]>=1.5.0
+google-cloud-sql-connector>=1.5.0
 sqlalchemy>=2.0.0
 pg8000>=1.30.0
 psycopg2-binary>=2.9.9

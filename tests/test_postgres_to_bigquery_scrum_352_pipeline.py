@@ -98,6 +98,27 @@ def test_env_deploy_json_config():
     assert "TARGET_TABLE" in config
 
 
+def test_settings_initialization(monkeypatch):
+    """Verifies that configuration initializes properly with environment variables."""
+    from server.config import Settings, get_settings
+    monkeypatch.setenv("GCP_PROJECT_ID", "upbeat-repeater-477110-q6")
+    monkeypatch.setenv("POSTGRES_DB", "postgres")
+    settings = get_settings()
+    assert settings.gcp_project_id == "upbeat-repeater-477110-q6"
+    assert settings.postgres_db == "postgres"
+    assert settings.bigquery_dataset == "analytics"
+    assert settings.bigquery_table == "postgres_test1"
+
+
+def test_zero_sqlite_guard(monkeypatch):
+    """Verifies that attempting to use SQLite raises EnvironmentError."""
+    from server.config import Settings
+    monkeypatch.setenv("DATABASE_URL", "sqlite:///test.db")
+    settings = Settings()
+    with pytest.raises(EnvironmentError, match="SQLite database URL is prohibited"):
+        settings.get_database_url_or_fail()
+
+
 @pytest.mark.skipif(pd is None, reason="pandas not installed in test environment")
 def test_transformer_logic_when_pandas_available():
     """Verifies transformation logic when pandas is installed."""
