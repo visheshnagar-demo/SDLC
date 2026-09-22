@@ -1,0 +1,166 @@
+{
+  "pipeline_id": "sales_order_etl",
+  "source": {
+    "type": "gcs",
+    "bucket": "sdlc-workspec-store",
+    "prefix": "etl/data/raw_sales_data.csv",
+    "file_format": "csv"
+  },
+  "target": {
+    "type": "bigquery",
+    "dataset": "analytics",
+    "table_name": "harshada-test1",
+    "partition_field": "order_date",
+    "write_mode": "append"
+  },
+  "columns": [
+    {
+      "source_name": "order_id",
+      "target_name": "order_id",
+      "target_type": "INTEGER",
+      "mode": "REQUIRED",
+      "transform": "to_integer"
+    },
+    {
+      "source_name": "customer_id",
+      "target_name": "customer_id",
+      "target_type": "STRING",
+      "mode": "NULLABLE",
+      "transform": "strip_and_nullify"
+    },
+    {
+      "source_name": "customer_name",
+      "target_name": "customer_name",
+      "target_type": "STRING",
+      "mode": "NULLABLE",
+      "transform": "strip_and_nullify"
+    },
+    {
+      "source_name": "customer_email",
+      "target_name": "customer_email",
+      "target_type": "STRING",
+      "mode": "NULLABLE",
+      "transform": "strip_and_nullify"
+    },
+    {
+      "source_name": "product_category",
+      "target_name": "product_category",
+      "target_type": "STRING",
+      "mode": "NULLABLE",
+      "transform": "strip_and_nullify"
+    },
+    {
+      "source_name": "amount",
+      "target_name": "amount",
+      "target_type": "FLOAT",
+      "mode": "NULLABLE",
+      "transform": "to_float"
+    },
+    {
+      "source_name": "currency",
+      "target_name": "currency",
+      "target_type": "STRING",
+      "mode": "NULLABLE",
+      "transform": "strip_and_nullify"
+    },
+    {
+      "source_name": "order_status",
+      "target_name": "order_status",
+      "target_type": "STRING",
+      "mode": "NULLABLE",
+      "transform": "strip_and_nullify"
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "target_type": "TIMESTAMP",
+      "mode": "NULLABLE",
+      "transform": "to_timestamp_iso"
+    }
+  ],
+  "mappings": [
+    {
+      "source_column": "order_id",
+      "target_column": "order_id",
+      "target_type": "INTEGER",
+      "mode": "REQUIRED",
+      "transform": "to_integer"
+    },
+    {
+      "source_column": "customer_id",
+      "target_column": "customer_id",
+      "target_type": "STRING",
+      "mode": "NULLABLE",
+      "transform": "strip_and_nullify"
+    },
+    {
+      "source_column": "customer_name",
+      "target_column": "customer_name",
+      "target_type": "STRING",
+      "mode": "NULLABLE",
+      "transform": "strip_and_nullify"
+    },
+    {
+      "source_column": "customer_email",
+      "target_column": "customer_email",
+      "target_type": "STRING",
+      "mode": "NULLABLE",
+      "transform": "strip_and_nullify"
+    },
+    {
+      "source_column": "product_category",
+      "target_column": "product_category",
+      "target_type": "STRING",
+      "mode": "NULLABLE",
+      "transform": "strip_and_nullify"
+    },
+    {
+      "source_column": "amount",
+      "target_column": "amount",
+      "target_type": "FLOAT",
+      "mode": "NULLABLE",
+      "transform": "to_float"
+    },
+    {
+      "source_column": "currency",
+      "target_column": "currency",
+      "target_type": "STRING",
+      "mode": "NULLABLE",
+      "transform": "strip_and_nullify"
+    },
+    {
+      "source_column": "order_status",
+      "target_column": "order_status",
+      "target_type": "STRING",
+      "mode": "NULLABLE",
+      "transform": "strip_and_nullify"
+    },
+    {
+      "source_column": "created_at",
+      "target_column": "created_at",
+      "target_type": "TIMESTAMP",
+      "mode": "NULLABLE",
+      "transform": "to_timestamp_iso"
+    },
+    {
+      "source_column": "created_at",
+      "target_column": "order_date",
+      "target_type": "DATE",
+      "mode": "REQUIRED",
+      "transform": "extract_date"
+    },
+    {
+      "source_column": "created_at",
+      "target_column": "ingested_at",
+      "target_type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "transform": "current_timestamp"
+    }
+  ],
+  "deduplication": {
+    "primary_key": [
+      "order_id"
+    ],
+    "strategy": "latest_by_created_at"
+  }
+}
