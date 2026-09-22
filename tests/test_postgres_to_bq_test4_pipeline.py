@@ -1,7 +1,7 @@
 """Automated tests for pipeline postgres_to_bq_test4."""
 import ast
-import os
 import json
+import os
 import pytest
 
 try:
@@ -61,6 +61,10 @@ def test_schema_json_and_spec_alignment():
     assert "id" in schema_col_names
     assert "email" in schema_col_names
     assert "status" in schema_col_names
+    assert "amount" in schema_col_names
+    assert "created_at" in schema_col_names
+    assert "updated_at" in schema_col_names
+    assert "ingested_at" in schema_col_names
     assert schema_col_names.issubset(spec_col_names)
 
 
@@ -72,6 +76,20 @@ def test_ddl_file_integrity():
         ddl_content = f.read()
     assert "CREATE TABLE IF NOT EXISTS" in ddl_content
     assert "test4" in ddl_content
+
+
+def test_deploy_env_config():
+    """Verifies env.deploy.json configuration requirements."""
+    env_file = "env.deploy.json"
+    assert os.path.isfile(env_file), f"env.deploy.json missing: {env_file}"
+    with open(env_file, "r", encoding="utf-8") as f:
+        env_vars = json.load(f)
+    assert "INSTANCE_CONNECTION_NAME" in env_vars
+    assert "POSTGRES_DB" in env_vars
+    assert "GCP_PROJECT_ID" in env_vars
+    assert "BIGQUERY_DATASET" in env_vars
+    assert "BIGQUERY_TABLE" in env_vars
+    assert "POSTGRES_PASSWORD" not in env_vars  # Mandatory IAM Auth policy
 
 
 def test_transformation_logic_unit():
