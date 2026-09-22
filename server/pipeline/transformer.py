@@ -16,6 +16,9 @@ class DataCleanerTransformer:
 
     def strip_whitespace_and_sanitize_nulls(self, df: pd.DataFrame) -> pd.DataFrame:
         """Trims leading/trailing whitespace and converts placeholder null strings to None."""
+        if df is None:
+            return df
+
         cleaned_df = df.copy()
 
         null_equivalents = {
@@ -42,16 +45,19 @@ class DataCleanerTransformer:
 
     def coerce_types(self, df: pd.DataFrame) -> pd.DataFrame:
         """Coerces columns to their target schema types."""
+        if df is None:
+            return df
+
         transformed_df = df.copy()
 
         if "id" in transformed_df.columns:
             transformed_df["id"] = transformed_df["id"].apply(
-                lambda x: str(x) if x is not None and not pd.isna(x) else None
+                lambda x: str(x).strip() if x is not None and not pd.isna(x) and str(x).strip() not in ["", "None", "nan", "null", "NULL", "NaN"] else None
             )
 
         if "raw_text" in transformed_df.columns:
             transformed_df["raw_text"] = transformed_df["raw_text"].apply(
-                lambda x: str(x).strip() if x is not None and not pd.isna(x) else None
+                lambda x: str(x).strip() if x is not None and not pd.isna(x) and str(x).strip() not in ["", "None", "nan", "null", "NULL", "NaN"] else None
             )
 
         if "numeric_val" in transformed_df.columns:
@@ -61,7 +67,7 @@ class DataCleanerTransformer:
 
         if "is_active" in transformed_df.columns:
             def parse_bool(val):
-                if pd.isna(val) or val is None:
+                if val is None or pd.isna(val):
                     return None
                 if isinstance(val, (bool, np.bool_)):
                     return bool(val)

@@ -10,6 +10,7 @@ import argparse
 import json
 from datetime import datetime
 import pandas as pd
+import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -142,8 +143,8 @@ class PipelineRunner:
             def _to_bool(val):
                 if pd.isna(val) or val is None:
                     return None
-                if isinstance(val, bool):
-                    return val
+                if isinstance(val, (bool, np.bool_)):
+                    return bool(val)
                 s = str(val).strip().lower()
                 if s in ["true", "1", "1.0", "t", "yes", "y"]:
                     return True

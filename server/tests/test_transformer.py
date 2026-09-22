@@ -2,6 +2,7 @@
 import pytest
 
 pd = pytest.importorskip("pandas")
+np = pytest.importorskip("numpy")
 pydantic = pytest.importorskip("pydantic")
 
 from server.config import ETLConfig
@@ -76,6 +77,61 @@ def test_coerce_types(transformer):
     assert pd.isna(result["created_at"].iloc[2])
 
 
+def test_boolean_coercion_strict_primitives(transformer):
+    data = {
+        "is_active": [
+            "true", "TRUE", "True", "1", "1.0", "t", "yes", "Y", True, np.bool_(True),
+            "false", "FALSE", "False", "0", "0.0", "f", "no", "N", False, np.bool_(False),
+            None, "None", "null", "invalid", "",
+        ]
+    }
+    df = pd.DataFrame(data)
+    result = transformer.coerce_types(df)
+
+    # First 10 values must be strictly Python True
+    for idx in range(10):
+        val = result["is_active"].iloc[idx]
+        assert val is True
+        assert type(val) is bool
+
+    # Next 10 values must be strictly Python False
+    for idx in range(10, 20):
+        val = result["is_active"].iloc[idx]
+        assert val is False
+        assert type(val) is bool
+
+    # Remaining values must be None
+    for idx in range(20, 25):
+        val = result["is_active"].iloc[idx]
+        assert val is None
+
+
+def test_timestamp_coercion_and_nat_handling(transformer):
+    data = {
+        "created_at": [
+            "2026-05-18T12:00:00Z",
+            "2026-05-19 14:30:00",
+            "invalid_date",
+            None,
+            "",
+            "2026-01-01",
+        ]
+    }
+    df = pd.DataFrame(data)
+    result = transformer.coerce_types(df)
+
+    # Valid dates
+    assert not pd.isna(result["created_at"].iloc[0])
+    assert not pd.isna(result["created_at"].iloc[1])
+    assert not pd.isna(result["created_at"].iloc[5])
+
+    # Invalid / null dates coerce to NaT (pd.isna is True)
+    assert pd.isna(result["created_at"].iloc[2])
+    assert result["created_at"].iloc[2] is pd.NaT or pd.isna(result["created_at"].iloc[2])
+    assert pd.isna(result["created_at"].iloc[3])
+    assert pd.isna(result["created_at"].iloc[4])
+
+
 def test_full_transform_success(transformer):
     data = {
         "id": ["  101  ", "102"],
@@ -102,6 +158,11 @@ def test_transform_empty_dataframe(transformer):
     assert len(result) == 0
 
 
+def test_transform_none_raises_error(transformer):
+    with pytest.raises(TransformationError):
+        transformer.transform(None)
+
+
 def test_transform_circuit_breaker(transformer):
     data = {
         "id": [None, None],
@@ -111,3 +172,15 @@ def test_transform_circuit_breaker(transformer):
     df = pd.DataFrame(data)
     with pytest.raises(TransformationError):
         transformer.transform(df)
+
+
+def test_transform_quarantined_rows(transformer):
+    data = {
+        "id": ["1", None, "2"],
+        "raw_text": ["valid", None, "also valid"],
+        "numeric_val": ["10", None, "20"],
+    }
+    df = pd.DataFrame(data)
+    result = transformer.transform(df)
+    assert len(result) == 2
+    assert result["id"].tolist() == ["1", "2"]
