@@ -13,38 +13,25 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
-  componentDidCatch(_error, _errorInfo) {
-    // Error logged for boundary tracking
+  componentDidCatch(error, errorInfo) {
+    console.error("Uncaught error:", error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div
-          style={{
-            padding: "2rem",
-            textAlign: "center",
-            fontFamily: "sans-serif",
-          }}
-        >
-          <h2>Something went wrong.</h2>
-          <p style={{ color: "#666" }}>
-            {this.state.error?.message ||
-              "An unexpected rendering error occurred."}
+        <div className="min-h-screen bg-[#121316] text-[#F8F9FA] flex flex-col items-center justify-center p-8 text-center space-y-4">
+          <h2 className="font-serif text-2xl font-bold text-[#F2CA50]">
+            Horological Interface Notice
+          </h2>
+          <p className="text-sm text-[#9EACB9] max-w-md">
+            Something unexpected occurred while rendering the luxury interface.
           </p>
           <button
             onClick={() => window.location.reload()}
-            style={{
-              marginTop: "1rem",
-              padding: "0.5rem 1rem",
-              backgroundColor: "#4F46E5",
-              color: "#fff",
-              border: "none",
-              borderRadius: "0.375rem",
-              cursor: "pointer",
-            }}
+            className="bg-[#D4AF37] hover:bg-[#E5C158] text-[#0A0B0E] font-bold px-6 py-2.5 rounded-lg text-xs uppercase tracking-wider"
           >
-            Reload Page
+            Reload Interface
           </button>
         </div>
       );
@@ -53,10 +40,13 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </React.StrictMode>,
-);
+const rootElement = document.getElementById("root");
+if (rootElement) {
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    </React.StrictMode>,
+  );
+}

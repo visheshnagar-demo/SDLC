@@ -2,11 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family:
-    "Inter",
-    system-ui,
-    -apple-system,
-    sans-serif;
+@layer base {
+  body {
+    background-color: #121316;
+    color: #f8f9fa;
+    font-family:
+      "Plus Jakarta Sans",
+      system-ui,
+      -apple-system,
+      sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-luxury-heading {
+    font-family: "Playfair Display", Georgia, serif;
+  }
+}
+
+/* Custom scrollbar for luxury dark UI */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0b0e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #232733;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4d4635;
 }
