@@ -1,0 +1,37 @@
+{
+  "columns": [
+    {
+      "source_name": "id",
+      "target_name": "id",
+      "source_type": "integer",
+      "target_type": "INT64",
+      "transform": "identity"
+    },
+    {
+      "source_name": "data_val",
+      "target_name": "data_val",
+      "source_type": "string",
+      "target_type": "STRING",
+      "transform": "clean_string"
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "source_type": "timestamp",
+      "target_type": "TIMESTAMP",
+      "transform": "to_utc_iso"
+    }
+  ],
+  "audit_columns": [
+    {
+      "name": "_etl_loaded_at",
+      "type": "TIMESTAMP",
+      "transform": "current_utc_timestamp"
+    },
+    {
+      "name": "_etl_batch_id",
+      "type": "STRING",
+      "transform": "uuid_v4"
+    }
+  ]
+}

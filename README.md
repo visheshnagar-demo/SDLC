@@ -1,88 +1,72 @@
-# Project
+# Cloud SQL PostgreSQL to BigQuery ETL Pipeline (SCRUM-352)
 
-## Server
+Production-grade automated ETL pipeline extracting data from Cloud SQL PostgreSQL (`test_data`), performing data cleaning/sanitization, deduplication, type coercion, and atomic loading into Google Cloud BigQuery (`analytics.postgres_test1`).
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+## 1. Architecture Overview
 
-### Setup
-
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+```
+┌─────────────────────────────────┐
+│ Cloud SQL PostgreSQL            │
+│ instance: sdlc-etl-demo-db      │
+│ db: postgres | tbl: test_data   │
+└────────────────┬────────────────┘
+                 │ (IAM auth / TLS)
+                 ▼
+┌─────────────────────────────────┐
+│ Python 3.11 ETL Engine          │
+│ • Schema Discovery on Read      │
+│ • Whitespace & Null Cleaner     │
+│ • Deduplication & Type Coercion │
+│ • Circuit Breaker & Quarantine  │
+│ • Metadata Enrichment           │
+└────────────────┬────────────────┘
+                 │ (Batch Parquet load)
+                 ▼
+┌─────────────────────────────────┐
+│ Google Cloud BigQuery           │
+│ project: upbeat-repeater-477110 │
+│ dataset: analytics              │
+│ table: postgres_test1           │
+└─────────────────────────────────┘
 ```
 
-2. Install dependencies:
+## 2. Pipeline Components
+
+- **`server/config.py`**: Pydantic settings loading PostgreSQL and BigQuery environment variables with strict zero-SQLite enforcement.
+- **`server/extractor.py`**: Dynamic schema discovery and TLS extraction using Google Cloud SQL Connector.
+- **`server/transformer.py`**: Whitespace trimming, null sanitization (`NULL`, `""`, `None`, `N/A`), deduplication, timestamp formatting, and circuit breaker evaluation (< 5% corrupt row threshold).
+- **`server/loader.py`**: Google BigQuery atomic batch loader with day partitioning on `created_at` and clustering on `id`.
+- **`server/main.py`**: Container entrypoint CLI supporting custom arguments and structured logging.
+- **`pipeline/run_postgres_to_bigquery_scrum_352.py`**: Standalone Cloud Run Job runner.
+- **`dags/postgres_to_bigquery_scrum_352_dag.py`**: Orchestration DAG reference for Apache Airflow / Cloud Composer.
+
+## 3. Configuration & Environment Variables
+
+| Variable | Description | Default / Example |
+| :--- | :--- | :--- |
+| `INSTANCE_CONNECTION_NAME` | Cloud SQL Connection Identifier | `upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db` |
+| `POSTGRES_DB` | PostgreSQL Database Name | `postgres` |
+| `POSTGRES_USER` | PostgreSQL Service User | `559906504681-compute@developer` |
+| `SOURCE_TABLE` | Source PostgreSQL Table | `test_data` |
+| `GCP_PROJECT_ID` | GCP Project ID | `upbeat-repeater-477110-q6` |
+| `BIGQUERY_DATASET` | Destination BigQuery Dataset | `analytics` |
+| `BIGQUERY_TABLE` | Destination BigQuery Table | `postgres_test1` |
+| `CIRCUIT_BREAKER_THRESHOLD`| Max corrupt row ratio | `0.05` |
+| `WRITE_DISPOSITION` | Write mode (`WRITE_TRUNCATE` / `WRITE_APPEND`) | `WRITE_TRUNCATE` |
+
+## 4. Local Execution & Testing
+
+### Installation
 ```bash
-cd server
 pip install -r requirements.txt
-cd ..
 ```
 
-### Running Tests
+### Running Pipeline
 ```bash
-cd server
-python -m pytest -v
-cd ..
+python -m server.main --source-table test_data --target-table analytics.postgres_test1 --write-mode truncate
 ```
 
-### Starting the Development Server
+### Running Test Suite
 ```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+pytest
 ```
-
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
-```bash
-# Copy the example environment file
-cp .env.example .env
-```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-

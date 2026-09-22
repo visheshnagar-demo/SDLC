@@ -1,0 +1,20 @@
+[
+  {
+    "name": "id",
+    "type": "INT64",
+    "mode": "NULLABLE",
+    "description": "Target field id"
+  },
+  {
+    "name": "data_val",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Target field data_val"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Target field created_at"
+  }
+]

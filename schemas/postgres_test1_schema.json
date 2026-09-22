@@ -1,0 +1,32 @@
+[
+  {
+    "name": "id",
+    "type": "INT64",
+    "mode": "NULLABLE",
+    "description": "Record Identifier"
+  },
+  {
+    "name": "data_val",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Sanitized Data Value"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Record Creation Timestamp"
+  },
+  {
+    "name": "_etl_loaded_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "ETL Ingestion UTC Timestamp"
+  },
+  {
+    "name": "_etl_batch_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "ETL Batch Execution UUID"
+  }
+]
