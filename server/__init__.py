@@ -1,1 +1,1 @@
-"""Server package for Email AI Classifier."""
+# Server package

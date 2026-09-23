@@ -1,93 +1,56 @@
 import uuid
-from datetime import datetime
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
-
 from server.models import Email, ClassificationAuditLog
-from server.services.classifier import classify_email, VALID_CATEGORIES
-from server.services.parser import parse_uploaded_file, parse_email_text, create_preview
+from server.services.classifier import classify_email, CATEGORIES
+from server.services.parser import parse_email_file, extract_preview
 
 
 def create_email_from_text(
-    db: Session,
-    body: str,
-    subject: Optional[str] = None,
+    db: Session, body: str, subject: Optional[str] = None
 ) -> Email:
-    parsed_subject, parsed_body = parse_email_text(body, explicit_subject=subject)
-    preview = create_preview(parsed_body, max_len=150)
-    category, confidence_score = classify_email(parsed_subject or "", parsed_body)
+    category, confidence = classify_email(body, subject or "")
+    preview = extract_preview(body)
 
     email_obj = Email(
         id=str(uuid.uuid4()),
-        subject=parsed_subject or "Untitled Email",
-        body=parsed_body,
+        subject=subject,
+        body=body,
         preview=preview,
         file_name=None,
-        file_type="text",
+        file_type=None,
         category=category,
         original_category=category,
-        confidence_score=confidence_score,
+        confidence_score=confidence,
         status="PROCESSED",
         is_overridden=False,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
     )
     db.add(email_obj)
-    db.flush()
-
-    audit = ClassificationAuditLog(
-        id=str(uuid.uuid4()),
-        email_id=email_obj.id,
-        previous_category=None,
-        new_category=category,
-        action="INITIAL_CLASSIFICATION",
-        reason="Automated AI text classification",
-        created_at=datetime.utcnow(),
-    )
-    db.add(audit)
     db.commit()
     db.refresh(email_obj)
     return email_obj
 
 
-def create_email_from_upload(
-    db: Session,
-    filename: str,
-    content: bytes,
-) -> Email:
-    parsed_subject, parsed_body, file_type = parse_uploaded_file(filename, content)
-    preview = create_preview(parsed_body, max_len=150)
-    category, confidence_score = classify_email(parsed_subject or "", parsed_body)
+def create_email_from_file(db: Session, content: bytes, filename: str) -> Email:
+    subject, body, ext = parse_email_file(content, filename)
+    category, confidence = classify_email(body, subject or "")
+    preview = extract_preview(body)
 
     email_obj = Email(
         id=str(uuid.uuid4()),
-        subject=parsed_subject or filename,
-        body=parsed_body,
+        subject=subject,
+        body=body,
         preview=preview,
         file_name=filename,
-        file_type=file_type,
+        file_type=ext,
         category=category,
         original_category=category,
-        confidence_score=confidence_score,
+        confidence_score=confidence,
         status="PROCESSED",
         is_overridden=False,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
     )
     db.add(email_obj)
-    db.flush()
-
-    audit = ClassificationAuditLog(
-        id=str(uuid.uuid4()),
-        email_id=email_obj.id,
-        previous_category=None,
-        new_category=category,
-        action="INITIAL_CLASSIFICATION",
-        reason=f"Automated AI file ingestion from {filename}",
-        created_at=datetime.utcnow(),
-    )
-    db.add(audit)
     db.commit()
     db.refresh(email_obj)
     return email_obj
@@ -95,27 +58,27 @@ def create_email_from_upload(
 
 def list_emails(
     db: Session,
-    search: Optional[str] = None,
-    category: Optional[str] = None,
-    status: Optional[str] = None,
     skip: int = 0,
     limit: int = 20,
+    category: Optional[str] = None,
+    status: Optional[str] = None,
+    search: Optional[str] = None,
 ) -> Tuple[List[Email], int]:
     query = db.query(Email)
 
     if category and category.lower() != "all":
-        query = query.filter(Email.category.ilike(category))
+        query = query.filter(Email.category == category)
 
     if status and status.lower() != "all":
-        query = query.filter(Email.status.ilike(status))
+        query = query.filter(Email.status == status)
 
     if search:
-        search_pattern = f"%{search}%"
+        search_term = f"%{search}%"
         query = query.filter(
             or_(
-                Email.subject.ilike(search_pattern),
-                Email.body.ilike(search_pattern),
-                Email.file_name.ilike(search_pattern),
+                Email.subject.ilike(search_term),
+                Email.body.ilike(search_term),
+                Email.file_name.ilike(search_term),
             )
         )
 
@@ -129,59 +92,28 @@ def get_email_by_id(db: Session, email_id: str) -> Optional[Email]:
 
 
 def override_email_category(
-    db: Session,
-    email_id: str,
-    new_category: str,
-    reason: Optional[str] = None,
+    db: Session, email_id: str, new_category: str, reason: Optional[str] = None
 ) -> Optional[Email]:
+    if new_category not in CATEGORIES:
+        raise ValueError(
+            f"Invalid category '{new_category}'. Allowed categories: {', '.join(CATEGORIES)}"
+        )
+
     email_obj = get_email_by_id(db, email_id)
     if not email_obj:
         return None
 
-    # Capitalize or normalize category if matched
-    matched_cat = next(
-        (c for c in VALID_CATEGORIES if c.lower() == new_category.lower()), None
-    )
-    if not matched_cat:
-        raise ValueError(
-            f"Invalid category '{new_category}'. Valid categories are: {', '.join(VALID_CATEGORIES)}"
-        )
-
-    previous_cat = email_obj.category
-    email_obj.category = matched_cat
-    email_obj.is_overridden = True
-    email_obj.updated_at = datetime.utcnow()
-
-    audit = ClassificationAuditLog(
+    audit_log = ClassificationAuditLog(
         id=str(uuid.uuid4()),
         email_id=email_obj.id,
-        previous_category=previous_cat,
-        new_category=matched_cat,
-        action="MANUAL_OVERRIDE",
-        reason=reason or "Manual category override by user",
-        created_at=datetime.utcnow(),
+        previous_category=str(email_obj.category),
+        new_category=new_category,
+        reason=reason,
     )
-    db.add(audit)
+    db.add(audit_log)
+
+    email_obj.category = new_category
+    email_obj.is_overridden = True
     db.commit()
     db.refresh(email_obj)
     return email_obj
-
-
-def get_email_stats(db: Session) -> Dict[str, int]:
-    total = db.query(Email).count()
-    urgent = db.query(Email).filter(Email.category == "Urgent").count()
-    work = db.query(Email).filter(Email.category == "Work").count()
-    personal = db.query(Email).filter(Email.category == "Personal").count()
-    promotional = db.query(Email).filter(Email.category == "Promotional").count()
-    uncategorized = db.query(Email).filter(Email.category == "Uncategorized").count()
-    overridden = db.query(Email).filter(Email.is_overridden.is_(True)).count()
-
-    return {
-        "total": total,
-        "urgent": urgent,
-        "work": work,
-        "personal": personal,
-        "promotional": promotional,
-        "uncategorized": uncategorized,
-        "overridden": overridden,
-    }

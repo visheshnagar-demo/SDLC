@@ -1,65 +1,44 @@
 import io
-from fastapi.testclient import TestClient
 
 
-def test_health_check(client: TestClient):
+def test_health_check(client):
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "healthy"}
+    assert response.json()["status"] == "ok"
 
 
-def test_root_endpoint(client: TestClient):
-    response = client.get("/")
-    assert response.status_code == 200
-    assert "status" in response.json()
-    assert response.json()["status"] == "online"
-
-
-def test_ingest_email_text_work(client: TestClient):
+def test_ingest_text_email_work(client):
     payload = {
-        "subject": "Sprint Review and Jira Backlog Grooming",
-        "body": "Hi team, let's sync on the sprint deliverables and roadmap planning for the next release.",
+        "subject": "Sprint Planning Meeting Agenda",
+        "body": "Hi team, let's review the Q4 project deliverables, sprint tasks, and client reports during tomorrow's sync.",
     }
     response = client.post("/api/v1/emails/text", json=payload)
     assert response.status_code == 201
     data = response.json()
-    assert data["id"] is not None
-    assert data["subject"] == "Sprint Review and Jira Backlog Grooming"
+    assert data["subject"] == payload["subject"]
     assert data["category"] == "Work"
     assert data["confidence_score"] >= 0.50
     assert data["status"] == "PROCESSED"
     assert data["is_overridden"] is False
-    assert len(data["audit_logs"]) >= 1
+    assert data["id"] is not None
 
 
-def test_ingest_email_text_urgent(client: TestClient):
+def test_ingest_text_email_urgent(client):
     payload = {
         "subject": "CRITICAL ALERT: Production Database Outage",
-        "body": "Emergency! High priority P1 incident. The primary database cluster is down. Action required immediately.",
+        "body": "Immediate action required! The primary production database has failed. Execute emergency runbook asap.",
     }
     response = client.post("/api/v1/emails/text", json=payload)
     assert response.status_code == 201
     data = response.json()
     assert data["category"] == "Urgent"
-    assert data["confidence_score"] >= 0.50
+    assert data["confidence_score"] >= 0.70
 
 
-def test_ingest_email_text_promotional(client: TestClient):
+def test_ingest_text_email_personal(client):
     payload = {
-        "subject": "Huge 70% Off Black Friday Sale!",
-        "body": "Get exclusive discount coupon and special promotional pricing on all subscriptions today. Unsubscribe here.",
-    }
-    response = client.post("/api/v1/emails/text", json=payload)
-    assert response.status_code == 201
-    data = response.json()
-    assert data["category"] == "Promotional"
-    assert data["confidence_score"] >= 0.50
-
-
-def test_ingest_email_text_personal(client: TestClient):
-    payload = {
-        "subject": "Family Weekend Picnic and Birthday Dinner",
-        "body": "Hey, let's have dinner with family this weekend to celebrate birthday. Hope to see you there for lunch!",
+        "subject": "Dinner plans this weekend",
+        "body": "Hey, do you want to join our family BBQ dinner and movie night this Saturday?",
     }
     response = client.post("/api/v1/emails/text", json=payload)
     assert response.status_code == 201
@@ -68,151 +47,170 @@ def test_ingest_email_text_personal(client: TestClient):
     assert data["confidence_score"] >= 0.50
 
 
-def test_ingest_email_text_uncategorized(client: TestClient):
+def test_ingest_text_email_promotional(client):
     payload = {
-        "subject": "Random note",
-        "body": "1234567890 xyz abc",
+        "subject": "Limited Time: 50% Off Everything!",
+        "body": "Massive clearance sale! Use promo coupon code SAVE50 to claim your special discount offer today.",
+    }
+    response = client.post("/api/v1/emails/text", json=payload)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["category"] == "Promotional"
+    assert data["confidence_score"] >= 0.50
+
+
+def test_ingest_text_email_empty_or_whitespace(client):
+    payload = {
+        "subject": "",
+        "body": "   ",
     }
     response = client.post("/api/v1/emails/text", json=payload)
     assert response.status_code == 201
     data = response.json()
     assert data["category"] == "Uncategorized"
-    assert data["confidence_score"] < 0.50
+    assert data["confidence_score"] == 0.00
 
 
-def test_ingest_email_text_empty_body(client: TestClient):
-    response = client.post(
-        "/api/v1/emails/text", json={"subject": "Empty", "body": "   "}
+def test_ingest_file_eml(client):
+    eml_content = (
+        b"From: devops@example.com\r\n"
+        b"To: team@example.com\r\n"
+        b"Subject: URGENT: SSL Certificate Expiry Alert\r\n"
+        b"Content-Type: text/plain; charset=utf-8\r\n"
+        b"\r\n"
+        b"Immediate action required. The wildcard SSL certificate will expire in 24 hours.\r\n"
     )
-    assert response.status_code == 201
-    data = response.json()
-    assert data["category"] == "Uncategorized"
-
-
-def test_upload_txt_file(client: TestClient):
-    file_content = b"Subject: Client Contract Renewal\n\nPlease find attached the signed contract and invoice for review."
-    files = {"file": ("contract.txt", io.BytesIO(file_content), "text/plain")}
+    files = {"file": ("alert.eml", io.BytesIO(eml_content), "message/rfc822")}
     response = client.post("/api/v1/emails/upload", files=files)
     assert response.status_code == 201
     data = response.json()
-    assert data["file_name"] == "contract.txt"
-    assert data["file_type"] == ".txt"
-    assert data["category"] == "Work"
-
-
-def test_upload_eml_file(client: TestClient):
-    eml_data = (
-        b"From: alerts@corp.com\r\n"
-        b"To: admin@corp.com\r\n"
-        b"Subject: Emergency Alert: Server Breach Detected\r\n"
-        b"Content-Type: text/plain; charset=utf-8\r\n\r\n"
-        b"Immediate action required! Security breach incident detected on server."
-    )
-    files = {"file": ("alert.eml", io.BytesIO(eml_data), "message/rfc822")}
-    response = client.post("/api/v1/emails/upload", files=files)
-    assert response.status_code == 201
-    data = response.json()
+    assert data["subject"] == "URGENT: SSL Certificate Expiry Alert"
     assert data["file_name"] == "alert.eml"
     assert data["file_type"] == ".eml"
     assert data["category"] == "Urgent"
 
 
-def test_upload_unsupported_file(client: TestClient):
-    files = {"file": ("test.pdf", io.BytesIO(b"binary content"), "application/pdf")}
+def test_ingest_file_txt(client):
+    txt_content = b"Subject: Quarterly Budget Presentation\nHi team, please find the presentation slides for the quarterly budget review."
+    files = {"file": ("budget.txt", io.BytesIO(txt_content), "text/plain")}
+    response = client.post("/api/v1/emails/upload", files=files)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["subject"] == "Quarterly Budget Presentation"
+    assert data["file_type"] == ".txt"
+    assert data["category"] == "Work"
+
+
+def test_ingest_file_invalid_extension(client):
+    pdf_content = b"%PDF-1.4 dummy binary content"
+    files = {"file": ("document.pdf", io.BytesIO(pdf_content), "application/pdf")}
     response = client.post("/api/v1/emails/upload", files=files)
     assert response.status_code == 400
     assert "Unsupported file format" in response.json()["detail"]
 
 
-def test_upload_file_too_large(client: TestClient):
-    large_content = b"x" * (10 * 1024 * 1024 + 100)
-    files = {"file": ("huge.txt", io.BytesIO(large_content), "text/plain")}
+def test_ingest_file_too_large(client):
+    # 10MB + 1 byte
+    large_content = b"A" * (10 * 1024 * 1024 + 1)
+    files = {"file": ("large.txt", io.BytesIO(large_content), "text/plain")}
     response = client.post("/api/v1/emails/upload", files=files)
     assert response.status_code == 400
+    assert "exceeds maximum allowed limit" in response.json()["detail"]
 
 
-def test_list_and_filter_emails(client: TestClient):
+def test_list_and_filter_emails(client):
+    # Seed 2 distinct items
     client.post(
         "/api/v1/emails/text",
-        json={"subject": "Urgent Server Fix", "body": "Critical issue asap."},
+        json={"subject": "Alpha project", "body": "Project task deliverable"},
     )
     client.post(
         "/api/v1/emails/text",
-        json={"subject": "Family Party", "body": "Dinner this weekend."},
+        json={"subject": "Beta vacation", "body": "Family vacation trip dinner"},
     )
 
-    res = client.get("/api/v1/emails?limit=10")
-    assert res.status_code == 200
-    data = res.json()
+    # Test list all
+    response = client.get("/api/v1/emails?skip=0&limit=10")
+    assert response.status_code == 200
+    data = response.json()
+    assert "total" in data
     assert "items" in data
     assert data["total"] >= 2
+    assert len(data["items"]) >= 2
 
-    res_urgent = client.get("/api/v1/emails?category=Urgent")
-    assert res_urgent.status_code == 200
-    for item in res_urgent.json()["items"]:
-        assert item["category"] == "Urgent"
+    # Test category filter
+    response_work = client.get("/api/v1/emails?category=Work")
+    assert response_work.status_code == 200
+    for item in response_work.json()["items"]:
+        assert item["category"] == "Work"
 
-    res_search = client.get("/api/v1/emails?search=Server")
-    assert res_search.status_code == 200
-    assert len(res_search.json()["items"]) >= 1
+    # Test search filter
+    response_search = client.get("/api/v1/emails?search=vacation")
+    assert response_search.status_code == 200
+    search_items = response_search.json()["items"]
+    assert len(search_items) >= 1
+    assert any(
+        "vacation" in (item["subject"] or "").lower()
+        or "vacation" in item["body"].lower()
+        for item in search_items
+    )
 
 
-def test_get_email_by_id(client: TestClient):
-    created = client.post(
+def test_get_email_by_id_and_not_found(client):
+    create_resp = client.post(
         "/api/v1/emails/text",
-        json={"subject": "Test Email", "body": "Project standup notes."},
-    ).json()
-    email_id = created["id"]
+        json={"subject": "Unique Subject", "body": "Some email text content"},
+    )
+    email_id = create_resp.json()["id"]
 
-    res = client.get(f"/api/v1/emails/{email_id}")
-    assert res.status_code == 200
-    assert res.json()["id"] == email_id
+    get_resp = client.get(f"/api/v1/emails/{email_id}")
+    assert get_resp.status_code == 200
+    assert get_resp.json()["id"] == email_id
 
-    res_404 = client.get("/api/v1/emails/non-existent-uuid")
-    assert res_404.status_code == 404
+    not_found_resp = client.get("/api/v1/emails/non-existent-uuid-12345")
+    assert not_found_resp.status_code == 404
 
 
-def test_override_email_category(client: TestClient):
-    created = client.post(
+def test_manual_override_category(client):
+    create_resp = client.post(
         "/api/v1/emails/text",
-        json={"subject": "General Meeting", "body": "Discuss project sprint."},
-    ).json()
-    email_id = created["id"]
-    assert created["category"] == "Work"
-    assert created["is_overridden"] is False
+        json={
+            "subject": "Ambiguous Subject",
+            "body": "General text without clear keywords",
+        },
+    )
+    email_id = create_resp.json()["id"]
+    original_category = create_resp.json()["category"]
 
     override_payload = {
-        "category": "Urgent",
-        "reason": "Escalated by director",
+        "category": "Work",
+        "reason": "Business user manual classification override",
     }
-    res = client.patch(f"/api/v1/emails/{email_id}/override", json=override_payload)
-    assert res.status_code == 200
-    updated = res.json()
-    assert updated["category"] == "Urgent"
+    override_resp = client.patch(
+        f"/api/v1/emails/{email_id}/override", json=override_payload
+    )
+    assert override_resp.status_code == 200
+    updated = override_resp.json()
+    assert updated["category"] == "Work"
     assert updated["is_overridden"] is True
-    assert updated["original_category"] == "Work"
-    assert len(updated["audit_logs"]) >= 2
-    assert updated["audit_logs"][0]["action"] == "MANUAL_OVERRIDE"
+    assert updated["original_category"] == original_category
+    assert len(updated["audit_logs"]) >= 1
+    assert updated["audit_logs"][0]["previous_category"] == original_category
+    assert updated["audit_logs"][0]["new_category"] == "Work"
+    assert (
+        updated["audit_logs"][0]["reason"]
+        == "Business user manual classification override"
+    )
 
-    invalid_res = client.patch(
+
+def test_manual_override_invalid_category(client):
+    create_resp = client.post(
+        "/api/v1/emails/text",
+        json={"subject": "Test", "body": "Test message body"},
+    )
+    email_id = create_resp.json()["id"]
+
+    override_resp = client.patch(
         f"/api/v1/emails/{email_id}/override", json={"category": "InvalidCategory"}
     )
-    assert invalid_res.status_code == 400
-
-
-def test_stats_endpoint(client: TestClient):
-    client.post(
-        "/api/v1/emails/text",
-        json={"subject": "Urgent", "body": "Immediate emergency alert"},
-    )
-    client.post(
-        "/api/v1/emails/text",
-        json={"subject": "Promo", "body": "Discount coupon sale unsubscribe"},
-    )
-
-    res = client.get("/api/v1/emails/stats")
-    assert res.status_code == 200
-    stats = res.json()
-    assert stats["total"] >= 2
-    assert stats["urgent"] >= 1
-    assert stats["promotional"] >= 1
+    assert override_resp.status_code == 400

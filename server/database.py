@@ -1,20 +1,21 @@
 import os
 import uuid
-from datetime import datetime
-from typing import Generator
+from datetime import datetime, timezone
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./emails.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./app.db")
 
-connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+connect_args = {}
+if DATABASE_URL.startswith("sqlite"):
+    connect_args["check_same_thread"] = False
 
 engine = create_engine(DATABASE_URL, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
-def get_db() -> Generator[Session, None, None]:
+def get_db():
     db = SessionLocal()
     try:
         yield db
@@ -23,95 +24,83 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def init_db():
+    import server.models  # noqa: F401
+
     Base.metadata.create_all(bind=engine)
 
 
-def seed_data(db: Session):
-    from server.models import Email, ClassificationAuditLog
+def seed_data(db):
+    from server.models import Email
+
+    # Check if data already exists
+    if db.query(Email).first() is not None:
+        return
+
+    sample_emails = [
+        Email(
+            id=str(uuid.uuid4()),
+            subject="URGENT: Production Server SSL Certificate Expiring in 24h",
+            body="[ALERT] Critical SSL Expiration Warning for *.cloudcorp.io. Please find the mandatory remediation runbook link and update immediately.",
+            preview="[ALERT] Critical SSL Expiration Warning for *.cloudcorp.io. Please find the mandatory remediation runbook link...",
+            file_name="alert.eml",
+            file_type=".eml",
+            category="Urgent",
+            original_category="Urgent",
+            confidence_score=0.92,
+            status="PROCESSED",
+            is_overridden=False,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+        ),
+        Email(
+            id=str(uuid.uuid4()),
+            subject="Sprint Planning & Architecture Review - Q4 Goals",
+            body="Hi team, please review the attached architecture proposal for the upcoming sprint deliverables and quarterly budget.",
+            preview="Hi team, please review the attached architecture proposal for the upcoming sprint deliverables...",
+            file_name="meeting_notes.txt",
+            file_type=".txt",
+            category="Work",
+            original_category="Work",
+            confidence_score=0.88,
+            status="PROCESSED",
+            is_overridden=False,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+        ),
+        Email(
+            id=str(uuid.uuid4()),
+            subject="Family Reunion Dinner This Weekend!",
+            body="Hey everyone, don't forget we have our family dinner this weekend at grandma's house. Let me know if you can make it!",
+            preview="Hey everyone, don't forget we have our family dinner this weekend at grandma's house...",
+            file_name=None,
+            file_type=None,
+            category="Personal",
+            original_category="Personal",
+            confidence_score=0.95,
+            status="PROCESSED",
+            is_overridden=False,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+        ),
+        Email(
+            id=str(uuid.uuid4()),
+            subject="Special Offer: 50% Off All Subscriptions - Limited Time!",
+            body="Exclusive deal! Subscribe now and save 50% on all plans. Don't miss out on this clearance discount offer.",
+            preview="Exclusive deal! Subscribe now and save 50% on all plans. Don't miss out on this clearance discount...",
+            file_name=None,
+            file_type=None,
+            category="Promotional",
+            original_category="Promotional",
+            confidence_score=0.94,
+            status="PROCESSED",
+            is_overridden=False,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+        ),
+    ]
 
     try:
-        existing_count = db.query(Email).count()
-        if existing_count > 0:
-            return
-
-        sample_emails = [
-            {
-                "id": str(uuid.uuid4()),
-                "subject": "URGENT: Production Server SSL Certificate Expiring in 24h",
-                "body": "Critical alert: The wildcard SSL certificate for *.production.corp expires in 24 hours. Immediate renewal required to prevent service downtime.",
-                "preview": "Critical alert: The wildcard SSL certificate for *.production.corp expires in 24 hours...",
-                "file_name": "ssl_alert.eml",
-                "file_type": "message/rfc822",
-                "category": "Urgent",
-                "original_category": "Urgent",
-                "confidence_score": 0.94,
-                "status": "PROCESSED",
-                "is_overridden": False,
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
-            },
-            {
-                "id": str(uuid.uuid4()),
-                "subject": "Sprint Planning and Architecture Review for Q3",
-                "body": "Hi Team, let's schedule our sprint planning and architecture sync for Wednesday 10 AM. Please prepare your task estimates and Jira updates.",
-                "preview": "Hi Team, let's schedule our sprint planning and architecture sync for Wednesday 10 AM...",
-                "file_name": "sprint_review.txt",
-                "file_type": "text/plain",
-                "category": "Work",
-                "original_category": "Work",
-                "confidence_score": 0.88,
-                "status": "PROCESSED",
-                "is_overridden": False,
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
-            },
-            {
-                "id": str(uuid.uuid4()),
-                "subject": "Special 50% Off Cloud Hosting Promotion!",
-                "body": "Exclusive offer for developers! Upgrade to our Enterprise Cloud Plan today and receive 50% discount for the next 12 months. Unsubscribe here.",
-                "preview": "Exclusive offer for developers! Upgrade to our Enterprise Cloud Plan today...",
-                "file_name": "promo_deal.eml",
-                "file_type": "message/rfc822",
-                "category": "Promotional",
-                "original_category": "Promotional",
-                "confidence_score": 0.91,
-                "status": "PROCESSED",
-                "is_overridden": False,
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
-            },
-            {
-                "id": str(uuid.uuid4()),
-                "subject": "Family Weekend Dinner and Birthday Party",
-                "body": "Hey, we are planning a birthday dinner and weekend family gathering this Saturday at 6 PM. Hope you can join us for coffee and cake!",
-                "preview": "Hey, we are planning a birthday dinner and weekend family gathering this Saturday...",
-                "file_name": "family_invite.txt",
-                "file_type": "text/plain",
-                "category": "Personal",
-                "original_category": "Personal",
-                "confidence_score": 0.89,
-                "status": "PROCESSED",
-                "is_overridden": False,
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
-            },
-        ]
-
-        for item in sample_emails:
-            email_obj = Email(**item)
-            db.add(email_obj)
-            db.flush()
-            audit = ClassificationAuditLog(
-                id=str(uuid.uuid4()),
-                email_id=email_obj.id,
-                previous_category=None,
-                new_category=email_obj.category,
-                action="INITIAL_CLASSIFICATION",
-                reason="Initial automated AI categorization",
-                created_at=datetime.utcnow(),
-            )
-            db.add(audit)
-
+        db.add_all(sample_emails)
         db.commit()
     except Exception:
         db.rollback()

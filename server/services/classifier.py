@@ -1,137 +1,139 @@
 import re
 from typing import Tuple
 
-VALID_CATEGORIES = ["Work", "Personal", "Urgent", "Promotional", "Uncategorized"]
-UNCATEGORIZED_THRESHOLD = 0.50
+CATEGORIES = ["Work", "Personal", "Urgent", "Promotional", "Uncategorized"]
 
-CATEGORY_KEYWORDS = {
+KEYWORD_RULES = {
     "Urgent": [
         r"\burgent\b",
+        r"\bimmediate\b",
+        r"\baction required\b",
         r"\basap\b",
-        r"\bemergency\b",
         r"\bcritical\b",
         r"\balert\b",
+        r"\bemergency\b",
         r"\bdeadline\b",
-        r"\bsecurity\b",
-        r"\baction\s+required\b",
         r"\bexpiring\b",
-        r"\bdown\b",
         r"\bfailure\b",
-        r"\bbreach\b",
-        r"\bimmediately\b",
-        r"\bp1\b",
-        r"\boutage\b",
-        r"\bincident\b",
-        r"\bescalation\b",
-        r"\bserver\s+down\b",
+        r"\bhigh priority\b",
+        r"\bdanger\b",
+        r"\bescalat(e|ion)\b",
+        r"\bseverity\s*1\b",
+        r"\bsev-?1\b",
     ],
-    "Promotional": [
-        r"\bdiscount\b",
-        r"\boffer\b",
-        r"\bsale\b",
-        r"\bpromo\b",
-        r"\bdeals?\b",
-        r"\bvoucher\b",
-        r"\bcoupon\b",
-        r"\bunsubscribe\b",
-        r"\bnewsletter\b",
-        r"\bspecial\s+pricing\b",
-        r"\bclearance\b",
-        r"\bmarketing\b",
-        r"\bsubscribe\b",
-        r"\bwebinar\b",
-        r"\b%\s*off\b",
-        r"\bfree\s+trial\b",
-        r"\bexclusive\s+deal\b",
+    "Work": [
+        r"\bmeeting\b",
+        r"\bproject\b",
+        r"\breport\b",
+        r"\bsprint\b",
+        r"\bclient\b",
+        r"\bcontract\b",
+        r"\binvoice\b",
+        r"\bteam\b",
+        r"\breview\b",
+        r"\bagenda\b",
+        r"\bpresentation\b",
+        r"\btask\b",
+        r"\bstatus\b",
+        r"\bsync\b",
+        r"\bdeployment\b",
+        r"\bjira\b",
+        r"\bcode\b",
+        r"\bquarterly\b",
+        r"\bbudget\b",
+        r"\bproposal\b",
+        r"\bdeliverable\b",
+        r"\bschedule\b",
+        r"\bremediation\b",
+        r"\brunbook\b",
+        r"\bproduction\b",
+        r"\bdevops\b",
+        r"\barchitecture\b",
     ],
     "Personal": [
         r"\bfamily\b",
-        r"\bdinner\b",
-        r"\bbirthday\b",
-        r"\bweekend\b",
         r"\bvacation\b",
+        r"\bdinner\b",
         r"\bparty\b",
-        r"\bfriend\b",
-        r"\bmom\b",
-        r"\bdad\b",
-        r"\bbrother\b",
-        r"\bsister\b",
-        r"\bholiday\b",
         r"\blunch\b",
-        r"\bcoffee\b",
-        r"\bpicnic\b",
-        r"\bwedding\b",
-        r"\bcongrats\b",
-        r"\bcatching\s+up\b",
+        r"\bweekend\b",
+        r"\bholiday\b",
+        r"\bfriend\b",
+        r"\bbirthday\b",
+        r"\bhome\b",
+        r"\bdoctor\b",
         r"\btrip\b",
-        r"\bhow\s+are\s+you\b",
+        r"\bpersonal\b",
+        r"\breunion\b",
+        r"\bwedding\b",
+        r"\bbarbecue\b",
+        r"\bbbq\b",
+        r"\bmovie\b",
+        r"\bkids\b",
     ],
-    "Work": [
-        r"\bsprint\b",
-        r"\bmeeting\b",
-        r"\bclient\b",
-        r"\bproject\b",
-        r"\bcontract\b",
-        r"\binvoice\b",
-        r"\barchitecture\b",
-        r"\breview\b",
-        r"\bjira\b",
-        r"\bsync\b",
-        r"\bdeliverable\b",
-        r"\bstandup\b",
-        r"\bdeploy\b",
-        r"\brelease\b",
-        r"\broadmap\b",
-        r"\bcustomer\b",
-        r"\bdocumentation\b",
-        r"\bbackend\b",
-        r"\bfrontend\b",
-        r"\bpull\s+request\b",
-        r"\bticket\b",
-        r"\bagile\b",
+    "Promotional": [
+        r"\bdiscount\b",
+        r"\bsale\b",
+        r"\boffer\b",
+        r"\bdeal\b",
+        r"\bpromo\b",
+        r"\bpromotional\b",
+        r"\bcoupon\b",
+        r"\bspecial offer\b",
+        r"\bfree\b",
+        r"\bsubscribe\b",
+        r"\bnewsletter\b",
+        r"\bsave\b",
+        r"\b%\s*off\b",
+        r"\bclearance\b",
+        r"\bexclusive\b",
+        r"\bshop now\b",
+        r"\blimited time\b",
+        r"\bblack friday\b",
+        r"\bcyber monday\b",
+        r"\bvoucher\b",
+        r"\bprize\b",
+        r"\breward\b",
+        r"\bcash\s*back\b",
     ],
 }
 
 
-def classify_email(subject: str = "", body: str = "") -> Tuple[str, float]:
+def classify_email(text: str, subject: str = "") -> Tuple[str, float]:
     """
-    Classifies an email based on its subject and body.
-    Returns (category, confidence_score).
-    If confidence_score < 0.50, category is 'Uncategorized'.
+    Classifies an email into Work, Personal, Urgent, Promotional, or Uncategorized
+    and calculates a confidence score (0.00 - 1.00).
+    Empty or low-confidence (<0.50) emails result in 'Uncategorized'.
     """
-    subject_text = (subject or "").lower()
-    body_text = (body or "").lower()
-
-    if not subject_text.strip() and not body_text.strip():
+    combined = f"{subject or ''} {text or ''}".strip()
+    if not combined:
         return "Uncategorized", 0.00
 
     scores = {}
+    subject_lower = (subject or "").lower()
+    text_lower = (text or "").lower()
 
-    for cat, patterns in CATEGORY_KEYWORDS.items():
-        score = 0.0
-        for pat in patterns:
-            # Subject matches are weighted higher
-            subject_matches = len(re.findall(pat, subject_text, re.IGNORECASE))
-            body_matches = len(re.findall(pat, body_text, re.IGNORECASE))
-            score += subject_matches * 2.5 + body_matches * 1.0
-        scores[cat] = score
+    for category, patterns in KEYWORD_RULES.items():
+        match_count = 0
+        for pattern in patterns:
+            # Subject matches carry double weight
+            if re.search(pattern, subject_lower, re.IGNORECASE):
+                match_count += 2
+            if re.search(pattern, text_lower, re.IGNORECASE):
+                match_count += 1
 
-    best_category = max(scores, key=lambda k: scores[k])
-    max_raw_score = scores[best_category]
+        if match_count > 0:
+            # Base confidence of 0.70 plus incremental boost per match up to 0.98
+            confidence = min(0.70 + (match_count * 0.06), 0.98)
+            scores[category] = confidence
 
-    if max_raw_score <= 0.0:
-        return "Uncategorized", 0.00
+    if not scores:
+        return "Uncategorized", 0.35
 
-    # Urgent gets priority when equal score
-    if scores.get("Urgent", 0) > 0 and scores["Urgent"] >= max_raw_score * 0.9:
-        best_category = "Urgent"
-        max_raw_score = scores["Urgent"]
+    # Determine highest scoring category
+    best_category, highest_score = max(scores.items(), key=lambda x: x[1])
 
-    # Calculate confidence score between 0.50 and 0.98 for matching text
-    confidence = min(0.98, 0.55 + (max_raw_score * 0.08))
-    confidence = round(confidence, 2)
+    if highest_score < 0.50:
+        return "Uncategorized", round(highest_score, 2)
 
-    if confidence < UNCATEGORIZED_THRESHOLD:
-        return "Uncategorized", confidence
-
-    return best_category, confidence
+    return best_category, round(highest_score, 2)

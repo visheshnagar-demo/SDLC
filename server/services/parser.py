@@ -1,131 +1,128 @@
-import io
-import re
+import os
+import email
 from email import policy
-from email.parser import BytesParser, Parser
 from typing import Tuple, Optional
 
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+
+ALLOWED_EXTENSIONS = {".eml", ".msg", ".txt"}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB in bytes
 
 
-class FileTooLargeError(Exception):
-    pass
-
-
-class UnsupportedFileFormatError(Exception):
-    pass
-
-
-def create_preview(text: str, max_len: int = 150) -> str:
-    cleaned = re.sub(r"\s+", " ", text).strip()
-    if len(cleaned) <= max_len:
-        return cleaned
-    return cleaned[:max_len] + "..."
-
-
-def parse_email_text(
-    raw_text: str, explicit_subject: Optional[str] = None
-) -> Tuple[Optional[str], str]:
-    raw_text = raw_text.strip()
-    if not raw_text:
-        return explicit_subject, ""
-
-    # Check if raw_text contains RFC 822 / MIME email headers
-    if re.search(
-        r"^(From|To|Subject|Date|Received):", raw_text, re.MULTILINE | re.IGNORECASE
-    ):
-        try:
-            msg = Parser(policy=policy.default).parsestr(raw_text)
-            parsed_subject = msg.get("Subject")
-            body_part = msg.get_body(preferencelist=("plain", "html"))
-            body = body_part.get_content() if body_part else raw_text
-            final_subject = explicit_subject or parsed_subject
-            if not final_subject:
-                final_subject = create_preview(body, max_len=60)
-            return final_subject, str(body).strip()
-        except Exception:
-            pass
-
-    # If no MIME headers detected or parsing fails
-    if explicit_subject:
-        return explicit_subject, raw_text
-
-    # Check if first line resembles a subject
-    lines = [line.strip() for line in raw_text.splitlines() if line.strip()]
-    if lines and len(lines[0]) <= 80 and not lines[0].endswith("."):
-        first_line = lines[0]
-        if first_line.lower().startswith("subject:"):
-            first_line = first_line[8:].strip()
-        body = "\n".join(lines[1:]).strip() if len(lines) > 1 else raw_text
-        return first_line, body or raw_text
-
-    return create_preview(raw_text, max_len=60), raw_text
-
-
-def parse_uploaded_file(
-    filename: str, content: bytes
-) -> Tuple[Optional[str], str, str]:
-    """
-    Parses an uploaded file (.eml, .msg, .txt).
-    Returns (subject, body, file_type).
-    file_type is the extension: '.eml', '.msg', or '.txt'.
-    """
-    if len(content) > MAX_FILE_SIZE:
-        raise FileTooLargeError(f"File size ({len(content)} bytes) exceeds 10MB limit.")
-
-    lower_name = filename.lower()
-    ext = ""
-    if "." in lower_name:
-        ext = "." + lower_name.rsplit(".", 1)[-1]
-
-    if ext == ".txt":
-        try:
-            text = content.decode("utf-8")
-        except UnicodeDecodeError:
-            text = content.decode("latin-1", errors="replace")
-        subject, body = parse_email_text(text)
-        return subject, body, ".txt"
-
-    elif ext == ".eml":
-        try:
-            msg = BytesParser(policy=policy.default).parsebytes(content)
-            subject = msg.get("Subject", "")
-            body_part = msg.get_body(preferencelist=("plain", "html"))
-            body = body_part.get_content() if body_part else ""
-            if not body:
-                for part in msg.walk():
-                    if part.get_content_type() == "text/plain":
-                        payload = part.get_payload(decode=True)
-                        if isinstance(payload, bytes):
-                            body = payload.decode(
-                                part.get_content_charset() or "utf-8", errors="replace"
-                            )
-                        break
-            if not body:
-                body = content.decode("utf-8", errors="replace")
-            if not subject:
-                subject = create_preview(body, max_len=60)
-            return subject, str(body).strip(), ".eml"
-        except Exception:
-            text = content.decode("utf-8", errors="replace")
-            subject, body = parse_email_text(text)
-            return subject, body, ".eml"
-
-    elif ext == ".msg":
-        try:
-            import extract_msg
-
-            msg_obj = extract_msg.Message(io.BytesIO(content))
-            subject = msg_obj.subject or ""
-            body = msg_obj.body or ""
-            if not subject:
-                subject = create_preview(body, max_len=60)
-            return subject, str(body).strip(), ".msg"
-        except Exception:
-            text = content.decode("utf-8", errors="replace")
-            subject, body = parse_email_text(text)
-            return subject, body, ".msg"
-
-    else:
-        raise UnsupportedFileFormatError(
-            f"Unsupported file format for {filename}. Only .eml, .msg, and .txt are supported."
+def validate_file_metadata(filename: str, size: int) -> str:
+    """Validates file extension and size. Returns normalized extension."""
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise ValueError(
+            f"Unsupported file format '{ext}'. Supported formats: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
         )
+    if size > MAX_FILE_SIZE:
+        raise ValueError(
+            f"File size ({size} bytes) exceeds maximum allowed limit of 10MB."
+        )
+    return ext
+
+
+def extract_preview(body: str, max_length: int = 120) -> str:
+    """Generates a clean preview snippet from email body."""
+    if not body:
+        return ""
+    clean = " ".join(body.split())
+    if len(clean) <= max_length:
+        return clean
+    return clean[:max_length].rstrip() + "..."
+
+
+def parse_eml_bytes(content: bytes) -> Tuple[Optional[str], str]:
+    """Parses .eml bytes using standard email library."""
+    msg = email.message_from_bytes(content, policy=policy.default)
+    subject = msg.get("Subject")
+    if subject:
+        subject = str(subject).strip()
+
+    body_parts = []
+    if msg.is_multipart():
+        for part in msg.walk():
+            content_type = part.get_content_type()
+            content_disposition = str(part.get("Content-Disposition", ""))
+            if "attachment" in content_disposition:
+                continue
+            if content_type == "text/plain":
+                payload = part.get_payload(decode=True)
+                if payload:
+                    charset = part.get_content_charset() or "utf-8"
+                    body_parts.append(payload.decode(charset, errors="replace"))
+            elif content_type == "text/html" and not body_parts:
+                payload = part.get_payload(decode=True)
+                if payload:
+                    charset = part.get_content_charset() or "utf-8"
+                    body_parts.append(payload.decode(charset, errors="replace"))
+    else:
+        payload = msg.get_payload(decode=True)
+        if payload:
+            charset = msg.get_content_charset() or "utf-8"
+            body_parts.append(payload.decode(charset, errors="replace"))
+        else:
+            raw = msg.get_payload()
+            if isinstance(raw, str):
+                body_parts.append(raw)
+
+    body = "\n".join(body_parts).strip()
+    if not body:
+        # Fallback to string representation if payload extraction empty
+        body = content.decode("utf-8", errors="replace").strip()
+
+    return subject, body
+
+
+def parse_txt_bytes(content: bytes) -> Tuple[Optional[str], str]:
+    """Parses plain text file bytes."""
+    text = content.decode("utf-8", errors="replace").strip()
+    lines = text.splitlines()
+    subject = None
+    body = text
+
+    if lines and lines[0].lower().startswith("subject:"):
+        subject = lines[0][8:].strip()
+        body = "\n".join(lines[1:]).strip()
+
+    return subject, body
+
+
+def parse_msg_bytes(content: bytes) -> Tuple[Optional[str], str]:
+    """Parses .msg bytes using standard heuristics / text extraction."""
+    try:
+        # Check if it parses as an email structure
+        subject, body = parse_eml_bytes(content)
+        if body and body != content.decode("utf-8", errors="replace").strip():
+            return subject, body
+    except Exception:
+        pass
+
+    # Extract printable text strings if binary
+    text = content.decode("utf-8", errors="replace").strip()
+    lines = text.splitlines()
+    subject = None
+    body = text
+
+    for i, line in enumerate(lines[:5]):
+        if line.lower().startswith("subject:"):
+            subject = line[8:].strip()
+            body = "\n".join(lines[:i] + lines[i + 1 :]).strip()
+            break
+
+    return subject, body
+
+
+def parse_email_file(content: bytes, filename: str) -> Tuple[Optional[str], str, str]:
+    """Parses an uploaded email file based on its extension."""
+    ext = validate_file_metadata(filename, len(content))
+    if ext == ".eml":
+        subject, body = parse_eml_bytes(content)
+    elif ext == ".txt":
+        subject, body = parse_txt_bytes(content)
+    elif ext == ".msg":
+        subject, body = parse_msg_bytes(content)
+    else:
+        raise ValueError(f"Unsupported file format '{ext}'")
+
+    return subject, body, ext

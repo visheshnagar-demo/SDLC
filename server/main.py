@@ -9,9 +9,8 @@ from server.api.v1.emails import router as emails_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize DB tables
+    # Initialize database tables and seed test data idempotently
     init_db()
-    # Seed default data
     db = SessionLocal()
     try:
         seed_data(db)
@@ -22,39 +21,27 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Email Ingestion & AI Categorization API",
-    description="API for ingesting, parsing, AI classifying, and manually reviewing emails.",
+    description="Backend service for email ingestion (.eml, .msg, .txt), AI classification, and review dashboard.",
     version="1.0.0",
     lifespan=lifespan,
 )
 
-# CORS configuration
+# CORS Middleware configuration
 ALLOWED_ORIGINS = os.getenv(
-    "ALLOWED_ORIGINS",
-    "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000",
+    "ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000"
 ).split(",")
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=[origin.strip() for origin in ALLOWED_ORIGINS if origin.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include Routers
+# Include API routers
 app.include_router(emails_router, prefix="/api/v1/emails", tags=["emails"])
 
 
-@app.get("/")
-def root():
-    return {
-        "service": "Email Ingestion & AI Categorization API",
-        "version": "1.0.0",
-        "status": "online",
-        "docs": "/docs",
-    }
-
-
-@app.get("/health")
+@app.get("/health", tags=["system"])
 def health_check():
-    return {"status": "healthy"}
+    return {"status": "ok", "service": "email-ai-classifier"}
