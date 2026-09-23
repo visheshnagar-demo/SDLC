@@ -2,6 +2,118 @@
   "pipeline_id": "sales_order_etl",
   "source_table": "raw_sales_data",
   "target_table": "vishesh-test1",
+  "source": {
+    "type": "gcs",
+    "bucket": "sdlc-workspec-store",
+    "prefix": "etl/data/raw_sales_data.csv",
+    "uri": "gs://sdlc-workspec-store/etl/data/raw_sales_data.csv",
+    "format": "csv",
+    "columns": [
+      "order_id",
+      "customer_id",
+      "customer_name",
+      "customer_email",
+      "product_category",
+      "amount",
+      "currency",
+      "order_status",
+      "created_at"
+    ]
+  },
+  "target": {
+    "type": "bigquery",
+    "project_id": "upbeat-repeater-477110-q6",
+    "dataset": "analytics",
+    "table": "vishesh-test1",
+    "table_name": "vishesh-test1",
+    "full_table_id": "upbeat-repeater-477110-q6.analytics.vishesh-test1",
+    "partition_field": "created_at",
+    "clustering_fields": ["customer_id", "order_status"],
+    "write_disposition": "WRITE_TRUNCATE",
+    "write_mode": "overwrite"
+  },
+  "transformations": [
+    {
+      "source_column": "order_id",
+      "target_column": "order_id",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transform": "cast_int",
+      "description": "Unique identifier for the sales order"
+    },
+    {
+      "source_column": "customer_id",
+      "target_column": "customer_id",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_string",
+      "description": "Unique identifier for the customer"
+    },
+    {
+      "source_column": "customer_name",
+      "target_column": "customer_name",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_string",
+      "description": "Full name of the customer"
+    },
+    {
+      "source_column": "customer_email",
+      "target_column": "customer_email",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_string_nullify",
+      "description": "Customer contact email address"
+    },
+    {
+      "source_column": "product_category",
+      "target_column": "product_category",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_string_nullify",
+      "description": "Product category of the order"
+    },
+    {
+      "source_column": "amount",
+      "target_column": "amount",
+      "source_type": "FLOAT",
+      "target_type": "FLOAT",
+      "transform": "cast_float_nullify",
+      "description": "Total order monetary amount"
+    },
+    {
+      "source_column": "currency",
+      "target_column": "currency",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_string",
+      "description": "ISO currency code"
+    },
+    {
+      "source_column": "order_status",
+      "target_column": "order_status",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_string",
+      "description": "Order fulfillment and payment status"
+    },
+    {
+      "source_column": "created_at",
+      "target_column": "created_at",
+      "source_type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "transform": "parse_iso_timestamp",
+      "description": "Creation timestamp of the sales order"
+    },
+    {
+      "source_column": null,
+      "target_column": "ingested_at",
+      "source_type": null,
+      "target_type": "TIMESTAMP",
+      "transform": "current_utc_timestamp",
+      "description": "Pipeline execution ingestion timestamp"
+    }
+  ],
   "columns": [
     {
       "name": "order_id",
