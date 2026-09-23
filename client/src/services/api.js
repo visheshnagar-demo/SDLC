@@ -7,85 +7,105 @@ export const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
+  timeout: 30000,
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Standardized error payload extractions
-    const message =
-      error.response?.data?.detail ||
-      error.message ||
-      "An unexpected network error occurred";
-    return Promise.reject(
-      new Error(
-        typeof message === "object" ? JSON.stringify(message) : message,
-      ),
+export const itineraryApi = {
+  // Generate a new AI itinerary
+  generateItinerary: async (payload) => {
+    const response = await apiClient.post(
+      "/api/v1/itineraries/generate",
+      payload,
     );
+    return response.data;
   },
-);
 
-export const createCheckoutSession = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/checkout-session",
-    payload,
-  );
-  return response.data;
+  // Get full itinerary details by ID
+  getItinerary: async (id) => {
+    const response = await apiClient.get(`/api/v1/itineraries/${id}`);
+    return response.data;
+  },
+
+  // Update itinerary metadata/budget
+  updateItinerary: async (id, payload) => {
+    const response = await apiClient.put(`/api/v1/itineraries/${id}`, payload);
+    return response.data;
+  },
+
+  // Add custom activity to a day
+  addActivity: async (itineraryId, payload) => {
+    const response = await apiClient.post(
+      `/api/v1/itineraries/${itineraryId}/activities`,
+      payload,
+    );
+    return response.data;
+  },
+
+  // Update an existing activity
+  updateActivity: async (itineraryId, activityId, payload) => {
+    const response = await apiClient.put(
+      `/api/v1/itineraries/${itineraryId}/activities/${activityId}`,
+      payload,
+    );
+    return response.data;
+  },
+
+  // Delete an activity
+  deleteActivity: async (itineraryId, activityId) => {
+    const response = await apiClient.delete(
+      `/api/v1/itineraries/${itineraryId}/activities/${activityId}`,
+    );
+    return response.data;
+  },
+
+  // Reorder activities
+  reorderActivities: async (itineraryId, payload) => {
+    const response = await apiClient.post(
+      `/api/v1/itineraries/${itineraryId}/activities/reorder`,
+      payload,
+    );
+    return response.data;
+  },
+
+  // Export PDF
+  exportPdf: async (itineraryId) => {
+    const response = await apiClient.get(
+      `/api/v1/itineraries/${itineraryId}/export/pdf`,
+      { responseType: "blob" },
+    );
+    return response.data;
+  },
+
+  // Export iCalendar (.ics)
+  exportIcs: async (itineraryId) => {
+    const response = await apiClient.get(
+      `/api/v1/itineraries/${itineraryId}/export/ics`,
+      { responseType: "blob" },
+    );
+    return response.data;
+  },
+
+  // Generate shareable token
+  shareItinerary: async (itineraryId) => {
+    const response = await apiClient.post(
+      `/api/v1/itineraries/${itineraryId}/share`,
+    );
+    return response.data;
+  },
+
+  // Retrieve shared itinerary (public view)
+  getSharedItinerary: async (shareToken) => {
+    const response = await apiClient.get(
+      `/api/v1/itineraries/shared/${shareToken}`,
+    );
+    return response.data;
+  },
+
+  // List recent itineraries (if available)
+  listItineraries: async () => {
+    const response = await apiClient.get("/api/v1/itineraries");
+    return response.data;
+  },
 };
 
-export const payWithDigitalWallet = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/digital-wallet",
-    payload,
-  );
-  return response.data;
-};
-
-export const getExchangeRates = async (baseCurrency = "USD") => {
-  const response = await apiClient.get("/api/v1/payments/rates", {
-    params: { base_currency: baseCurrency },
-  });
-  return response.data;
-};
-
-export const listTransactions = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/payments/transactions", {
-    params,
-  });
-  return response.data;
-};
-
-export const getTransactionDetail = async (transactionId) => {
-  const response = await apiClient.get(
-    `/api/v1/payments/transactions/${transactionId}`,
-  );
-  return response.data;
-};
-
-export const createRefund = async (payload) => {
-  const response = await apiClient.post("/api/v1/refunds", payload);
-  return response.data;
-};
-
-export const listRefunds = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/refunds", { params });
-  return response.data;
-};
-
-export const listAuditLogs = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/audit-logs", { params });
-  return response.data;
-};
-
-export default {
-  apiClient,
-  createCheckoutSession,
-  payWithDigitalWallet,
-  getExchangeRates,
-  listTransactions,
-  getTransactionDetail,
-  createRefund,
-  listRefunds,
-  listAuditLogs,
-};
+export default itineraryApi;
