@@ -1,317 +1,36 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Payment Gateway Service",
-    "version": "0.1.0"
+    "title": "AI Study Planner API",
+    "description": "Intelligent schedule optimization and priority recommendations for students and learners.",
+    "version": "1.0.0"
   },
   "paths": {
-    "/api/v1/payments/checkout-session": {
+    "/api/v1/subjects": {
       "post": {
         "tags": [
-          "payments"
+          "Subjects"
         ],
-        "summary": "Create Session",
-        "operationId": "create_session_api_v1_payments_checkout_session_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CheckoutSessionRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CheckoutSessionResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/digital-wallet": {
-      "post": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Pay Digital Wallet",
-        "operationId": "pay_digital_wallet_api_v1_payments_digital_wallet_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DigitalWalletPaymentRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DigitalWalletPaymentResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/rates": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Get Rates",
-        "operationId": "get_rates_api_v1_payments_rates_get",
-        "parameters": [
-          {
-            "name": "base_currency",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "Base currency code",
-              "default": "USD",
-              "title": "Base Currency"
-            },
-            "description": "Base currency code"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExchangeRatesResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "List Transactions",
-        "operationId": "list_transactions_api_v1_payments_transactions_get",
-        "parameters": [
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Search transaction ID or email",
-              "title": "Search"
-            },
-            "description": "Search transaction ID or email"
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction status",
-              "title": "Status"
-            },
-            "description": "Filter by transaction status"
-          },
-          {
-            "name": "currency",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by currency",
-              "title": "Currency"
-            },
-            "description": "Filter by currency"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TransactionSummary"
-                  },
-                  "title": "Response List Transactions Api V1 Payments Transactions Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions/{transaction_id}": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Get Transaction",
-        "operationId": "get_transaction_api_v1_payments_transactions__transaction_id__get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Transaction Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TransactionDetail"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/refunds": {
-      "post": {
-        "tags": [
-          "refunds"
-        ],
-        "summary": "Create Refund Endpoint",
-        "operationId": "create_refund_endpoint_api_v1_refunds_post",
+        "summary": "Create Subject",
+        "description": "Create a new study subject with difficulty rating and target completion date.",
+        "operationId": "create_subject_api_v1_subjects_post",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RefundRequest"
+                "$ref": "#/components/schemas/SubjectCreate"
               }
             }
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RefundSummary"
+                  "$ref": "#/components/schemas/SubjectResponse"
                 }
               }
             }
@@ -330,36 +49,18 @@
       },
       "get": {
         "tags": [
-          "refunds"
+          "Subjects"
         ],
-        "summary": "List Refunds Endpoint",
-        "operationId": "list_refunds_endpoint_api_v1_refunds_get",
+        "summary": "List Subjects",
+        "description": "Retrieve all configured study subjects.",
+        "operationId": "list_subjects_api_v1_subjects_get",
         "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
-          },
           {
             "name": "skip",
             "in": "query",
             "required": false,
             "schema": {
               "type": "integer",
-              "minimum": 0,
               "default": 0,
               "title": "Skip"
             }
@@ -370,9 +71,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
+              "default": 100,
               "title": "Limit"
             }
           }
@@ -385,9 +84,9 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/RefundSummary"
+                    "$ref": "#/components/schemas/SubjectResponse"
                   },
-                  "title": "Response List Refunds Endpoint Api V1 Refunds Get"
+                  "title": "Response List Subjects Api V1 Subjects Get"
                 }
               }
             }
@@ -405,31 +104,442 @@
         }
       }
     },
-    "/api/v1/webhooks/stripe": {
-      "post": {
+    "/api/v1/subjects/{subject_id}": {
+      "get": {
         "tags": [
-          "webhooks"
+          "Subjects"
         ],
-        "summary": "Handle Stripe Webhook",
-        "operationId": "handle_stripe_webhook_api_v1_webhooks_stripe_post",
+        "summary": "Get Subject",
+        "description": "Retrieve a single subject by ID.",
+        "operationId": "get_subject_api_v1_subjects__subject_id__get",
         "parameters": [
           {
-            "name": "stripe-signature",
-            "in": "header",
-            "required": false,
+            "name": "subject_id",
+            "in": "path",
+            "required": true,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Stripe-Signature"
+              "type": "string",
+              "title": "Subject Id"
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubjectResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Subjects"
+        ],
+        "summary": "Update Subject",
+        "description": "Update subject properties.",
+        "operationId": "update_subject_api_v1_subjects__subject_id__put",
+        "parameters": [
+          {
+            "name": "subject_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubjectUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubjectResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Subjects"
+        ],
+        "summary": "Delete Subject",
+        "description": "Delete a subject by ID.",
+        "operationId": "delete_subject_api_v1_subjects__subject_id__delete",
+        "parameters": [
+          {
+            "name": "subject_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/availability": {
+      "get": {
+        "tags": [
+          "Availability"
+        ],
+        "summary": "Get Availability Profile",
+        "description": "Retrieve the current weekly availability settings.",
+        "operationId": "get_availability_profile_api_v1_availability_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AvailabilityResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Get Availability Profile Api V1 Availability Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Availability"
+        ],
+        "summary": "Set Availability Profile",
+        "description": "Save or update weekly study time availability by day of week.",
+        "operationId": "set_availability_profile_api_v1_availability_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvailabilityBatchCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AvailabilityResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Set Availability Profile Api V1 Availability Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schedules/generate": {
+      "post": {
+        "tags": [
+          "Schedules"
+        ],
+        "summary": "Generate Schedule",
+        "description": "Generate an AI-powered personalized study schedule and priority matrix.",
+        "operationId": "generate_schedule_api_v1_schedules_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleGenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudyPlanResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schedules": {
+      "get": {
+        "tags": [
+          "Schedules"
+        ],
+        "summary": "List Schedules",
+        "description": "List all created study plans.",
+        "operationId": "list_schedules_api_v1_schedules_get",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StudyPlanDetailResponse"
+                  },
+                  "title": "Response List Schedules Api V1 Schedules Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schedules/{plan_id}": {
+      "get": {
+        "tags": [
+          "Schedules"
+        ],
+        "summary": "Get Schedule",
+        "description": "Retrieve detailed schedule breakdown with individual daily sessions and recommendations.",
+        "operationId": "get_schedule_api_v1_schedules__plan_id__get",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plan Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudyPlanDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Schedules"
+        ],
+        "summary": "Delete Schedule",
+        "description": "Delete a study plan and all associated sessions.",
+        "operationId": "delete_schedule_api_v1_schedules__plan_id__delete",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plan Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schedules/sessions/{session_id}": {
+      "patch": {
+        "tags": [
+          "Schedules"
+        ],
+        "summary": "Update Session Status",
+        "description": "Update study session status (e.g., COMPLETED, SKIPPED, RESCHEDULED, PENDING).",
+        "operationId": "update_session_status_api_v1_schedules_sessions__session_id__patch",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionStatusUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudySessionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health Check",
+        "description": "Health and readiness check.",
+        "operationId": "health_check_api_v1_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -438,120 +548,14 @@
                 "schema": {}
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
         }
       }
     },
-    "/api/v1/audit-logs": {
+    "/": {
       "get": {
-        "tags": [
-          "audit-logs"
-        ],
-        "summary": "List Audit Logs",
-        "operationId": "list_audit_logs_api_v1_audit_logs_get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
-          },
-          {
-            "name": "event_type",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by event type",
-              "title": "Event Type"
-            },
-            "description": "Filter by event type"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AuditLogEntry"
-                  },
-                  "title": "Response List Audit Logs Api V1 Audit Logs Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/health": {
-      "get": {
-        "summary": "Health Check",
-        "operationId": "health_check_health_get",
+        "summary": "Root",
+        "operationId": "root__get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -567,274 +571,91 @@
   },
   "components": {
     "schemas": {
-      "AuditLogEntry": {
+      "AvailabilityBatchCreate": {
+        "properties": {
+          "weekly_slots": {
+            "items": {
+              "$ref": "#/components/schemas/AvailabilitySlot"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Weekly Slots",
+            "description": "List of daily availability settings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "weekly_slots"
+        ],
+        "title": "AvailabilityBatchCreate"
+      },
+      "AvailabilityResponse": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "transaction_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Transaction Id"
-          },
-          "event_type": {
+          "day_of_week": {
             "type": "string",
-            "title": "Event Type"
+            "title": "Day Of Week"
           },
-          "ip_address": {
+          "available_minutes": {
+            "type": "integer",
+            "title": "Available Minutes"
+          },
+          "preferred_time_of_day": {
             "type": "string",
-            "title": "Ip Address"
-          },
-          "masked_payload": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Masked Payload"
+            "title": "Preferred Time Of Day"
           },
           "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "event_type",
-          "ip_address",
-          "masked_payload"
+          "day_of_week",
+          "available_minutes",
+          "preferred_time_of_day",
+          "created_at",
+          "updated_at"
         ],
-        "title": "AuditLogEntry"
+        "title": "AvailabilityResponse"
       },
-      "CartItem": {
+      "AvailabilitySlot": {
         "properties": {
-          "name": {
+          "day_of_week": {
             "type": "string",
-            "title": "Name"
+            "title": "Day Of Week",
+            "description": "Day of week, e.g., MONDAY, TUESDAY, etc."
           },
-          "quantity": {
+          "available_minutes": {
             "type": "integer",
-            "title": "Quantity",
-            "default": 1
+            "maximum": 1440.0,
+            "minimum": 0.0,
+            "title": "Available Minutes",
+            "description": "Available study minutes for this day",
+            "default": 120
           },
-          "unit_price": {
-            "type": "number",
-            "title": "Unit Price"
+          "preferred_time_of_day": {
+            "type": "string",
+            "title": "Preferred Time Of Day",
+            "description": "Preferred time: MORNING, AFTERNOON, EVENING",
+            "default": "EVENING"
           }
         },
         "type": "object",
         "required": [
-          "name",
-          "unit_price"
+          "day_of_week"
         ],
-        "title": "CartItem"
-      },
-      "CheckoutSessionRequest": {
-        "properties": {
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount",
-            "description": "Amount in base currency"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "description": "Settlement/target currency",
-            "default": "USD"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "items": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/CartItem"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Items"
-          }
-        },
-        "type": "object",
-        "required": [
-          "amount",
-          "customer_email"
-        ],
-        "title": "CheckoutSessionRequest"
-      },
-      "CheckoutSessionResponse": {
-        "properties": {
-          "session_id": {
-            "type": "string",
-            "title": "Session Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "client_secret": {
-            "type": "string",
-            "title": "Client Secret"
-          },
-          "base_amount": {
-            "type": "number",
-            "title": "Base Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_amount": {
-            "type": "number",
-            "title": "Target Amount"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          }
-        },
-        "type": "object",
-        "required": [
-          "session_id",
-          "payment_intent_id",
-          "client_secret",
-          "base_amount",
-          "base_currency",
-          "target_amount",
-          "target_currency",
-          "exchange_rate"
-        ],
-        "title": "CheckoutSessionResponse"
-      },
-      "DigitalWalletPaymentRequest": {
-        "properties": {
-          "wallet_type": {
-            "type": "string",
-            "title": "Wallet Type",
-            "description": "apple_pay or google_pay"
-          },
-          "payment_token": {
-            "type": "string",
-            "title": "Payment Token"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "default": "USD"
-          },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
-          },
-          "customer_email": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Customer Email",
-            "default": "customer@example.com"
-          }
-        },
-        "type": "object",
-        "required": [
-          "wallet_type",
-          "payment_token",
-          "amount"
-        ],
-        "title": "DigitalWalletPaymentRequest"
-      },
-      "DigitalWalletPaymentResponse": {
-        "properties": {
-          "transaction_id": {
-            "type": "string",
-            "title": "Transaction Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "wallet_type": {
-            "type": "string",
-            "title": "Wallet Type"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          }
-        },
-        "type": "object",
-        "required": [
-          "transaction_id",
-          "payment_intent_id",
-          "wallet_type",
-          "amount",
-          "currency",
-          "status"
-        ],
-        "title": "DigitalWalletPaymentResponse"
-      },
-      "ExchangeRatesResponse": {
-        "properties": {
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "rates": {
-            "additionalProperties": {
-              "type": "number"
-            },
-            "type": "object",
-            "title": "Rates"
-          },
-          "timestamp": {
-            "type": "string",
-            "title": "Timestamp"
-          }
-        },
-        "type": "object",
-        "required": [
-          "base_currency",
-          "rates",
-          "timestamp"
-        ],
-        "title": "ExchangeRatesResponse"
+        "title": "AvailabilitySlot"
       },
       "HTTPValidationError": {
         "properties": {
@@ -849,64 +670,44 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "RefundRequest": {
-        "properties": {
-          "transaction_id": {
-            "type": "string",
-            "title": "Transaction Id"
-          },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
-          },
-          "reason": {
-            "type": "string",
-            "title": "Reason"
-          },
-          "memo": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Memo"
-          }
-        },
-        "type": "object",
-        "required": [
-          "transaction_id",
-          "amount",
-          "reason"
-        ],
-        "title": "RefundRequest"
-      },
-      "RefundSummary": {
+      "PriorityRecommendationResponse": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "transaction_id": {
+          "study_plan_id": {
             "type": "string",
-            "title": "Transaction Id"
+            "title": "Study Plan Id"
           },
-          "refund_amount": {
+          "subject_id": {
+            "type": "string",
+            "title": "Subject Id"
+          },
+          "priority_rank": {
+            "type": "integer",
+            "title": "Priority Rank"
+          },
+          "urgency_score": {
             "type": "number",
-            "title": "Refund Amount"
+            "title": "Urgency Score"
           },
-          "currency": {
+          "recommendation_text": {
             "type": "string",
-            "title": "Currency"
+            "title": "Recommendation Text"
           },
-          "reason": {
-            "type": "string",
-            "title": "Reason"
+          "allocated_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allocated Hours"
           },
-          "memo": {
+          "subject_name": {
             "anyOf": [
               {
                 "type": "string"
@@ -915,177 +716,518 @@
                 "type": "null"
               }
             ],
-            "title": "Memo"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
+            "title": "Subject Name"
           },
           "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "transaction_id",
-          "refund_amount",
-          "currency",
-          "reason",
-          "status"
+          "study_plan_id",
+          "subject_id",
+          "priority_rank",
+          "urgency_score",
+          "recommendation_text",
+          "created_at",
+          "updated_at"
         ],
-        "title": "RefundSummary"
+        "title": "PriorityRecommendationResponse"
       },
-      "TransactionDetail": {
+      "PrioritySummary": {
         "properties": {
-          "id": {
+          "subject_name": {
             "type": "string",
-            "title": "Id"
+            "title": "Subject Name"
           },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
+          "priority_rank": {
+            "type": "integer",
+            "title": "Priority Rank"
           },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "payment_method": {
-            "type": "string",
-            "title": "Payment Method"
-          },
-          "amount": {
+          "allocated_hours": {
             "type": "number",
-            "title": "Amount"
+            "title": "Allocated Hours"
           },
-          "base_currency": {
+          "recommendation_text": {
             "type": "string",
-            "title": "Base Currency"
-          },
-          "target_currency": {
+            "title": "Recommendation Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subject_name",
+          "priority_rank",
+          "allocated_hours",
+          "recommendation_text"
+        ],
+        "title": "PrioritySummary"
+      },
+      "ScheduleGenerateRequest": {
+        "properties": {
+          "plan_title": {
             "type": "string",
-            "title": "Target Currency"
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Plan Title",
+            "description": "Title of the study plan"
           },
-          "converted_amount": {
-            "type": "number",
-            "title": "Converted Amount"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          },
-          "status": {
+          "start_date": {
             "type": "string",
-            "title": "Status"
+            "format": "date",
+            "title": "Start Date",
+            "description": "Schedule start date"
           },
-          "refunded_amount": {
-            "type": "number",
-            "title": "Refunded Amount"
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "title": "End Date",
+            "description": "Schedule end date"
           },
-          "remaining_refundable_balance": {
-            "type": "number",
-            "title": "Remaining Refundable Balance"
-          },
-          "refunds": {
+          "subject_ids": {
             "items": {
-              "$ref": "#/components/schemas/RefundSummary"
+              "type": "string"
             },
             "type": "array",
-            "title": "Refunds"
+            "minItems": 1,
+            "title": "Subject Ids",
+            "description": "List of subject UUIDs to schedule"
           },
-          "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Created At"
+          "daily_max_minutes": {
+            "type": "integer",
+            "maximum": 1440.0,
+            "minimum": 30.0,
+            "title": "Daily Max Minutes",
+            "description": "Maximum study minutes per day",
+            "default": 300
+          },
+          "include_recommendations": {
+            "type": "boolean",
+            "title": "Include Recommendations",
+            "description": "Whether to compute AI priority recommendations",
+            "default": true
           }
         },
         "type": "object",
         "required": [
-          "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "base_currency",
-          "target_currency",
-          "converted_amount",
-          "exchange_rate",
-          "status",
-          "refunded_amount",
-          "remaining_refundable_balance"
+          "plan_title",
+          "start_date",
+          "end_date",
+          "subject_ids"
         ],
-        "title": "TransactionDetail"
+        "title": "ScheduleGenerateRequest"
       },
-      "TransactionSummary": {
+      "SessionStatusUpdate": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Updated session status: PENDING, COMPLETED, SKIPPED, RESCHEDULED"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "SessionStatusUpdate"
+      },
+      "StudyPlanDetailResponse": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "payment_intent_id": {
+          "title": {
             "type": "string",
-            "title": "Payment Intent Id"
+            "title": "Title"
           },
-          "customer_email": {
+          "start_date": {
             "type": "string",
-            "title": "Customer Email"
+            "format": "date",
+            "title": "Start Date"
           },
-          "payment_method": {
+          "end_date": {
             "type": "string",
-            "title": "Payment Method"
+            "format": "date",
+            "title": "End Date"
           },
-          "amount": {
+          "total_study_hours": {
             "type": "number",
-            "title": "Amount"
+            "title": "Total Study Hours"
           },
-          "currency": {
+          "status": {
             "type": "string",
-            "title": "Currency"
+            "title": "Status"
+          },
+          "sessions": {
+            "items": {
+              "$ref": "#/components/schemas/StudySessionResponse"
+            },
+            "type": "array",
+            "title": "Sessions",
+            "default": []
+          },
+          "priorities": {
+            "items": {
+              "$ref": "#/components/schemas/PriorityRecommendationResponse"
+            },
+            "type": "array",
+            "title": "Priorities",
+            "default": []
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "start_date",
+          "end_date",
+          "total_study_hours",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "StudyPlanDetailResponse"
+      },
+      "StudyPlanResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "title": "End Date"
+          },
+          "total_study_hours": {
+            "type": "number",
+            "title": "Total Study Hours"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "sessions_count": {
+            "type": "integer",
+            "title": "Sessions Count",
+            "default": 0
+          },
+          "priorities": {
+            "items": {
+              "$ref": "#/components/schemas/PrioritySummary"
+            },
+            "type": "array",
+            "title": "Priorities",
+            "default": []
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "start_date",
+          "end_date",
+          "total_study_hours",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "StudyPlanResponse"
+      },
+      "StudySessionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "study_plan_id": {
+            "type": "string",
+            "title": "Study Plan Id"
+          },
+          "subject_id": {
+            "type": "string",
+            "title": "Subject Id"
+          },
+          "session_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Session Date"
+          },
+          "start_time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Time"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "title": "Duration Minutes"
+          },
+          "topic_focus": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Topic Focus"
           },
           "status": {
             "type": "string",
             "title": "Status"
           },
           "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "subject": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "$ref": "#/components/schemas/SubjectResponse"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Created At"
+            ]
           }
         },
         "type": "object",
         "required": [
           "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "currency",
-          "status"
+          "study_plan_id",
+          "subject_id",
+          "session_date",
+          "duration_minutes",
+          "status",
+          "created_at",
+          "updated_at"
         ],
-        "title": "TransactionSummary"
+        "title": "StudySessionResponse"
+      },
+      "SubjectCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Name of the study subject"
+          },
+          "difficulty_level": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Difficulty Level",
+            "description": "Difficulty level from 1 (easy) to 5 (very hard)",
+            "default": 3
+          },
+          "target_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Target Date",
+            "description": "Target exam or completion date"
+          },
+          "estimated_total_hours": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Estimated Total Hours",
+            "description": "Estimated total hours needed",
+            "default": 10.0
+          },
+          "color_tag": {
+            "type": "string",
+            "maxLength": 20,
+            "title": "Color Tag",
+            "description": "Hex color or tag string",
+            "default": "#3B82F6"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "target_date"
+        ],
+        "title": "SubjectCreate"
+      },
+      "SubjectResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Name of the study subject"
+          },
+          "difficulty_level": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Difficulty Level",
+            "description": "Difficulty level from 1 (easy) to 5 (very hard)",
+            "default": 3
+          },
+          "target_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Target Date",
+            "description": "Target exam or completion date"
+          },
+          "estimated_total_hours": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Estimated Total Hours",
+            "description": "Estimated total hours needed",
+            "default": 10.0
+          },
+          "color_tag": {
+            "type": "string",
+            "maxLength": 20,
+            "title": "Color Tag",
+            "description": "Hex color or tag string",
+            "default": "#3B82F6"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "target_date",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "SubjectResponse"
+      },
+      "SubjectUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 150,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "difficulty_level": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Difficulty Level"
+          },
+          "target_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Date"
+          },
+          "estimated_total_hours": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Total Hours"
+          },
+          "color_tag": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color Tag"
+          }
+        },
+        "type": "object",
+        "title": "SubjectUpdate"
       },
       "ValidationError": {
         "properties": {
