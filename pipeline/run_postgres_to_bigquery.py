@@ -1,4 +1,4 @@
-"""Main batch execution entrypoint for Cloud Run Job."""
+"""Runner script for postgres_to_bigquery Cloud Run Job execution."""
 import sys
 from server.etl.pipeline import main
 

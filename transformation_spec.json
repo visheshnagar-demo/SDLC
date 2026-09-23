@@ -1,0 +1,45 @@
+{
+  "pipeline_id": "postgres_to_bigquery_scrum_365",
+  "source": {
+    "type": "postgresql",
+    "instance_connection_name": "upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db",
+    "database": "postgres",
+    "table": "test_data"
+  },
+  "target": {
+    "type": "bigquery",
+    "project": "upbeat-repeater-477110-q6",
+    "dataset": "analytics",
+    "table": "postgres_test2"
+  },
+  "columns": [
+    {
+      "source_name": "id",
+      "target_name": "id",
+      "target_type": "STRING",
+      "nullable": false,
+      "transform": "strip_and_coerce_string"
+    },
+    {
+      "source_name": "raw_data",
+      "target_name": "raw_data",
+      "target_type": "STRING",
+      "nullable": true,
+      "transform": "strip_and_normalize_nulls"
+    },
+    {
+      "source_name": "cleaned_at",
+      "target_name": "cleaned_at",
+      "target_type": "TIMESTAMP",
+      "nullable": true,
+      "transform": "parse_datetime_utc"
+    },
+    {
+      "source_name": "_ingested_at",
+      "target_name": "ingested_at",
+      "target_type": "TIMESTAMP",
+      "nullable": false,
+      "transform": "current_timestamp_utc"
+    }
+  ]
+}

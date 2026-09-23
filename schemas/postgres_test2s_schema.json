@@ -1,0 +1,26 @@
+[
+  {
+    "name": "id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Unique identifier of the record"
+  },
+  {
+    "name": "raw_data",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Raw string or JSON payload from source"
+  },
+  {
+    "name": "cleaned_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Timestamp when the record was processed/cleaned"
+  },
+  {
+    "name": "ingested_at",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "ETL ingestion timestamp"
+  }
+]

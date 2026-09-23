@@ -7,3 +7,4 @@ pandas>=2.0.0
 sqlalchemy>=2.0.0
 pytest>=7.4.0
 numpy>=1.24.0
+apache-airflow>=2.8.0
