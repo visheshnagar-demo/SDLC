@@ -4,13 +4,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: "#f0fdf4",
-          100: "#dcfce7",
-          500: "#22c55e",
-          600: "#16a34a",
-          700: "#15803d",
+        primary: {
+          DEFAULT: "#3525cd",
+          container: "#4f46e5",
+          dark: "#2719a8",
+          light: "#e0e7ff",
         },
+        secondary: "#0f172a",
+        accent: "#6366f1",
+      },
+      fontFamily: {
+        sans: ["Plus Jakarta Sans", "Inter", "system-ui", "sans-serif"],
       },
     },
   },
