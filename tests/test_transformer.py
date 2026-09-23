@@ -3,6 +3,15 @@ import ast
 import os
 import pytest
 
+try:
+    import numpy as np
+    import pandas as pd
+except ImportError:
+    np = None
+    pd = None
+
+from server.transformer import DataTransformer, clean_data, deduplicate, add_audit_columns
+
 
 def test_transformer_file_syntax():
     file_path = os.path.join("server", "transformer.py")
@@ -13,8 +22,8 @@ def test_transformer_file_syntax():
 
 
 def test_transformer_cleansing_and_deduplication():
-    pd = pytest.importorskip("pandas")
-    from server.transformer import DataTransformer
+    if pd is None:
+        pytest.skip("pandas not installed")
 
     data = {
         "order_id": ["1001", "1001", "1002"],
@@ -50,8 +59,8 @@ def test_transformer_cleansing_and_deduplication():
 
 
 def test_transformer_null_normalization():
-    pd = pytest.importorskip("pandas")
-    from server.transformer import DataTransformer
+    if pd is None:
+        pytest.skip("pandas not installed")
 
     data = {
         "order_id": ["2001"],
@@ -75,3 +84,13 @@ def test_transformer_null_normalization():
     assert pd.isna(row["product_category"])
     assert pd.isna(row["amount"])
     assert pd.isna(row["currency"])
+
+
+def test_transformer_empty_df():
+    if pd is None:
+        pytest.skip("pandas not installed")
+
+    transformer = DataTransformer()
+    clean_df, dedup_count = transformer.transform(pd.DataFrame())
+    assert clean_df.empty
+    assert dedup_count == 0

@@ -4,6 +4,13 @@ import os
 import pytest
 from unittest.mock import MagicMock, patch
 
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
+
+from server.loader import BigQueryLoader, load_to_bigquery
+
 
 def test_loader_file_syntax():
     file_path = os.path.join("server", "loader.py")
@@ -14,8 +21,8 @@ def test_loader_file_syntax():
 
 
 def test_loader_missing_project_id():
-    pd = pytest.importorskip("pandas")
-    from server.loader import BigQueryLoader
+    if pd is None:
+        pytest.skip("pandas not installed")
     loader = BigQueryLoader(project_id="", dataset_id="analytics", table_name="test")
     df = pd.DataFrame({"order_id": [1]})
     with pytest.raises(EnvironmentError):
@@ -23,17 +30,16 @@ def test_loader_missing_project_id():
 
 
 def test_loader_empty_dataframe_returns_zero():
-    pd = pytest.importorskip("pandas")
-    from server.loader import BigQueryLoader
+    if pd is None:
+        pytest.skip("pandas not installed")
     loader = BigQueryLoader(project_id="test-proj", dataset_id="analytics", table_name="test")
     df = pd.DataFrame()
     assert loader.load(df) == 0
 
 
 def test_loader_success():
-    pd = pytest.importorskip("pandas")
-    pytest.importorskip("google.cloud.bigquery")
-    from server.loader import BigQueryLoader
+    if pd is None:
+        pytest.skip("pandas not installed")
 
     with patch("server.loader.bigquery.Client") as mock_bq_client_cls:
         mock_client = MagicMock()
@@ -56,9 +62,8 @@ def test_loader_success():
 
 
 def test_loader_failure_raises_runtime_error():
-    pd = pytest.importorskip("pandas")
-    pytest.importorskip("google.cloud.bigquery")
-    from server.loader import BigQueryLoader
+    if pd is None:
+        pytest.skip("pandas not installed")
 
     with patch("server.loader.bigquery.Client") as mock_bq_client_cls:
         mock_client = MagicMock()
@@ -76,3 +81,16 @@ def test_loader_failure_raises_runtime_error():
 
         with pytest.raises(RuntimeError, match="BigQuery load job failed"):
             loader.load(df)
+
+
+def test_loader_table_id_parsing():
+    loader1 = BigQueryLoader(table_id="my-proj.my-dataset.my-table")
+    assert loader1.project_id == "my-proj"
+    assert loader1.dataset_id == "my-dataset"
+    assert loader1.table_name == "my-table"
+    assert loader1.full_table_id == "my-proj.my-dataset.my-table"
+
+    loader2 = BigQueryLoader(table_id="my-dataset.my-table", project_id="fallback-proj")
+    assert loader2.project_id == "fallback-proj"
+    assert loader2.dataset_id == "my-dataset"
+    assert loader2.table_name == "my-table"

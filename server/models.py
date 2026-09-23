@@ -9,16 +9,16 @@ class SalesRecord:
     """Represents a sanitized and validated sales record ready for BigQuery loading."""
     order_id: int
     customer_id: str
-    customer_name: Optional[str]
-    customer_email: Optional[str]
-    product_category: Optional[str]
-    amount: Optional[float]
-    currency: Optional[str]
-    order_status: Optional[str]
-    created_at: datetime
-    _etl_ingested_at: datetime
-    _etl_batch_id: str
-    _etl_source_file: str
+    customer_name: Optional[str] = None
+    customer_email: Optional[str] = None
+    product_category: Optional[str] = None
+    amount: Optional[float] = None
+    currency: Optional[str] = None
+    order_status: Optional[str] = None
+    created_at: Optional[datetime] = None
+    _etl_ingested_at: Optional[datetime] = None
+    _etl_batch_id: Optional[str] = None
+    _etl_source_file: Optional[str] = None
 
 
 @dataclass

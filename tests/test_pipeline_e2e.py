@@ -4,6 +4,13 @@ import os
 import pytest
 from unittest.mock import MagicMock, patch
 
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
+
+from server.main import run_pipeline
+
 
 def test_main_file_syntax():
     file_path = os.path.join("server", "main.py")
@@ -14,8 +21,8 @@ def test_main_file_syntax():
 
 
 def test_pipeline_e2e_success():
-    pd = pytest.importorskip("pandas")
-    from server.main import run_pipeline
+    if pd is None:
+        pytest.skip("pandas not installed")
 
     sample_csv_df = pd.DataFrame({
         "order_id": [1001, 1001, 1002],
@@ -45,9 +52,6 @@ def test_pipeline_e2e_success():
 
 
 def test_pipeline_e2e_failure_on_missing_file():
-    pd = pytest.importorskip("pandas")
-    from server.main import run_pipeline
-
     with patch("server.main.GCSExtractor") as mock_extractor_cls:
         mock_extractor = MagicMock()
         mock_extractor.extract.side_effect = FileNotFoundError("GCS file not found")

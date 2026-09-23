@@ -19,6 +19,30 @@ class Settings:
     circuit_breaker_error_threshold: float = float(os.getenv("CIRCUIT_BREAKER_THRESHOLD", "0.20"))
 
     @property
+    def gcs_bucket(self) -> str:
+        return self.gcs_source_bucket
+
+    @property
+    def gcs_prefix(self) -> str:
+        return self.gcs_source_prefix
+
+    @property
+    def project_id(self) -> str:
+        return self.gcp_project_id
+
+    @property
+    def dataset_id(self) -> str:
+        return self.bigquery_dataset
+
+    @property
+    def table_name(self) -> str:
+        return self.bigquery_table
+
+    @property
+    def circuit_breaker_threshold(self) -> float:
+        return self.circuit_breaker_error_threshold
+
+    @property
     def gcs_source_uri(self) -> str:
         return f"gs://{self.gcs_source_bucket}/{self.gcs_source_prefix}"
 

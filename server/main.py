@@ -2,7 +2,7 @@
 import sys
 import time
 import uuid
-from datetime import datetime
+from typing import Optional
 from server.config import config
 from server.extractor import GCSExtractor
 from server.loader import BigQueryLoader
@@ -12,7 +12,13 @@ from server.transformer import DataTransformer
 from server.validator import SchemaValidator
 
 
-def run_pipeline() -> int:
+def run_pipeline(
+    bucket_name: Optional[str] = None,
+    prefix: Optional[str] = None,
+    project_id: Optional[str] = None,
+    dataset_id: Optional[str] = None,
+    table_name: Optional[str] = None,
+) -> int:
     """Executes the complete ETL pipeline workflow."""
     start_time = time.time()
     batch_id = str(uuid.uuid4())
@@ -23,8 +29,8 @@ def run_pipeline() -> int:
     try:
         # Step 1: Extraction
         extractor = GCSExtractor(
-            bucket_name=config.gcs_source_bucket,
-            prefix=config.gcs_source_prefix,
+            bucket_name=bucket_name or config.gcs_source_bucket,
+            prefix=prefix or config.gcs_source_prefix,
         )
         raw_df = extractor.extract()
         metrics.records_extracted = len(raw_df)
@@ -47,9 +53,9 @@ def run_pipeline() -> int:
 
         # Step 4: BigQuery Loading
         loader = BigQueryLoader(
-            project_id=config.gcp_project_id,
-            dataset_id=config.bigquery_dataset,
-            table_name=config.bigquery_table,
+            project_id=project_id or config.gcp_project_id,
+            dataset_id=dataset_id or config.bigquery_dataset,
+            table_name=table_name or config.bigquery_table,
             write_disposition=config.write_disposition,
         )
         loaded_count = loader.load(transformed_df)

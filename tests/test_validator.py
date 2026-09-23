@@ -3,6 +3,13 @@ import ast
 import os
 import pytest
 
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
+
+from server.validator import SchemaValidator, normalize_headers, validate_schema
+
 
 def test_validator_file_syntax():
     file_path = os.path.join("server", "validator.py")
@@ -13,16 +20,18 @@ def test_validator_file_syntax():
 
 
 def test_normalize_headers():
-    pd = pytest.importorskip("pandas")
-    from server.validator import SchemaValidator
+    if pd is None:
+        pytest.skip("pandas not installed")
+
     df = pd.DataFrame({"Order ID": [1], "Customer  Name ": ["Alice"], "Created-At": ["2026-09-01"]})
     norm = SchemaValidator.normalize_headers(df)
     assert list(norm.columns) == ["order_id", "customer_name", "created_at"]
 
 
 def test_validator_missing_required_column():
-    pd = pytest.importorskip("pandas")
-    from server.validator import SchemaValidator
+    if pd is None:
+        pytest.skip("pandas not installed")
+
     df = pd.DataFrame({"order_id": [1], "customer_id": ["CUST-1"]})
     validator = SchemaValidator(error_threshold=0.20)
     with pytest.raises(ValueError, match="missing mandatory columns"):
@@ -30,8 +39,9 @@ def test_validator_missing_required_column():
 
 
 def test_validator_circuit_breaker_triggered():
-    pd = pytest.importorskip("pandas")
-    from server.validator import SchemaValidator
+    if pd is None:
+        pytest.skip("pandas not installed")
+
     data = {
         "order_id": [1001, None, None, None],
         "customer_id": ["C1", "C2", None, "C4"],
@@ -44,8 +54,9 @@ def test_validator_circuit_breaker_triggered():
 
 
 def test_validator_success_with_minor_quarantine():
-    pd = pytest.importorskip("pandas")
-    from server.validator import SchemaValidator
+    if pd is None:
+        pytest.skip("pandas not installed")
+
     data = {
         "order_id": [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, None],
         "customer_id": [f"C{i}" for i in range(1, 11)],
@@ -56,3 +67,12 @@ def test_validator_success_with_minor_quarantine():
     valid_df, quarantined_df = validator.validate(df)
     assert len(valid_df) == 9
     assert len(quarantined_df) == 1
+
+
+def test_validator_empty_df_raises():
+    if pd is None:
+        pytest.skip("pandas not installed")
+
+    validator = SchemaValidator(error_threshold=0.20)
+    with pytest.raises(ValueError, match="Input dataframe is empty"):
+        validator.validate(pd.DataFrame())

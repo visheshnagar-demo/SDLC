@@ -1,4 +1,195 @@
 {
+  "source": {
+    "type": "gcs",
+    "bucket": "sdlc-workspec-store",
+    "prefix": "etl/data/raw_sales_data.csv",
+    "format": "csv",
+    "path": "gs://sdlc-workspec-store/etl/data/raw_sales_data.csv",
+    "schema": [
+      { "name": "order_id", "type": "INTEGER" },
+      { "name": "customer_id", "type": "STRING" },
+      { "name": "customer_name", "type": "STRING" },
+      { "name": "customer_email", "type": "STRING" },
+      { "name": "product_category", "type": "STRING" },
+      { "name": "amount", "type": "FLOAT" },
+      { "name": "currency", "type": "STRING" },
+      { "name": "order_status", "type": "STRING" },
+      { "name": "created_at", "type": "TIMESTAMP" }
+    ]
+  },
+  "target": {
+    "type": "bigquery",
+    "project_id": "upbeat-repeater-477110-q6",
+    "dataset": "analytics",
+    "table": "vishesh-test1",
+    "partition_field": "created_at",
+    "partition_type": "DAY",
+    "clustering_fields": [
+      "order_id",
+      "customer_id"
+    ],
+    "write_disposition": "WRITE_APPEND",
+    "schema": [
+      { "name": "order_id", "type": "INTEGER", "mode": "REQUIRED" },
+      { "name": "customer_id", "type": "STRING", "mode": "REQUIRED" },
+      { "name": "customer_name", "type": "STRING", "mode": "NULLABLE" },
+      { "name": "customer_email", "type": "STRING", "mode": "NULLABLE" },
+      { "name": "product_category", "type": "STRING", "mode": "NULLABLE" },
+      { "name": "amount", "type": "FLOAT", "mode": "NULLABLE" },
+      { "name": "currency", "type": "STRING", "mode": "NULLABLE" },
+      { "name": "order_status", "type": "STRING", "mode": "NULLABLE" },
+      { "name": "created_at", "type": "TIMESTAMP", "mode": "REQUIRED" },
+      { "name": "_etl_ingested_at", "type": "TIMESTAMP", "mode": "REQUIRED" },
+      { "name": "_etl_batch_id", "type": "STRING", "mode": "REQUIRED" },
+      { "name": "_etl_source_file", "type": "STRING", "mode": "REQUIRED" }
+    ]
+  },
+  "transformations": [
+    {
+      "source_name": "order_id",
+      "target_name": "order_id",
+      "source_column": "order_id",
+      "target_column": "order_id",
+      "name": "order_id",
+      "source": "order_id",
+      "target": "order_id",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "type": "INTEGER",
+      "transform": "cast_int",
+      "transformation": "cast_int",
+      "description": "Unique Order Identifier",
+      "nullable": false
+    },
+    {
+      "source_name": "customer_id",
+      "target_name": "customer_id",
+      "source_column": "customer_id",
+      "target_column": "customer_id",
+      "name": "customer_id",
+      "source": "customer_id",
+      "target": "customer_id",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "type": "STRING",
+      "transform": "strip_whitespace",
+      "transformation": "strip_whitespace",
+      "description": "Customer Identifier",
+      "nullable": false
+    },
+    {
+      "source_name": "customer_name",
+      "target_name": "customer_name",
+      "source_column": "customer_name",
+      "target_column": "customer_name",
+      "name": "customer_name",
+      "source": "customer_name",
+      "target": "customer_name",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "type": "STRING",
+      "transform": "strip_whitespace",
+      "transformation": "strip_whitespace",
+      "description": "Customer Full Name",
+      "nullable": true
+    },
+    {
+      "source_name": "customer_email",
+      "target_name": "customer_email",
+      "source_column": "customer_email",
+      "target_column": "customer_email",
+      "name": "customer_email",
+      "source": "customer_email",
+      "target": "customer_email",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "type": "STRING",
+      "transform": "lowercase_strip",
+      "transformation": "lowercase_strip",
+      "description": "Customer Email Address",
+      "nullable": true
+    },
+    {
+      "source_name": "product_category",
+      "target_name": "product_category",
+      "source_column": "product_category",
+      "target_column": "product_category",
+      "name": "product_category",
+      "source": "product_category",
+      "target": "product_category",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "type": "STRING",
+      "transform": "strip_whitespace",
+      "transformation": "strip_whitespace",
+      "description": "Product Category",
+      "nullable": true
+    },
+    {
+      "source_name": "amount",
+      "target_name": "amount",
+      "source_column": "amount",
+      "target_column": "amount",
+      "name": "amount",
+      "source": "amount",
+      "target": "amount",
+      "source_type": "FLOAT",
+      "target_type": "FLOAT",
+      "type": "FLOAT",
+      "transform": "cast_float",
+      "transformation": "cast_float",
+      "description": "Order Amount",
+      "nullable": true
+    },
+    {
+      "source_name": "currency",
+      "target_name": "currency",
+      "source_column": "currency",
+      "target_column": "currency",
+      "name": "currency",
+      "source": "currency",
+      "target": "currency",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "type": "STRING",
+      "transform": "uppercase_strip",
+      "transformation": "uppercase_strip",
+      "description": "Currency Code",
+      "nullable": true
+    },
+    {
+      "source_name": "order_status",
+      "target_name": "order_status",
+      "source_column": "order_status",
+      "target_column": "order_status",
+      "name": "order_status",
+      "source": "order_status",
+      "target": "order_status",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "type": "STRING",
+      "transform": "uppercase_strip",
+      "transformation": "uppercase_strip",
+      "description": "Order Status",
+      "nullable": true
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "source_column": "created_at",
+      "target_column": "created_at",
+      "name": "created_at",
+      "source": "created_at",
+      "target": "created_at",
+      "source_type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "type": "TIMESTAMP",
+      "transform": "parse_iso8601",
+      "transformation": "parse_iso8601",
+      "description": "Order Creation Timestamp",
+      "nullable": false
+    }
+  ],
   "source_columns": [
     "order_id",
     "customer_id",
@@ -161,20 +352,37 @@
   "audit_columns": [
     {
       "name": "_etl_ingested_at",
-      "type": "TIMESTAMP"
+      "type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "description": "ETL Ingestion Timestamp"
     },
     {
       "name": "_etl_batch_id",
-      "type": "STRING"
+      "type": "STRING",
+      "target_type": "STRING",
+      "description": "ETL Batch UUID"
     },
     {
       "name": "_etl_source_file",
-      "type": "STRING"
+      "type": "STRING",
+      "target_type": "STRING",
+      "description": "GCS Source URI"
     }
   ],
+  "deduplication": {
+    "keys": [
+      "order_id"
+    ],
+    "order_by": "created_at",
+    "direction": "desc"
+  },
   "deduplication_keys": [
     "order_id"
   ],
   "deduplication_order_by": "created_at",
-  "deduplication_order_direction": "desc"
+  "deduplication_order_direction": "desc",
+  "circuit_breaker": {
+    "threshold": 0.20,
+    "max_error_percentage": 20
+  }
 }

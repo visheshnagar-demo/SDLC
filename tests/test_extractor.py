@@ -4,6 +4,13 @@ import os
 import pytest
 from unittest.mock import MagicMock, patch
 
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
+
+from server.extractor import GCSExtractor, extract_from_gcs
+
 
 def test_extractor_file_syntax():
     file_path = os.path.join("server", "extractor.py")
@@ -14,17 +21,14 @@ def test_extractor_file_syntax():
 
 
 def test_extractor_missing_config():
-    pd = pytest.importorskip("pandas")
-    from server.extractor import GCSExtractor
     extractor = GCSExtractor(bucket_name="", prefix="")
     with pytest.raises(EnvironmentError):
         extractor.extract()
 
 
 def test_extractor_single_csv_success():
-    pd = pytest.importorskip("pandas")
-    pytest.importorskip("google.cloud.storage")
-    from server.extractor import GCSExtractor
+    if pd is None:
+        pytest.skip("pandas not installed")
 
     csv_data = (
         "order_id,customer_id,customer_name,customer_email,product_category,amount,currency,order_status,created_at\n"
@@ -51,9 +55,8 @@ def test_extractor_single_csv_success():
 
 
 def test_extractor_empty_file_raises_value_error():
-    pd = pytest.importorskip("pandas")
-    pytest.importorskip("google.cloud.storage")
-    from server.extractor import GCSExtractor
+    if pd is None:
+        pytest.skip("pandas not installed")
 
     with patch("server.extractor.storage.Client") as mock_storage_client:
         mock_client = MagicMock()
@@ -68,3 +71,10 @@ def test_extractor_empty_file_raises_value_error():
         extractor = GCSExtractor(bucket_name="test-bucket", prefix="empty.csv")
         with pytest.raises(ValueError, match="is empty"):
             extractor.extract()
+
+
+def test_extractor_uri_parsing():
+    extractor = GCSExtractor(gcs_uri="gs://custom-bucket/path/to/file.csv")
+    assert extractor.bucket_name == "custom-bucket"
+    assert extractor.prefix == "path/to/file.csv"
+    assert extractor.source_uri == "gs://custom-bucket/path/to/file.csv"
