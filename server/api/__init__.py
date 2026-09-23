@@ -1,3 +1,3 @@
-from server.api.v1 import api_v1_router
+from server.api import v1
 
-__all__ = ["api_v1_router"]
+__all__ = ["v1"]

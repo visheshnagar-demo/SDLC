@@ -1,0 +1,50 @@
+[
+  {
+    "name": "id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Unique record identifier"
+  },
+  {
+    "name": "name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Entity name, whitespace trimmed"
+  },
+  {
+    "name": "category",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Category classification"
+  },
+  {
+    "name": "amount",
+    "type": "FLOAT64",
+    "mode": "NULLABLE",
+    "description": "Numeric amount value"
+  },
+  {
+    "name": "status",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Status code"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Record creation timestamp"
+  },
+  {
+    "name": "updated_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Last update timestamp"
+  },
+  {
+    "name": "_etl_loaded_at",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "Pipeline audit timestamp injected at load time"
+  }
+]

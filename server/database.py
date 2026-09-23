@@ -1,14 +1,18 @@
+"""Database connection and session management."""
+
 import os
 import uuid
-import datetime
+from datetime import date, datetime, timezone, timedelta
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
-from sqlalchemy.exc import IntegrityError
-import bcrypt
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:////tmp/app.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./study_planner.db")
 
-connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
+# For SQLite, enable check_same_thread=False
+connect_args = {}
+if DATABASE_URL.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
+
 engine = create_engine(DATABASE_URL, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -16,6 +20,7 @@ Base = declarative_base()
 
 
 def get_db():
+    """Dependency for providing a database session to API routes."""
     db = SessionLocal()
     try:
         yield db
@@ -23,76 +28,81 @@ def get_db():
         db.close()
 
 
-def get_password_hash(password: str) -> str:
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
-
-
 def init_db():
-    from server import models  # noqa: F401
+    """Create all tables in the database idempotently."""
+    # Import all models so metadata is populated
+    import server.models  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
-    db = SessionLocal()
-    try:
-        seed_data(db)
-    finally:
-        db.close()
 
 
 def seed_data(db: Session):
-    from server.models import User, ExchangeRateCache
+    """Seed sample data if tables are empty for immediate out-of-the-box readiness."""
+    from server.models.subject import Subject
+    from server.models.availability import AvailabilityProfile
 
-    # Seed regular test user
-    try:
-        user = db.query(User).filter(User.email == "test@example.com").first()
-        if not user:
-            user = User(
+    # Seed default subjects if none exist
+    existing_subjects = db.query(Subject).first()
+    if not existing_subjects:
+        now = datetime.now(timezone.utc)
+        sample_subjects = [
+            Subject(
                 id=str(uuid.uuid4()),
-                email="test@example.com",
-                hashed_password=get_password_hash("testpassword"),
-                role="user",
-                is_active=True,
-                is_verified=True,
-            )
-            db.add(user)
-            db.commit()
-    except IntegrityError:
-        db.rollback()
+                name="Organic Chemistry",
+                difficulty_level=4,
+                target_date=date.today() + timedelta(days=45),
+                estimated_total_hours=45.0,
+                color_tag="#3B82F6",
+                created_at=now,
+                updated_at=now,
+            ),
+            Subject(
+                id=str(uuid.uuid4()),
+                name="Advanced Calculus",
+                difficulty_level=5,
+                target_date=date.today() + timedelta(days=20),
+                estimated_total_hours=35.0,
+                color_tag="#7C3AED",
+                created_at=now,
+                updated_at=now,
+            ),
+            Subject(
+                id=str(uuid.uuid4()),
+                name="World History",
+                difficulty_level=2,
+                target_date=date.today() + timedelta(days=60),
+                estimated_total_hours=20.0,
+                color_tag="#10B981",
+                created_at=now,
+                updated_at=now,
+            ),
+        ]
+        db.add_all(sample_subjects)
+        db.commit()
 
-    # Seed admin user
-    try:
-        admin = db.query(User).filter(User.email == "admin@example.com").first()
-        if not admin:
-            admin = User(
+    # Seed default weekly availability if none exist
+    existing_avail = db.query(AvailabilityProfile).first()
+    if not existing_avail:
+        now = datetime.now(timezone.utc)
+        default_schedule = [
+            ("MONDAY", 180, "EVENING"),
+            ("TUESDAY", 120, "EVENING"),
+            ("WEDNESDAY", 180, "EVENING"),
+            ("THURSDAY", 120, "EVENING"),
+            ("FRIDAY", 150, "AFTERNOON"),
+            ("SATURDAY", 360, "MORNING"),
+            ("SUNDAY", 240, "MORNING"),
+        ]
+        avail_entities = [
+            AvailabilityProfile(
                 id=str(uuid.uuid4()),
-                email="admin@example.com",
-                hashed_password=get_password_hash("adminpassword"),
-                role="admin",
-                is_active=True,
-                is_verified=True,
+                day_of_week=day,
+                available_minutes=mins,
+                preferred_time_of_day=pref,
+                created_at=now,
+                updated_at=now,
             )
-            db.add(admin)
-            db.commit()
-    except IntegrityError:
-        db.rollback()
-
-    # Seed initial exchange rates cache
-    try:
-        cache = (
-            db.query(ExchangeRateCache)
-            .filter(ExchangeRateCache.base_currency == "USD")
-            .first()
-        )
-        if not cache:
-            now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-            cache = ExchangeRateCache(
-                id=str(uuid.uuid4()),
-                base_currency="USD",
-                rates_json='{"USD": 1.0, "EUR": 0.925, "GBP": 0.79, "JPY": 155.0, "CAD": 1.36}',
-                fetched_at=now,
-                expires_at=now + datetime.timedelta(minutes=15),
-            )
-            db.add(cache)
-            db.commit()
-    except IntegrityError:
-        db.rollback()
+            for day, mins, pref in default_schedule
+        ]
+        db.add_all(avail_entities)
+        db.commit()

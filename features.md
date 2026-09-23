@@ -17,3 +17,14 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-363 - AI Study Planner — Personalized Schedule & Priority Generation
+
+### Feature Summary
+An AI-powered study planner application allowing users to input study subjects, daily/weekly available study hours, and target exam/completion dates to automatically receive an optimized, prioritized study schedule.
+
+### Key Features
+- Subject & Availability Input Form (Frontend)
+- AI Schedule & Priority Generation Engine (Backend/AI Integration)
+- Interactive Schedule & Recommendations Display (Frontend)
+- Schedule Data Persistence & API Contracts (Integration)
