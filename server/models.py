@@ -34,7 +34,9 @@ class Email(Base):
     )
 
     audit_logs = relationship(
-        "ClassificationAuditLog", back_populates="email", cascade="all, delete-orphan"
+        lambda: ClassificationAuditLog,
+        back_populates="email",
+        cascade="all, delete-orphan",
     )
 
 
@@ -55,4 +57,4 @@ class ClassificationAuditLog(Base):
         server_default=func.now(),
     )
 
-    email = relationship("Email", back_populates="audit_logs")
+    email = relationship(lambda: Email, back_populates="audit_logs")
