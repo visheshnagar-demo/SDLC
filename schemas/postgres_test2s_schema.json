@@ -1,0 +1,50 @@
+[
+  {
+    "name": "id",
+    "type": "INT64",
+    "mode": "REQUIRED",
+    "description": "Unique identifier"
+  },
+  {
+    "name": "name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Record name or title"
+  },
+  {
+    "name": "email",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Email address"
+  },
+  {
+    "name": "status",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Status code or state"
+  },
+  {
+    "name": "amount",
+    "type": "FLOAT64",
+    "mode": "NULLABLE",
+    "description": "Numeric value or amount"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Record creation timestamp"
+  },
+  {
+    "name": "updated_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Record update timestamp"
+  },
+  {
+    "name": "ingested_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Pipeline ingestion audit timestamp"
+  }
+]

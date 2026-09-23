@@ -1,0 +1,106 @@
+{
+  "pipeline_id": "postgres_to_bigquery",
+  "source": {
+    "type": "postgresql",
+    "instance_connection_name": "upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db",
+    "database": "postgres",
+    "table": "test_data"
+  },
+  "target": {
+    "type": "bigquery",
+    "project": "upbeat-repeater-477110-q6",
+    "dataset": "analytics",
+    "table": "postgres_test2",
+    "write_disposition": "WRITE_TRUNCATE"
+  },
+  "columns": [
+    {
+      "source_name": "id",
+      "target_name": "id",
+      "source_column": "id",
+      "target_column": "id",
+      "source_type": "INTEGER",
+      "target_type": "INT64",
+      "transform": "cast(id as INT64)",
+      "is_key": true
+    },
+    {
+      "source_name": "name",
+      "target_name": "name",
+      "source_column": "name",
+      "target_column": "name",
+      "source_type": "VARCHAR",
+      "target_type": "STRING",
+      "transform": "trim(name)",
+      "is_key": false
+    },
+    {
+      "source_name": "email",
+      "target_name": "email",
+      "source_column": "email",
+      "target_column": "email",
+      "source_type": "VARCHAR",
+      "target_type": "STRING",
+      "transform": "lower(trim(email))",
+      "is_key": false
+    },
+    {
+      "source_name": "status",
+      "target_name": "status",
+      "source_column": "status",
+      "target_column": "status",
+      "source_type": "VARCHAR",
+      "target_type": "STRING",
+      "transform": "upper(trim(status))",
+      "is_key": false
+    },
+    {
+      "source_name": "amount",
+      "target_name": "amount",
+      "source_column": "amount",
+      "target_column": "amount",
+      "source_type": "NUMERIC",
+      "target_type": "FLOAT64",
+      "transform": "cast(amount as FLOAT64)",
+      "is_key": false
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "source_column": "created_at",
+      "target_column": "created_at",
+      "source_type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "transform": "to_utc_timestamp(created_at)",
+      "is_key": false
+    },
+    {
+      "source_name": "updated_at",
+      "target_name": "updated_at",
+      "source_column": "updated_at",
+      "target_column": "updated_at",
+      "source_type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "transform": "to_utc_timestamp(updated_at)",
+      "is_key": false
+    },
+    {
+      "source_name": "ingested_at",
+      "target_name": "ingested_at",
+      "source_column": "ingested_at",
+      "target_column": "ingested_at",
+      "source_type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "transform": "current_timestamp()",
+      "is_key": false
+    }
+  ],
+  "cleaning_rules": [
+    "Trim leading and trailing whitespace from string columns",
+    "Standardize empty strings and NaN representations to null",
+    "Parse and normalize timestamp columns to UTC",
+    "Coerce numeric formats",
+    "Deduplicate records",
+    "Quarantine all-null invalid rows"
+  ]
+}
