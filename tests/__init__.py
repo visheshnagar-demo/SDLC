@@ -1,1 +1,1 @@
-"""Sales ETL tests package."""
+"""Test suite package."""

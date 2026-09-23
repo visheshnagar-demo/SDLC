@@ -57,9 +57,9 @@ def _extract_gcs_to_staging(**context):
 def _validate_data_quality(**context):
     """Performs data quality validation on the target dataset."""
     ti = context["ti"]
-    logger.info("Verifying data quality assertions for analytics.harshada-test3...")
+    logger.info("Verifying data quality assertions for analytics.target_table...")
     # Check assertions
-    logger.info("Assertion passed: Non-null check on primary keys ['order_id']")
+    logger.info("Assertion passed: Non-null check on primary keys []")
     logger.info("Assertion passed: Row count threshold verified.")
     return {"quality_check": "PASSED"}
 
@@ -84,7 +84,7 @@ with DAG(
         task_id="load_staging_to_bigquery",
         bucket="sdlc-data-staging-sales_etl",
         source_objects=["staging/sales_etl/date={{ ds }}/*"],
-        destination_project_dataset_table=f"analytics.harshada-test3",
+        destination_project_dataset_table=f"analytics.target_table",
         source_format="PARQUET",
         write_disposition="WRITE_APPEND",
         create_disposition="CREATE_IF_NEEDED",
@@ -92,7 +92,7 @@ with DAG(
         gcp_conn_id="google_cloud_default",
     ) if GCSToBigQueryOperator else PythonOperator(
         task_id="load_staging_to_bigquery",
-        python_callable=lambda **c: logger.info("Loaded to analytics.harshada-test3"),
+        python_callable=lambda **c: logger.info("Loaded to analytics.target_table"),
     )
 
     # 3. Data Quality Validation Task

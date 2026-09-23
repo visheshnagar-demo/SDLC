@@ -1,1 +1,1 @@
-"""Sales ETL Pipeline package."""
+"""Sales Order ETL Pipeline Package."""

@@ -7,9 +7,9 @@ Automated connector pipeline from **GCS** to **BIGQUERY**.
   - Mode: `full`
   - Cursor Field: `None`
 - **Target System**: `destination_system` (bigquery)
-  - Destination Table: `analytics.harshada-test3`
+  - Destination Table: `analytics.sales_etl`
   - Write Mode: `append`
-  - Merge Keys: `['order_id']`
+  - Merge Keys: `[]`
 - **Execution Mode**: Cloud Run Job (one-time batch execution)
 
 ## Cloud Run Job Execution
