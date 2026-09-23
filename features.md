@@ -17,3 +17,15 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-369 - AI Travel Planner - Customizable Itinerary Generation
+
+### Feature Summary
+An interactive web application allowing travelers to input trip preferences and automatically receive tailored itineraries that can be edited, exported, and shared.
+
+### Key Features
+- User input form for destination, budget, duration, and interest categories
+- AI-driven day-by-day itinerary generation with activity cost estimates and locations
+- Interactive itinerary customization (adding, removing, reordering, and swapping activities)
+- Real-time budget recalculation and total trip spend tracking
+- Export options including PDF download, calendar (.ics), and shareable links
