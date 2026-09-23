@@ -25,6 +25,15 @@ def test_schema_json_validity():
         assert "ingested_at" in column_names
 
 
+def test_openapi_json_exists():
+    """Verify openapi.json exists and is valid JSON."""
+    assert os.path.exists("openapi.json"), "openapi.json must exist in root repository"
+    with open("openapi.json", "r", encoding="utf-8") as f:
+        spec = json.load(f)
+    assert spec.get("openapi", "").startswith("3.")
+    assert "paths" in spec
+
+
 def test_ddl_file_exists():
     """Verify DDL SQL file exists and contains CREATE TABLE statement."""
     ddl_path = "sql/ddl/cleaned_sales.sql"
