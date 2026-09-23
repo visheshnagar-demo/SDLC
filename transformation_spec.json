@@ -1,0 +1,85 @@
+{
+  "columns": [
+    {
+      "source_name": "order_id",
+      "target_name": "order_id",
+      "source_column": "order_id",
+      "target_column": "order_id",
+      "target_type": "INTEGER",
+      "transform": "cast",
+      "nullable": false
+    },
+    {
+      "source_name": "customer_id",
+      "target_name": "customer_id",
+      "source_column": "customer_id",
+      "target_column": "customer_id",
+      "target_type": "STRING",
+      "transform": "trim",
+      "nullable": true
+    },
+    {
+      "source_name": "customer_name",
+      "target_name": "customer_name",
+      "source_column": "customer_name",
+      "target_column": "customer_name",
+      "target_type": "STRING",
+      "transform": "trim",
+      "nullable": true
+    },
+    {
+      "source_name": "customer_email",
+      "target_name": "customer_email",
+      "source_column": "customer_email",
+      "target_column": "customer_email",
+      "target_type": "STRING",
+      "transform": "trim",
+      "nullable": true
+    },
+    {
+      "source_name": "product_category",
+      "target_name": "product_category",
+      "source_column": "product_category",
+      "target_column": "product_category",
+      "target_type": "STRING",
+      "transform": "trim",
+      "nullable": true
+    },
+    {
+      "source_name": "amount",
+      "target_name": "amount",
+      "source_column": "amount",
+      "target_column": "amount",
+      "target_type": "FLOAT",
+      "transform": "cast",
+      "nullable": true
+    },
+    {
+      "source_name": "currency",
+      "target_name": "currency",
+      "source_column": "currency",
+      "target_column": "currency",
+      "target_type": "STRING",
+      "transform": "trim",
+      "nullable": true
+    },
+    {
+      "source_name": "order_status",
+      "target_name": "order_status",
+      "source_column": "order_status",
+      "target_column": "order_status",
+      "target_type": "STRING",
+      "transform": "trim",
+      "nullable": true
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "source_column": "created_at",
+      "target_column": "created_at",
+      "target_type": "TIMESTAMP",
+      "transform": "to_timestamp",
+      "nullable": false
+    }
+  ]
+}

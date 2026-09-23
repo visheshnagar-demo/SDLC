@@ -1,88 +1,69 @@
-# Project
+# Sales ETL Pipeline (SCRUM-355)
 
-## Server
+Automated ETL pipeline designed to ingest raw sales CSV data from Google Cloud Storage, clean and normalize fields, and load into Google BigQuery with partitioning and clustering.
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+## Architecture
 
-### Setup
+- **Source**: Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/raw_sales_data.csv`)
+- **Processing**: Python 3.11 with Pandas / PyArrow, packaged as a serverless Cloud Run Job.
+- **Destination**: Google BigQuery (`sales_data.cleaned_sales`) partitioned by `created_at` (daily) and clustered by `product_category, customer_id`.
+- **Orchestration**: Direct Cloud Run Job execution or Airflow DAG (`dags/sales_etl_dag.py`).
 
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+## Data Transformations
+
+1. **Header & Column Standardization**: Standardize column names to lower_snake_case.
+2. **Whitespace Stripping & Null Normalization**: Strip leading/trailing whitespaces, convert empty or literal null strings to `None`.
+3. **Currency & Amount Cleansing**: Strip currency symbols (`$`, `€`, `£`), commas, and cast to `FLOAT64`.
+4. **Order ID Cleansing & Deduplication**: Ensure integer typing and deduplicate transactions on natural key `order_id`.
+5. **Timestamp Normalization**: Parse `created_at` into ISO 8601 UTC timestamp format.
+6. **Audit Telemetry**: Inject `ingested_at` UTC timestamp.
+
+## Project Structure
+
+```
+├── app.py                          # Application entry point
+├── pipeline/
+│   ├── run_sales_etl.py            # Standalone batch ETL pipeline runner
+│   └── sales_etl_README.md         # Pipeline connector docs
+├── schemas/
+│   ├── cleaned_sales_schema.json   # BigQuery JSON table schema
+│   └── sales_data_schema.json      # Sales data schema definition
+├── sql/
+│   └── ddl/
+│       └── cleaned_sales.sql       # BigQuery DDL with partitioning & clustering
+├── dags/
+│   └── sales_etl_dag.py            # Airflow DAG definition
+├── tests/
+│   ├── test_sales_etl.py           # Unit & transformation tests
+│   └── test_sales_etl_pipeline.py  # Pipeline configuration & syntax tests
+├── transformation_spec.json        # Transformation mapping specification
+├── env.deploy.json                 # Deployment environment variables
+├── Dockerfile                      # Container definition for Cloud Run Job
+├── requirements.txt                # Python dependencies
+└── README.md                       # Documentation
 ```
 
-2. Install dependencies:
+## Running Locally
+
 ```bash
-cd server
+# Install dependencies
 pip install -r requirements.txt
-cd ..
+pip install pytest
+
+# Run unit and integration tests
+pytest tests/
+
+# Execute pipeline locally
+python -m pipeline.run_sales_etl
 ```
 
-### Running Tests
+## Deployment
+
+Deployable as a Cloud Run Job on Google Cloud Platform:
+
 ```bash
-cd server
-python -m pytest -v
-cd ..
+gcloud run jobs create sales-etl-job \
+  --image gcr.io/upbeat-repeater-477110-q6/sales-etl:latest \
+  --region us-central1 \
+  --env-vars-file env.deploy.json
 ```
-
-### Starting the Development Server
-```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
-```bash
-# Copy the example environment file
-cp .env.example .env
-```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-
