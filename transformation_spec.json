@@ -1,0 +1,167 @@
+{
+  "pipeline_id": "sales_order_etl",
+  "source_table": "raw_sales_data",
+  "target_table": "vishesh-test1",
+  "columns": [
+    {
+      "name": "order_id",
+      "source_name": "order_id",
+      "target_name": "order_id",
+      "source_column": "order_id",
+      "target_column": "order_id",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transform": "cast_int"
+    },
+    {
+      "name": "customer_id",
+      "source_name": "customer_id",
+      "target_name": "customer_id",
+      "source_column": "customer_id",
+      "target_column": "customer_id",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_string"
+    },
+    {
+      "name": "customer_name",
+      "source_name": "customer_name",
+      "target_name": "customer_name",
+      "source_column": "customer_name",
+      "target_column": "customer_name",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_string"
+    },
+    {
+      "name": "customer_email",
+      "source_name": "customer_email",
+      "target_name": "customer_email",
+      "source_column": "customer_email",
+      "target_column": "customer_email",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_string_nullify"
+    },
+    {
+      "name": "product_category",
+      "source_name": "product_category",
+      "target_name": "product_category",
+      "source_column": "product_category",
+      "target_column": "product_category",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_string_nullify"
+    },
+    {
+      "name": "amount",
+      "source_name": "amount",
+      "target_name": "amount",
+      "source_column": "amount",
+      "target_column": "amount",
+      "source_type": "FLOAT",
+      "target_type": "FLOAT",
+      "transform": "cast_float_nullify"
+    },
+    {
+      "name": "currency",
+      "source_name": "currency",
+      "target_name": "currency",
+      "source_column": "currency",
+      "target_column": "currency",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_string"
+    },
+    {
+      "name": "order_status",
+      "source_name": "order_status",
+      "target_name": "order_status",
+      "source_column": "order_status",
+      "target_column": "order_status",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_string"
+    },
+    {
+      "name": "created_at",
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "source_column": "created_at",
+      "target_column": "created_at",
+      "source_type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "transform": "parse_iso_timestamp"
+    }
+  ],
+  "source_columns": [
+    "order_id",
+    "customer_id",
+    "customer_name",
+    "customer_email",
+    "product_category",
+    "amount",
+    "currency",
+    "order_status",
+    "created_at"
+  ],
+  "mappings": [
+    {
+      "source": "order_id",
+      "target": "order_id",
+      "target_type": "INTEGER",
+      "transform": "cast_int"
+    },
+    {
+      "source": "customer_id",
+      "target": "customer_id",
+      "target_type": "STRING",
+      "transform": "strip_string"
+    },
+    {
+      "source": "customer_name",
+      "target": "customer_name",
+      "target_type": "STRING",
+      "transform": "strip_string"
+    },
+    {
+      "source": "customer_email",
+      "target": "customer_email",
+      "target_type": "STRING",
+      "transform": "strip_string_nullify"
+    },
+    {
+      "source": "product_category",
+      "target": "product_category",
+      "target_type": "STRING",
+      "transform": "strip_string_nullify"
+    },
+    {
+      "source": "amount",
+      "target": "amount",
+      "target_type": "FLOAT",
+      "transform": "cast_float_nullify"
+    },
+    {
+      "source": "currency",
+      "target": "currency",
+      "target_type": "STRING",
+      "transform": "strip_string"
+    },
+    {
+      "source": "order_status",
+      "target": "order_status",
+      "target_type": "STRING",
+      "transform": "strip_string"
+    },
+    {
+      "source": "created_at",
+      "target": "created_at",
+      "target_type": "TIMESTAMP",
+      "transform": "parse_iso_timestamp"
+    }
+  ],
+  "deduplication_keys": [
+    "order_id"
+  ]
+}

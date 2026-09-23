@@ -1,0 +1,62 @@
+[
+  {
+    "name": "order_id",
+    "type": "INTEGER",
+    "mode": "REQUIRED",
+    "description": "Unique integer identifier for the sales order"
+  },
+  {
+    "name": "customer_id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Customer unique identifier"
+  },
+  {
+    "name": "customer_name",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Customer full name"
+  },
+  {
+    "name": "customer_email",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Customer email address"
+  },
+  {
+    "name": "product_category",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Product category name"
+  },
+  {
+    "name": "amount",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Order transaction total amount"
+  },
+  {
+    "name": "currency",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Currency ISO code"
+  },
+  {
+    "name": "order_status",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Order fulfillment status"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "Order creation timestamp"
+  },
+  {
+    "name": "ingested_at",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "Pipeline ingestion timestamp"
+  }
+]

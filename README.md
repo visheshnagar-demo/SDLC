@@ -1,88 +1,80 @@
-# Project
+# Sales Order ETL Pipeline (Cloud Run Job)
 
-## Server
+Production-grade batch ETL data pipeline for Jira Issue **SCRUM-358**.
+Ingests sales order records from Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/raw_sales_data.csv`), cleans and deduplicates them, and loads them into partitioned Google BigQuery table `analytics.vishesh-test1`.
+
+---
+
+## 1. Architecture Overview
+
+- **Compute:** Google Cloud Run Job (Serverless, zero-idle batch execution).
+- **Source:** Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/raw_sales_data.csv`).
+- **Destination:** Google BigQuery (`upbeat-repeater-477110-q6.analytics.vishesh-test1`).
+- **Partitioning:** Day-partitioned on `DATE(created_at)`.
+- **Clustering:** Clustered by `order_status, product_category`.
+- **Python Version:** 3.11.
+
+---
+
+## 2. Pipeline Stages
+
+1. **Extraction (`pipeline/extractor.py`):**
+   - Connects to GCS bucket using Google Cloud Storage client.
+   - Downloads raw CSV bytes with fail-fast validation if source is missing.
+2. **Validation (`pipeline/validator.py`):**
+   - Discovers schema and asserts required column presence.
+   - Quarantines invalid records and triggers circuit breaker if 100% of rows fail.
+3. **Transformation (`pipeline/transformer.py`):**
+   - Trims whitespaces from strings.
+   - Standardizes null markers (`"nan"`, `"null"`, `""` -> `None`).
+   - Normalizes numeric attributes and ISO 8601 UTC timestamps.
+   - Adds audit timestamp `ingested_at`.
+4. **Deduplication (`pipeline/deduplicator.py`):**
+   - Deduplicates records on business key `order_id`, keeping latest chronological record.
+5. **BigQuery Loading (`pipeline/loader.py`):**
+   - Ensures partitioned BigQuery dataset and table are initialized.
+   - Loads transformed DataFrame atomically via PyArrow.
+6. **Structured Audit Logging (`pipeline/logger.py`):**
+   - Emits structured JSON execution metrics to Google Cloud Logging.
+
+---
+
+## 3. Local Execution & Testing
 
 ### Prerequisites
-- Python 3.9+
-- pip and venv
-
-### Setup
-
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
-```
-
-2. Install dependencies:
-```bash
-cd server
-pip install -r requirements.txt
-cd ..
-```
+- Python 3.11+
+- Virtual environment with dependencies installed:
+  ```bash
+  pip install -r requirements.txt
+  ```
 
 ### Running Tests
 ```bash
-cd server
-python -m pytest -v
-cd ..
+pytest tests/ -v
 ```
 
-### Starting the Development Server
+### Running Pipeline Locally
 ```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+export GCP_PROJECT_ID=upbeat-repeater-477110-q6
+export GCS_SOURCE_BUCKET=sdlc-workspec-store
+export GCS_SOURCE_PREFIX=etl/data/raw_sales_data.csv
+export BIGQUERY_DATASET=analytics
+export BIGQUERY_TABLE=vishesh-test1
+export WRITE_DISPOSITION=WRITE_TRUNCATE
+
+python main.py
 ```
 
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
+---
 
-## Full-Stack Local Development
+## 4. Cloud Run Job Deployment
 
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
+The pipeline is packaged into a minimal Docker container:
 ```bash
-# Copy the example environment file
-cp .env.example .env
+docker build -t gcr.io/upbeat-repeater-477110-q6/etl-sales-pipeline:latest .
 ```
 
-### 2. Start the Backend (Terminal 1)
+Execution in Cloud Run Jobs:
 ```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+gcloud run jobs execute etl-sales-pipeline --region=us-central1
 ```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-
