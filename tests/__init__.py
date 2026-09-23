@@ -1,0 +1,1 @@
+"""Sales ETL tests package."""

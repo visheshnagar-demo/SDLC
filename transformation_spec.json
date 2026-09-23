@@ -1,0 +1,114 @@
+{
+  "columns": [
+    {
+      "source_name": "order_id",
+      "target_name": "order_id",
+      "target_type": "STRING",
+      "transforms": [
+        "trim",
+        "to_string"
+      ],
+      "nullable": false
+    },
+    {
+      "source_name": "customer_id",
+      "target_name": "customer_id",
+      "target_type": "STRING",
+      "transforms": [
+        "trim"
+      ],
+      "nullable": true
+    },
+    {
+      "source_name": "customer_name",
+      "target_name": "customer_name",
+      "target_type": "STRING",
+      "transforms": [
+        "trim"
+      ],
+      "nullable": true
+    },
+    {
+      "source_name": "customer_email",
+      "target_name": "customer_email",
+      "target_type": "STRING",
+      "transforms": [
+        "trim",
+        "lowercase"
+      ],
+      "nullable": true
+    },
+    {
+      "source_name": "product_category",
+      "target_name": "product_category",
+      "target_type": "STRING",
+      "transforms": [
+        "trim"
+      ],
+      "nullable": true
+    },
+    {
+      "source_name": "amount",
+      "target_name": "amount",
+      "target_type": "FLOAT64",
+      "transforms": [
+        "to_float"
+      ],
+      "nullable": true
+    },
+    {
+      "source_name": "currency",
+      "target_name": "currency",
+      "target_type": "STRING",
+      "transforms": [
+        "trim",
+        "uppercase"
+      ],
+      "nullable": true
+    },
+    {
+      "source_name": "order_status",
+      "target_name": "order_status",
+      "target_type": "STRING",
+      "transforms": [
+        "trim",
+        "uppercase"
+      ],
+      "nullable": true
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "target_type": "TIMESTAMP",
+      "transforms": [
+        "to_timestamp"
+      ],
+      "nullable": false
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "order_date",
+      "target_type": "DATE",
+      "transforms": [
+        "to_date"
+      ],
+      "nullable": false
+    },
+    {
+      "source_name": "_ingested_at",
+      "target_name": "_ingested_at",
+      "target_type": "TIMESTAMP",
+      "transforms": [
+        "current_timestamp"
+      ],
+      "nullable": false
+    }
+  ],
+  "deduplication": {
+    "unique_keys": [
+      "order_id"
+    ],
+    "order_by": "created_at",
+    "keep": "last"
+  }
+}
