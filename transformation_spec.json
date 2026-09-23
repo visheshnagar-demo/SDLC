@@ -1,4 +1,44 @@
 {
+  "pipeline_id": "postgres_to_bigquery",
+  "source": {
+    "type": "postgres",
+    "instance": "upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db",
+    "database": "postgres",
+    "table": "test_data"
+  },
+  "target": {
+    "type": "bigquery",
+    "project": "upbeat-repeater-477110-q6",
+    "dataset": "analytics",
+    "table": "postgres_test2",
+    "write_disposition": "WRITE_TRUNCATE"
+  },
+  "transformations": [
+    {
+      "source_column": "id",
+      "target_column": "id",
+      "target_type": "STRING",
+      "transform": "trim_and_clean"
+    },
+    {
+      "source_column": "data_payload",
+      "target_column": "cleaned_payload",
+      "target_type": "STRING",
+      "transform": "trim_and_clean"
+    },
+    {
+      "source_column": "created_at",
+      "target_column": "created_at",
+      "target_type": "TIMESTAMP",
+      "transform": "to_utc_timestamp"
+    },
+    {
+      "source_column": "updated_at",
+      "target_column": "updated_at",
+      "target_type": "TIMESTAMP",
+      "transform": "to_utc_timestamp"
+    }
+  ],
   "columns": [
     {
       "source_name": "id",

@@ -4,6 +4,7 @@ import ast
 import json
 import pytest
 
+
 def test_dag_syntax():
     """Verifies that the Airflow DAG has valid Python AST syntax."""
     dag_path = os.path.join("dags", "postgres_to_bigquery_dag.py")
@@ -126,7 +127,7 @@ def test_transformation_circuit_breaker():
 
 
 def test_extractor_missing_config_raises():
-    """Verifies that extractor fails fast with EnvironmentError when config is absent."""
+    """Verifies that extractor fails fast with ValueError / ConfigError / EnvironmentError when config is absent."""
     pytest.importorskip("pandas")
     from pipeline.extractor import CloudSQLExtractor
 
@@ -134,23 +135,10 @@ def test_extractor_missing_config_raises():
         instance_connection_name="",
         db_name="",
         db_user="",
+        db_url="",
     )
-    old_db_url = os.environ.pop("DATABASE_URL", None)
-    old_pg_url = os.environ.pop("POSTGRES_URL", None)
-    old_inst = os.environ.pop("INSTANCE_CONNECTION_NAME", None)
-    old_user = os.environ.pop("POSTGRES_USER", None)
-    try:
-        with pytest.raises(EnvironmentError):
-            extractor.extract()
-    finally:
-        if old_db_url:
-            os.environ["DATABASE_URL"] = old_db_url
-        if old_pg_url:
-            os.environ["POSTGRES_URL"] = old_pg_url
-        if old_inst:
-            os.environ["INSTANCE_CONNECTION_NAME"] = old_inst
-        if old_user:
-            os.environ["POSTGRES_USER"] = old_user
+    with pytest.raises((ValueError, EnvironmentError)):
+        extractor.extract()
 
 
 def test_loader_missing_project_raises():
@@ -159,13 +147,5 @@ def test_loader_missing_project_raises():
     from pipeline.loader import BigQueryLoader
 
     loader = BigQueryLoader(project_id="")
-    old_proj = os.environ.pop("GCP_PROJECT_ID", None)
-    old_p = os.environ.pop("PROJECT_ID", None)
-    try:
-        with pytest.raises(EnvironmentError):
-            loader.load(pd.DataFrame({"id": ["1"], "cleaned_payload": ["test"]}))
-    finally:
-        if old_proj:
-            os.environ["GCP_PROJECT_ID"] = old_proj
-        if old_p:
-            os.environ["PROJECT_ID"] = old_p
+    with pytest.raises((ValueError, EnvironmentError)):
+        loader.load(pd.DataFrame({"id": ["1"], "cleaned_payload": ["test"]}))

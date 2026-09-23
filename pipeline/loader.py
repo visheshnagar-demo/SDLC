@@ -11,6 +11,11 @@ from google.cloud import bigquery
 logger = logging.getLogger("pipeline.loader")
 
 
+class ConfigError(ValueError):
+    """Raised when required configuration is missing or invalid."""
+    pass
+
+
 class BigQueryLoader:
     """Loads cleaned DataFrames into target BigQuery tables."""
 
@@ -21,15 +26,27 @@ class BigQueryLoader:
         table_id: str = None,
         write_disposition: str = "WRITE_TRUNCATE",
     ):
-        self.project_id = (
-            project_id
-            or os.getenv("GCP_PROJECT_ID")
-            or os.getenv("PROJECT_ID")
-            or os.getenv("GOOGLE_CLOUD_PROJECT")
-            or os.getenv("GCLOUD_PROJECT")
-        )
-        self.dataset_id = dataset_id or os.getenv("BIGQUERY_DATASET", "analytics")
-        self.table_id = table_id or os.getenv("BIGQUERY_TABLE", "postgres_test2")
+        if project_id is not None:
+            self.project_id = project_id
+        else:
+            self.project_id = (
+                os.getenv("GCP_PROJECT_ID")
+                or os.getenv("PROJECT_ID")
+                or os.getenv("GOOGLE_CLOUD_PROJECT")
+                or os.getenv("GCLOUD_PROJECT")
+                or ""
+            )
+
+        if dataset_id is not None:
+            self.dataset_id = dataset_id
+        else:
+            self.dataset_id = os.getenv("BIGQUERY_DATASET", "analytics")
+
+        if table_id is not None:
+            self.table_id = table_id
+        else:
+            self.table_id = os.getenv("BIGQUERY_TABLE", "postgres_test2")
+
         self.write_disposition = write_disposition
 
     def load(self, df: pd.DataFrame) -> bool:
@@ -42,11 +59,11 @@ class BigQueryLoader:
             True on successful load.
 
         Raises:
-            EnvironmentError: If GCP project is not configured.
+            ConfigError / ValueError: If GCP project is not configured.
             RuntimeError: If BigQuery load job fails.
         """
         if not self.project_id:
-            raise EnvironmentError(
+            raise ConfigError(
                 "FATAL: GCP_PROJECT_ID or PROJECT_ID environment variable is missing for BigQuery loading."
             )
 
