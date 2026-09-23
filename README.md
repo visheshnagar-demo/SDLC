@@ -1,88 +1,72 @@
-# Project
+# Cloud SQL PostgreSQL to BigQuery ETL Pipeline (SCRUM-368)
 
-## Server
+Serverless batch ETL pipeline extracting operational data from Google Cloud SQL PostgreSQL, sanitizing/cleansing records, and loading into Google BigQuery (`analytics.postgres_test2`).
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+## Pipeline Architecture
 
-### Setup
+- **Source**: Cloud SQL PostgreSQL (`upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db`, database `postgres`, table `test_data`)
+- **Extraction**: IAM-authenticated connection via `cloud-sql-python-connector` (service account: `559906504681-compute@developer`)
+- **Transformation Engine**: Python 3.11 / Pandas / PyArrow
+  - Leading and trailing whitespace trimming
+  - Payload column standardization (`data_payload` -> `cleaned_payload`)
+  - Null representation normalization (`"N/A"`, `""`, `"None"` -> `None`)
+  - UTC ISO timestamp formatting for `created_at` and `updated_at`
+  - Record deduplication keeping latest `updated_at` per primary key `id`
+  - Audit metadata injection (`etl_ingested_at`)
+- **Target Sink**: Google BigQuery (`analytics.postgres_test2`)
+  - Partitioning on `etl_ingested_at`
+  - Clustering on `id`
+  - Idempotent `WRITE_TRUNCATE` load disposition
 
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+## Directory Layout
+
+```
+.
+├── Dockerfile                                 # Container runtime definition
+├── env.deploy.json                            # Cloud Run deployment configuration
+├── requirements.txt                           # Production and testing dependencies
+├── dags/
+│   └── postgres_to_bigquery_dag.py           # Optional Airflow orchestration DAG
+├── pipeline/
+│   ├── __init__.py
+│   ├── extractor.py                           # Cloud SQL IAM connector & extraction
+│   ├── transformer.py                         # Data cleaning and schema casting
+│   ├── loader.py                              # BigQuery load jobs
+│   └── run_postgres_to_bigquery.py           # Standalone batch job entrypoint
+├── schemas/
+│   └── postgres_test2_schema.json            # Target BigQuery JSON schema
+├── sql/
+│   └── ddl/
+│       └── postgres_test2.sql                # Target BigQuery SQL DDL
+└── tests/
+    ├── test_postgres_to_bigquery.py          # Unit & integration tests
+    └── test_postgres_to_bigquery_pipeline.py # AST & connector configuration tests
 ```
 
-2. Install dependencies:
-```bash
-cd server
-pip install -r requirements.txt
-cd ..
-```
+## Local Development & Execution
 
 ### Running Tests
 ```bash
-cd server
-python -m pytest -v
-cd ..
+pytest tests/ -v
 ```
 
-### Starting the Development Server
+### Running the ETL Pipeline Locally
+Set required environment variables:
 ```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+export INSTANCE_CONNECTION_NAME="upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db"
+export POSTGRES_DB="postgres"
+export POSTGRES_USER="559906504681-compute@developer"
+export CLOUD_SQL_IP_TYPE="PRIVATE"
+export GCP_PROJECT_ID="upbeat-repeater-477110-q6"
+export BIGQUERY_DATASET="analytics"
+export BIGQUERY_TABLE="postgres_test2"
+
+python -m pipeline.run_postgres_to_bigquery
 ```
 
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
+## Cloud Run Job Deployment
+The pipeline executes as a serverless Cloud Run Job without idle container overhead:
 ```bash
-# Copy the example environment file
-cp .env.example .env
+# Entrypoint executed directly by Cloud Run Job:
+CMD ["python", "-m", "pipeline.run_postgres_to_bigquery"]
 ```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-

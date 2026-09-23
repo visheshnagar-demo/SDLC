@@ -1,0 +1,36 @@
+{
+  "columns": [
+    {
+      "source_name": "id",
+      "source_column": "id",
+      "target_name": "id",
+      "target_column": "id",
+      "target_type": "STRING",
+      "transform": "trim_and_clean"
+    },
+    {
+      "source_name": "data_payload",
+      "source_column": "data_payload",
+      "target_name": "cleaned_payload",
+      "target_column": "cleaned_payload",
+      "target_type": "STRING",
+      "transform": "trim_and_clean"
+    },
+    {
+      "source_name": "created_at",
+      "source_column": "created_at",
+      "target_name": "created_at",
+      "target_column": "created_at",
+      "target_type": "TIMESTAMP",
+      "transform": "to_utc_timestamp"
+    },
+    {
+      "source_name": "updated_at",
+      "source_column": "updated_at",
+      "target_name": "updated_at",
+      "target_column": "updated_at",
+      "target_type": "TIMESTAMP",
+      "transform": "to_utc_timestamp"
+    }
+  ]
+}

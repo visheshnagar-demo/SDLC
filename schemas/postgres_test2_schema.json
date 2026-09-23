@@ -1,0 +1,32 @@
+[
+  {
+    "name": "id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Cleaned unique identifier"
+  },
+  {
+    "name": "cleaned_payload",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Whitespace-trimmed text payload"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Standardized UTC creation timestamp"
+  },
+  {
+    "name": "updated_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Standardized UTC update timestamp"
+  },
+  {
+    "name": "etl_ingested_at",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "Metadata audit timestamp injected by pipeline"
+  }
+]
