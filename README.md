@@ -1,9 +1,11 @@
-# Project
+# Email Classification System
+
+Automated AI email ingestion, categorization (Work, Personal, Urgent, Promotional, Uncategorized), review, and manual override platform.
 
 ## Server
 
 ### Prerequisites
-- Python 3.9+
+- Python 3.11+
 - pip and venv
 
 ### Setup
@@ -85,4 +87,3 @@ Passwords are stored hashed with the app's own hashing utility (never in plainte
 | Backend  | 8000 | http://localhost:8000      |
 | Frontend | 5173 | http://localhost:5173      |
 | API Docs | 8000 | http://localhost:8000/docs |
-

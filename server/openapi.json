@@ -1,34 +1,36 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Payment Gateway Service",
-    "version": "0.1.0"
+    "title": "Email Classification System API",
+    "description": "Backend service for automated AI email parsing, classification, and review.",
+    "version": "1.0.0"
   },
   "paths": {
-    "/api/v1/payments/checkout-session": {
+    "/api/v1/emails/text": {
       "post": {
         "tags": [
-          "payments"
+          "Emails"
         ],
-        "summary": "Create Session",
-        "operationId": "create_session_api_v1_payments_checkout_session_post",
+        "summary": "Ingest email via raw text payload",
+        "description": "Ingest email by raw text and automatically classify category.",
+        "operationId": "ingest_text_email_api_v1_emails_text_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CheckoutSessionRequest"
+                "$ref": "#/components/schemas/EmailCreateText"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CheckoutSessionResponse"
+                  "$ref": "#/components/schemas/EmailRead"
                 }
               }
             }
@@ -46,30 +48,31 @@
         }
       }
     },
-    "/api/v1/payments/digital-wallet": {
+    "/api/v1/emails/upload": {
       "post": {
         "tags": [
-          "payments"
+          "Emails"
         ],
-        "summary": "Pay Digital Wallet",
-        "operationId": "pay_digital_wallet_api_v1_payments_digital_wallet_post",
+        "summary": "Ingest email via file upload",
+        "description": "Ingest email via .eml, .msg, or .txt file upload up to 10MB.",
+        "operationId": "ingest_file_email_api_v1_emails_upload_post",
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/DigitalWalletPaymentRequest"
+                "$ref": "#/components/schemas/Body_ingest_file_email_api_v1_emails_upload_post"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DigitalWalletPaymentResponse"
+                  "$ref": "#/components/schemas/EmailRead"
                 }
               }
             }
@@ -87,61 +90,44 @@
         }
       }
     },
-    "/api/v1/payments/rates": {
+    "/api/v1/emails": {
       "get": {
         "tags": [
-          "payments"
+          "Emails"
         ],
-        "summary": "Get Rates",
-        "operationId": "get_rates_api_v1_payments_rates_get",
+        "summary": "List and filter classified emails",
+        "description": "List emails with pagination, category filter, status filter, and search query.",
+        "operationId": "list_classified_emails_api_v1_emails_get",
         "parameters": [
           {
-            "name": "base_currency",
+            "name": "skip",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string",
-              "description": "Base currency code",
-              "default": "USD",
-              "title": "Base Currency"
+              "type": "integer",
+              "minimum": 0,
+              "description": "Pagination offset",
+              "default": 0,
+              "title": "Skip"
             },
-            "description": "Base currency code"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExchangeRatesResponse"
-                }
-              }
-            }
+            "description": "Pagination offset"
           },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "List Transactions",
-        "operationId": "list_transactions_api_v1_payments_transactions_get",
-        "parameters": [
           {
-            "name": "search",
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Items per page",
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Items per page"
+          },
+          {
+            "name": "category",
             "in": "query",
             "required": false,
             "schema": {
@@ -153,10 +139,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Search transaction ID or email",
-              "title": "Search"
+              "description": "Filter by category",
+              "title": "Category"
             },
-            "description": "Search transaction ID or email"
+            "description": "Filter by category"
           },
           {
             "name": "status",
@@ -171,13 +157,13 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by transaction status",
+              "description": "Filter by status",
               "title": "Status"
             },
-            "description": "Filter by transaction status"
+            "description": "Filter by status"
           },
           {
-            "name": "currency",
+            "name": "search",
             "in": "query",
             "required": false,
             "schema": {
@@ -189,33 +175,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by currency",
-              "title": "Currency"
+              "description": "Search keyword in subject or body",
+              "title": "Search"
             },
-            "description": "Filter by currency"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
+            "description": "Search keyword in subject or body"
           }
         ],
         "responses": {
@@ -224,11 +187,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TransactionSummary"
-                  },
-                  "title": "Response List Transactions Api V1 Payments Transactions Get"
+                  "$ref": "#/components/schemas/EmailListResponse"
                 }
               }
             }
@@ -246,21 +205,22 @@
         }
       }
     },
-    "/api/v1/payments/transactions/{transaction_id}": {
+    "/api/v1/emails/{email_id}": {
       "get": {
         "tags": [
-          "payments"
+          "Emails"
         ],
-        "summary": "Get Transaction",
-        "operationId": "get_transaction_api_v1_payments_transactions__transaction_id__get",
+        "summary": "Get email detail by UUID",
+        "description": "Retrieve full email content and classification details by ID.",
+        "operationId": "get_email_detail_api_v1_emails__email_id__get",
         "parameters": [
           {
-            "name": "transaction_id",
+            "name": "email_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Transaction Id"
+              "title": "Email Id"
             }
           }
         ],
@@ -270,7 +230,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TransactionDetail"
+                  "$ref": "#/components/schemas/EmailRead"
                 }
               }
             }
@@ -288,19 +248,31 @@
         }
       }
     },
-    "/api/v1/refunds": {
-      "post": {
+    "/api/v1/emails/{email_id}/override": {
+      "patch": {
         "tags": [
-          "refunds"
+          "Emails"
         ],
-        "summary": "Create Refund Endpoint",
-        "operationId": "create_refund_endpoint_api_v1_refunds_post",
+        "summary": "Manual classification override",
+        "description": "Manually override the AI-assigned category and create an audit log entry.",
+        "operationId": "override_email_classification_api_v1_emails__email_id__override_patch",
+        "parameters": [
+          {
+            "name": "email_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Email Id"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RefundRequest"
+                "$ref": "#/components/schemas/CategoryOverride"
               }
             }
           }
@@ -311,226 +283,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RefundSummary"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "tags": [
-          "refunds"
-        ],
-        "summary": "List Refunds Endpoint",
-        "operationId": "list_refunds_endpoint_api_v1_refunds_get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RefundSummary"
-                  },
-                  "title": "Response List Refunds Endpoint Api V1 Refunds Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/webhooks/stripe": {
-      "post": {
-        "tags": [
-          "webhooks"
-        ],
-        "summary": "Handle Stripe Webhook",
-        "operationId": "handle_stripe_webhook_api_v1_webhooks_stripe_post",
-        "parameters": [
-          {
-            "name": "stripe-signature",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Stripe-Signature"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/audit-logs": {
-      "get": {
-        "tags": [
-          "audit-logs"
-        ],
-        "summary": "List Audit Logs",
-        "operationId": "list_audit_logs_api_v1_audit_logs_get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
-          },
-          {
-            "name": "event_type",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by event type",
-              "title": "Event Type"
-            },
-            "description": "Filter by event type"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AuditLogEntry"
-                  },
-                  "title": "Response List Audit Logs Api V1 Audit Logs Get"
+                  "$ref": "#/components/schemas/EmailRead"
                 }
               }
             }
@@ -550,8 +303,30 @@
     },
     "/health": {
       "get": {
+        "tags": [
+          "Health"
+        ],
         "summary": "Health Check",
         "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "Root"
+        ],
+        "summary": "Root",
+        "operationId": "root__get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -567,13 +342,37 @@
   },
   "components": {
     "schemas": {
-      "AuditLogEntry": {
+      "Body_ingest_file_email_api_v1_emails_upload_post": {
         "properties": {
-          "id": {
+          "file": {
             "type": "string",
-            "title": "Id"
-          },
-          "transaction_id": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_ingest_file_email_api_v1_emails_upload_post"
+      },
+      "CategoryOverride": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "description": "Target category: Work, Personal, Urgent, Promotional, or Uncategorized"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category"
+        ],
+        "title": "CategoryOverride"
+      },
+      "EmailCreateText": {
+        "properties": {
+          "subject": {
             "anyOf": [
               {
                 "type": "string"
@@ -582,176 +381,58 @@
                 "type": "null"
               }
             ],
-            "title": "Transaction Id"
+            "title": "Subject"
           },
-          "event_type": {
+          "body": {
             "type": "string",
-            "title": "Event Type"
-          },
-          "ip_address": {
-            "type": "string",
-            "title": "Ip Address"
-          },
-          "masked_payload": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Masked Payload"
-          },
-          "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Created At"
+            "minLength": 0,
+            "title": "Body"
           }
         },
         "type": "object",
         "required": [
-          "id",
-          "event_type",
-          "ip_address",
-          "masked_payload"
+          "body"
         ],
-        "title": "AuditLogEntry"
+        "title": "EmailCreateText"
       },
-      "CartItem": {
+      "EmailListResponse": {
         "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "quantity": {
+          "total": {
             "type": "integer",
-            "title": "Quantity",
-            "default": 1
+            "title": "Total"
           },
-          "unit_price": {
-            "type": "number",
-            "title": "Unit Price"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "unit_price"
-        ],
-        "title": "CartItem"
-      },
-      "CheckoutSessionRequest": {
-        "properties": {
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount",
-            "description": "Amount in base currency"
+          "skip": {
+            "type": "integer",
+            "title": "Skip"
           },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "description": "Settlement/target currency",
-            "default": "USD"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
           },
           "items": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/CartItem"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "items": {
+              "$ref": "#/components/schemas/EmailRead"
+            },
+            "type": "array",
             "title": "Items"
           }
         },
         "type": "object",
         "required": [
-          "amount",
-          "customer_email"
+          "total",
+          "skip",
+          "limit",
+          "items"
         ],
-        "title": "CheckoutSessionRequest"
+        "title": "EmailListResponse"
       },
-      "CheckoutSessionResponse": {
+      "EmailRead": {
         "properties": {
-          "session_id": {
+          "id": {
             "type": "string",
-            "title": "Session Id"
+            "title": "Id"
           },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "client_secret": {
-            "type": "string",
-            "title": "Client Secret"
-          },
-          "base_amount": {
-            "type": "number",
-            "title": "Base Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_amount": {
-            "type": "number",
-            "title": "Target Amount"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          }
-        },
-        "type": "object",
-        "required": [
-          "session_id",
-          "payment_intent_id",
-          "client_secret",
-          "base_amount",
-          "base_currency",
-          "target_amount",
-          "target_currency",
-          "exchange_rate"
-        ],
-        "title": "CheckoutSessionResponse"
-      },
-      "DigitalWalletPaymentRequest": {
-        "properties": {
-          "wallet_type": {
-            "type": "string",
-            "title": "Wallet Type",
-            "description": "apple_pay or google_pay"
-          },
-          "payment_token": {
-            "type": "string",
-            "title": "Payment Token"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "default": "USD"
-          },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
-          },
-          "customer_email": {
+          "subject": {
             "anyOf": [
               {
                 "type": "string"
@@ -760,81 +441,83 @@
                 "type": "null"
               }
             ],
-            "title": "Customer Email",
-            "default": "customer@example.com"
-          }
-        },
-        "type": "object",
-        "required": [
-          "wallet_type",
-          "payment_token",
-          "amount"
-        ],
-        "title": "DigitalWalletPaymentRequest"
-      },
-      "DigitalWalletPaymentResponse": {
-        "properties": {
-          "transaction_id": {
-            "type": "string",
-            "title": "Transaction Id"
+            "title": "Subject"
           },
-          "payment_intent_id": {
+          "body": {
             "type": "string",
-            "title": "Payment Intent Id"
+            "title": "Body"
           },
-          "wallet_type": {
+          "preview": {
             "type": "string",
-            "title": "Wallet Type"
+            "title": "Preview"
           },
-          "amount": {
+          "file_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Name"
+          },
+          "file_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Type"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "original_category": {
+            "type": "string",
+            "title": "Original Category"
+          },
+          "confidence_score": {
             "type": "number",
-            "title": "Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
+            "title": "Confidence Score"
           },
           "status": {
             "type": "string",
             "title": "Status"
+          },
+          "is_overridden": {
+            "type": "boolean",
+            "title": "Is Overridden"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
-          "transaction_id",
-          "payment_intent_id",
-          "wallet_type",
-          "amount",
-          "currency",
-          "status"
+          "id",
+          "body",
+          "preview",
+          "category",
+          "original_category",
+          "confidence_score",
+          "status",
+          "is_overridden",
+          "created_at",
+          "updated_at"
         ],
-        "title": "DigitalWalletPaymentResponse"
-      },
-      "ExchangeRatesResponse": {
-        "properties": {
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "rates": {
-            "additionalProperties": {
-              "type": "number"
-            },
-            "type": "object",
-            "title": "Rates"
-          },
-          "timestamp": {
-            "type": "string",
-            "title": "Timestamp"
-          }
-        },
-        "type": "object",
-        "required": [
-          "base_currency",
-          "rates",
-          "timestamp"
-        ],
-        "title": "ExchangeRatesResponse"
+        "title": "EmailRead"
       },
       "HTTPValidationError": {
         "properties": {
@@ -848,244 +531,6 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
-      },
-      "RefundRequest": {
-        "properties": {
-          "transaction_id": {
-            "type": "string",
-            "title": "Transaction Id"
-          },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
-          },
-          "reason": {
-            "type": "string",
-            "title": "Reason"
-          },
-          "memo": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Memo"
-          }
-        },
-        "type": "object",
-        "required": [
-          "transaction_id",
-          "amount",
-          "reason"
-        ],
-        "title": "RefundRequest"
-      },
-      "RefundSummary": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "transaction_id": {
-            "type": "string",
-            "title": "Transaction Id"
-          },
-          "refund_amount": {
-            "type": "number",
-            "title": "Refund Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
-          "reason": {
-            "type": "string",
-            "title": "Reason"
-          },
-          "memo": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Memo"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "transaction_id",
-          "refund_amount",
-          "currency",
-          "reason",
-          "status"
-        ],
-        "title": "RefundSummary"
-      },
-      "TransactionDetail": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "payment_method": {
-            "type": "string",
-            "title": "Payment Method"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "converted_amount": {
-            "type": "number",
-            "title": "Converted Amount"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "refunded_amount": {
-            "type": "number",
-            "title": "Refunded Amount"
-          },
-          "remaining_refundable_balance": {
-            "type": "number",
-            "title": "Remaining Refundable Balance"
-          },
-          "refunds": {
-            "items": {
-              "$ref": "#/components/schemas/RefundSummary"
-            },
-            "type": "array",
-            "title": "Refunds"
-          },
-          "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "base_currency",
-          "target_currency",
-          "converted_amount",
-          "exchange_rate",
-          "status",
-          "refunded_amount",
-          "remaining_refundable_balance"
-        ],
-        "title": "TransactionDetail"
-      },
-      "TransactionSummary": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "payment_method": {
-            "type": "string",
-            "title": "Payment Method"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "currency",
-          "status"
-        ],
-        "title": "TransactionSummary"
       },
       "ValidationError": {
         "properties": {
