@@ -1,4 +1,84 @@
-# Project
+# SDLC Project - Payment Gateway & Cloud SQL to BigQuery ETL Pipeline
+
+## Overview
+This repository contains a full-stack system consisting of a Payment Gateway backend service and an automated ETL pipeline that extracts data from Google Cloud SQL PostgreSQL, cleans and validates records, and loads them into Google BigQuery.
+
+### ETL Pipeline Components (SCRUM-364)
+- **Source Database:** Google Cloud SQL PostgreSQL
+  - Instance: `upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db`
+  - Database: `postgres`
+  - User: `559906504681-compute@developer` (IAM mTLS authentication via Cloud SQL Python Connector)
+  - Source Table: `test_data`
+- **Data Transformations:**
+  - Leading/trailing whitespace stripping on text fields
+  - Standardized null/sentinel value normalization (`""`, `"N/A"`, `"null"`, `"None"` -> `NULL`)
+  - Duplicate record elimination
+  - Type casting (timestamps to UTC ISO-8601, numeric amounts to float)
+  - Injection of `_etl_loaded_at` audit timestamp
+- **Target Data Warehouse:** Google BigQuery
+  - Project: `upbeat-repeater-477110-q6`
+  - Dataset: `analytics`
+  - Target Table: `postgres_test2`
+
+---
+
+### Prerequisites
+- Python 3.11+
+- pip / virtualenv
+
+### 1. Backend Installation
+```bash
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 2. Environment Configuration
+Copy `.env.example` to `.env` and configure appropriate variables:
+```bash
+cp .env.example .env
+```
+
+### 3. Running the Server
+```bash
+uvicorn server.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+### 4. Running the ETL Pipeline Manually
+```bash
+python -m server.etl_main
+```
+
+### 5. Running the Test Suite
+```bash
+pytest -v
+```
+
+---
+
+## API Endpoints
+
+### ETL Job Endpoints
+- `POST /api/v1/etl/jobs/run`: Trigger on-demand ETL batch execution.
+- `GET /api/v1/etl/jobs/status`: Get latest execution status and metrics.
+
+### Payment Gateway Endpoints
+- `POST /api/v1/payments/process`: Process payment transaction.
+- `POST /api/v1/refunds/request`: Submit refund request.
+- `GET /api/v1/audit/logs`: Query audit logs.
+- `GET /health`: Health check.
+
+---
+
+## Full-Stack Local Development
+- Backend runs on `http://localhost:8000`
+- Frontend runs on `http://localhost:5173`
+- Default Test Credentials (if auth is enabled):
+  - User: `test@example.com` / `testpassword`
+  - Admin: `admin@example.com` / `adminpassword`
 
 ## Server
 

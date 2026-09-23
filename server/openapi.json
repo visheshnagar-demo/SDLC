@@ -1,10 +1,50 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Payment Gateway Service",
+    "title": "Payment Gateway & ETL Service",
     "version": "0.1.0"
   },
   "paths": {
+    "/api/v1/etl/jobs/run": {
+      "post": {
+        "tags": [
+          "ETL"
+        ],
+        "summary": "Trigger Etl Job",
+        "description": "Triggers the ETL pipeline batch execution.",
+        "operationId": "trigger_etl_job_api_v1_etl_jobs_run_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/etl/jobs/status": {
+      "get": {
+        "tags": [
+          "ETL"
+        ],
+        "summary": "Get Etl Job Status",
+        "description": "Queries the status and metrics of the latest ETL execution.",
+        "operationId": "get_etl_job_status_api_v1_etl_jobs_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/payments/checkout-session": {
       "post": {
         "tags": [

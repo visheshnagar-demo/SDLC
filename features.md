@@ -17,3 +17,13 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-364 - ETL Pipeline: Cloud SQL PostgreSQL to BigQuery Data Ingestion & Cleaning
+
+### Feature Summary
+Extract data from Cloud SQL PostgreSQL test_data table, perform data cleaning transformations, and load the cleaned dataset into BigQuery analytics.postgres_test2 table.
+
+### Key Features
+- Source Data Extraction from Cloud SQL PostgreSQL (instance upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db, database postgres, table test_data)
+- Data Cleaning & Transformation (deduplication, whitespace trimming, null handling, schema validation)
+- Target Data Loading into BigQuery table analytics.postgres_test2
