@@ -1,133 +1,140 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, status
 from sqlalchemy.orm import Session
 
 from server.database import get_db
 from server.schemas import (
-    EmailCreateText,
     EmailRead,
-    EmailListResponse,
+    EmailCreateText,
     CategoryOverride,
+    EmailListResponse,
+    EmailStatsResponse,
 )
 from server.services import email_service
+from server.services.parser import FileTooLargeError, UnsupportedFileFormatError
 
-router = APIRouter(prefix="/emails", tags=["Emails"])
+router = APIRouter()
 
 
-@router.post(
-    "/text",
-    response_model=EmailRead,
-    status_code=status.HTTP_201_CREATED,
-    summary="Ingest email via raw text payload",
-)
-def ingest_text_email(
-    email_in: EmailCreateText,
+@router.post("/text", response_model=EmailRead, status_code=status.HTTP_201_CREATED)
+def ingest_email_text(
+    payload: EmailCreateText,
     db: Session = Depends(get_db),
 ):
-    """Ingest email by raw text and automatically classify category."""
-    email_obj = email_service.create_email_from_text(db=db, email_in=email_in)
-    return email_obj
+    return email_service.create_email_from_text(
+        db=db,
+        body=payload.body,
+        subject=payload.subject,
+    )
 
 
-@router.post(
-    "/upload",
-    response_model=EmailRead,
-    status_code=status.HTTP_201_CREATED,
-    summary="Ingest email via file upload",
-)
-async def ingest_file_email(
+@router.post("/upload", response_model=EmailRead, status_code=status.HTTP_201_CREATED)
+async def ingest_email_file(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
-    """Ingest email via .eml, .msg, or .txt file upload up to 10MB."""
     if not file.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Uploaded file must have a valid filename.",
+            detail="Uploaded file must have a filename.",
         )
 
-    file_bytes = await file.read()
-    email_obj = email_service.create_email_from_file(
-        db=db, filename=file.filename, file_bytes=file_bytes
-    )
-    return email_obj
+    content = await file.read()
+    try:
+        return email_service.create_email_from_upload(
+            db=db,
+            filename=file.filename,
+            content=content,
+        )
+    except FileTooLargeError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+    except UnsupportedFileFormatError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to parse and process email file: {str(e)}",
+        )
 
 
-@router.get(
-    "",
-    response_model=EmailListResponse,
-    status_code=status.HTTP_200_OK,
-    summary="List and filter classified emails",
-)
-def list_classified_emails(
-    skip: int = Query(0, ge=0, description="Pagination offset"),
-    limit: int = Query(20, ge=1, le=100, description="Items per page"),
+@router.get("", response_model=EmailListResponse)
+def list_emails(
+    search: Optional[str] = Query(
+        None, description="Search term for subject, body, or file_name"
+    ),
     category: Optional[str] = Query(None, description="Filter by category"),
     status_filter: Optional[str] = Query(
         None, alias="status", description="Filter by status"
     ),
-    search: Optional[str] = Query(
-        None, description="Search keyword in subject or body"
-    ),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
-    """List emails with pagination, category filter, status filter, and search query."""
-    total, items = email_service.list_emails(
+    items, total = email_service.list_emails(
         db=db,
-        skip=skip,
-        limit=limit,
+        search=search,
         category=category,
         status=status_filter,
-        search=search,
+        skip=skip,
+        limit=limit,
     )
-    return EmailListResponse(total=total, skip=skip, limit=limit, items=items)
+    return EmailListResponse(
+        items=items,
+        total=total,
+        skip=skip,
+        limit=limit,
+    )
 
 
-@router.get(
-    "/{email_id}",
-    response_model=EmailRead,
-    status_code=status.HTTP_200_OK,
-    summary="Get email detail by UUID",
-)
-def get_email_detail(
-    email_id: str,
+@router.get("/stats", response_model=EmailStatsResponse)
+def get_email_stats(
     db: Session = Depends(get_db),
 ):
-    """Retrieve full email content and classification details by ID."""
-    email_obj = email_service.get_email_by_id(db=db, email_id=email_id)
+    stats = email_service.get_email_stats(db=db)
+    return EmailStatsResponse(**stats)
+
+
+@router.get("/{id}", response_model=EmailRead)
+def get_email_by_id(
+    id: str,
+    db: Session = Depends(get_db),
+):
+    email_obj = email_service.get_email_by_id(db=db, email_id=id)
     if not email_obj:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Email with ID '{email_id}' not found.",
+            detail=f"Email with ID '{id}' not found.",
         )
     return email_obj
 
 
-@router.patch(
-    "/{email_id}/override",
-    response_model=EmailRead,
-    status_code=status.HTTP_200_OK,
-    summary="Manual classification override",
-)
-def override_email_classification(
-    email_id: str,
-    override_in: CategoryOverride,
+@router.patch("/{id}/override", response_model=EmailRead)
+def override_email_category(
+    id: str,
+    payload: CategoryOverride,
     db: Session = Depends(get_db),
 ):
-    """Manually override the AI-assigned category and create an audit log entry."""
-    valid_categories = {"Work", "Personal", "Urgent", "Promotional", "Uncategorized"}
-    if override_in.category not in valid_categories:
+    try:
+        updated_email = email_service.override_email_category(
+            db=db,
+            email_id=id,
+            new_category=payload.category,
+            reason=payload.reason,
+        )
+        if not updated_email:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Email with ID '{id}' not found.",
+            )
+        return updated_email
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid category '{override_in.category}'. Allowed categories: {', '.join(sorted(valid_categories))}",
+            detail=str(e),
         )
-
-    email_obj = email_service.override_category(
-        db=db, email_id=email_id, new_category=override_in.category
-    )
-    if not email_obj:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Email with ID '{email_id}' not found.",
-        )
-    return email_obj

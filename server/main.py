@@ -3,48 +3,58 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from server.database import init_db
+from server.database import init_db, SessionLocal, seed_data
 from server.api.v1.emails import router as emails_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize database tables
+    # Initialize DB tables
     init_db()
+    # Seed default data
+    db = SessionLocal()
+    try:
+        seed_data(db)
+    finally:
+        db.close()
     yield
 
 
 app = FastAPI(
-    title="Email Classification System API",
-    description="Backend service for automated AI email parsing, classification, and review.",
+    title="Email Ingestion & AI Categorization API",
+    description="API for ingesting, parsing, AI classifying, and manually reviewing emails.",
     version="1.0.0",
     lifespan=lifespan,
 )
 
-# Mandatory CORS setup for Fullstack
+# CORS configuration
 ALLOWED_ORIGINS = os.getenv(
-    "ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000"
+    "ALLOWED_ORIGINS",
+    "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000",
 ).split(",")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin.strip() for origin in ALLOWED_ORIGINS if origin.strip()],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(emails_router, prefix="/api/v1")
+# Include Routers
+app.include_router(emails_router, prefix="/api/v1/emails", tags=["emails"])
 
 
-@app.get("/health", tags=["Health"])
-def health_check():
-    return {"status": "healthy", "service": "Email Classification System"}
-
-
-@app.get("/", tags=["Root"])
+@app.get("/")
 def root():
     return {
-        "message": "Welcome to Email Classification System API",
-        "docs_url": "/docs",
+        "service": "Email Ingestion & AI Categorization API",
+        "version": "1.0.0",
+        "status": "online",
+        "docs": "/docs",
     }
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}

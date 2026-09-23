@@ -30,7 +30,6 @@ graph TD
 - server/api/__init__.py
 - server/api/v1/__init__.py
 - server/api/v1/emails.py
-- server/config.py
 - server/database.py
 - server/main.py
 - server/models.py

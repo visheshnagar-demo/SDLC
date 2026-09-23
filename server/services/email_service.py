@@ -1,40 +1,34 @@
-import os
 import uuid
 from datetime import datetime
-from typing import Optional, List, Tuple
+from typing import Optional, List, Dict, Tuple
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, desc
+from sqlalchemy import or_
 
 from server.models import Email, ClassificationAuditLog
-from server.schemas import EmailCreateText
-from server.services.parser import (
-    validate_file_size_and_extension,
-    parse_eml,
-    parse_msg,
-    parse_txt,
-    generate_preview,
-)
-from server.services.classifier import classify_email
+from server.services.classifier import classify_email, VALID_CATEGORIES
+from server.services.parser import parse_uploaded_file, parse_email_text, create_preview
 
 
-def create_email_from_text(db: Session, email_in: EmailCreateText) -> Email:
-    """Create, ingest with PENDING status, and classify an email from raw text input."""
-    subject = (email_in.subject or "").strip() or None
-    body = email_in.body.strip()
-    preview = generate_preview(body or (subject or ""))
+def create_email_from_text(
+    db: Session,
+    body: str,
+    subject: Optional[str] = None,
+) -> Email:
+    parsed_subject, parsed_body = parse_email_text(body, explicit_subject=subject)
+    preview = create_preview(parsed_body, max_len=150)
+    category, confidence_score = classify_email(parsed_subject or "", parsed_body)
 
-    # Stage 1: Initialize record in PENDING status
     email_obj = Email(
         id=str(uuid.uuid4()),
-        subject=subject,
-        body=body,
+        subject=parsed_subject or "Untitled Email",
+        body=parsed_body,
         preview=preview,
         file_name=None,
-        file_type="raw_text",
-        category="Uncategorized",
-        original_category="Uncategorized",
-        confidence_score=0.0,
-        status="PENDING",
+        file_type="text",
+        category=category,
+        original_category=category,
+        confidence_score=confidence_score,
+        status="PROCESSED",
         is_overridden=False,
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow(),
@@ -42,43 +36,41 @@ def create_email_from_text(db: Session, email_in: EmailCreateText) -> Email:
     db.add(email_obj)
     db.flush()
 
-    try:
-        # Stage 2: AI Classification & Processing
-        category, confidence_score = classify_email(subject, body)
-        email_obj.category = category
-        email_obj.original_category = category
-        email_obj.confidence_score = confidence_score
-        email_obj.status = "PROCESSED"
-    except Exception:
-        email_obj.status = "FAILED"
-        email_obj.category = "Uncategorized"
-        email_obj.original_category = "Uncategorized"
-        email_obj.confidence_score = 0.0
-
+    audit = ClassificationAuditLog(
+        id=str(uuid.uuid4()),
+        email_id=email_obj.id,
+        previous_category=None,
+        new_category=category,
+        action="INITIAL_CLASSIFICATION",
+        reason="Automated AI text classification",
+        created_at=datetime.utcnow(),
+    )
+    db.add(audit)
     db.commit()
     db.refresh(email_obj)
     return email_obj
 
 
-def create_email_from_file(db: Session, filename: str, file_bytes: bytes) -> Email:
-    """Validate, initialize PENDING record, parse, and classify an uploaded email file."""
-    file_size = len(file_bytes)
-    validate_file_size_and_extension(filename, file_size)
+def create_email_from_upload(
+    db: Session,
+    filename: str,
+    content: bytes,
+) -> Email:
+    parsed_subject, parsed_body, file_type = parse_uploaded_file(filename, content)
+    preview = create_preview(parsed_body, max_len=150)
+    category, confidence_score = classify_email(parsed_subject or "", parsed_body)
 
-    ext = os.path.splitext(filename)[1].lower()
-
-    # Stage 1: Initialize record in PENDING status
     email_obj = Email(
         id=str(uuid.uuid4()),
-        subject=None,
-        body="",
-        preview="",
+        subject=parsed_subject or filename,
+        body=parsed_body,
+        preview=preview,
         file_name=filename,
-        file_type=ext,
-        category="Uncategorized",
-        original_category="Uncategorized",
-        confidence_score=0.0,
-        status="PENDING",
+        file_type=file_type,
+        category=category,
+        original_category=category,
+        confidence_score=confidence_score,
+        status="PROCESSED",
         is_overridden=False,
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow(),
@@ -86,32 +78,16 @@ def create_email_from_file(db: Session, filename: str, file_bytes: bytes) -> Ema
     db.add(email_obj)
     db.flush()
 
-    try:
-        if ext == ".eml":
-            subject, body = parse_eml(file_bytes)
-        elif ext == ".msg":
-            subject, body = parse_msg(file_bytes)
-        elif ext == ".txt":
-            subject, body = parse_txt(file_bytes)
-        else:
-            subject, body = None, file_bytes.decode("utf-8", errors="replace")
-
-        preview = generate_preview(body or (subject or ""))
-        category, confidence_score = classify_email(subject, body)
-
-        email_obj.subject = subject
-        email_obj.body = body
-        email_obj.preview = preview
-        email_obj.category = category
-        email_obj.original_category = category
-        email_obj.confidence_score = confidence_score
-        email_obj.status = "PROCESSED"
-    except Exception:
-        email_obj.status = "FAILED"
-        email_obj.category = "Uncategorized"
-        email_obj.original_category = "Uncategorized"
-        email_obj.confidence_score = 0.0
-
+    audit = ClassificationAuditLog(
+        id=str(uuid.uuid4()),
+        email_id=email_obj.id,
+        previous_category=None,
+        new_category=category,
+        action="INITIAL_CLASSIFICATION",
+        reason=f"Automated AI file ingestion from {filename}",
+        created_at=datetime.utcnow(),
+    )
+    db.add(audit)
     db.commit()
     db.refresh(email_obj)
     return email_obj
@@ -119,13 +95,12 @@ def create_email_from_file(db: Session, filename: str, file_bytes: bytes) -> Ema
 
 def list_emails(
     db: Session,
-    skip: int = 0,
-    limit: int = 20,
+    search: Optional[str] = None,
     category: Optional[str] = None,
     status: Optional[str] = None,
-    search: Optional[str] = None,
-) -> Tuple[int, List[Email]]:
-    """List emails with filtering, search, and pagination."""
+    skip: int = 0,
+    limit: int = 20,
+) -> Tuple[List[Email], int]:
     query = db.query(Email)
 
     if category and category.lower() != "all":
@@ -140,47 +115,73 @@ def list_emails(
             or_(
                 Email.subject.ilike(search_pattern),
                 Email.body.ilike(search_pattern),
-                Email.preview.ilike(search_pattern),
                 Email.file_name.ilike(search_pattern),
             )
         )
 
     total = query.count()
-    items = query.order_by(desc(Email.created_at)).offset(skip).limit(limit).all()
-    return total, items
+    items = query.order_by(Email.created_at.desc()).offset(skip).limit(limit).all()
+    return items, total
 
 
 def get_email_by_id(db: Session, email_id: str) -> Optional[Email]:
-    """Retrieve an email record by its primary key UUID."""
     return db.query(Email).filter(Email.id == email_id).first()
 
 
-def override_category(
-    db: Session, email_id: str, new_category: str, modified_by: str = "user"
+def override_email_category(
+    db: Session,
+    email_id: str,
+    new_category: str,
+    reason: Optional[str] = None,
 ) -> Optional[Email]:
-    """Manually override the classification category of an email and record an audit log."""
     email_obj = get_email_by_id(db, email_id)
     if not email_obj:
         return None
 
-    previous_category = email_obj.category
-
-    # Create audit log
-    audit_log = ClassificationAuditLog(
-        id=str(uuid.uuid4()),
-        email_id=email_obj.id,
-        previous_category=previous_category,
-        new_category=new_category,
-        modified_by=modified_by,
-        created_at=datetime.utcnow(),
+    # Capitalize or normalize category if matched
+    matched_cat = next(
+        (c for c in VALID_CATEGORIES if c.lower() == new_category.lower()), None
     )
-    db.add(audit_log)
+    if not matched_cat:
+        raise ValueError(
+            f"Invalid category '{new_category}'. Valid categories are: {', '.join(VALID_CATEGORIES)}"
+        )
 
-    # Update email record
-    email_obj.category = new_category
+    previous_cat = email_obj.category
+    email_obj.category = matched_cat
     email_obj.is_overridden = True
     email_obj.updated_at = datetime.utcnow()
 
+    audit = ClassificationAuditLog(
+        id=str(uuid.uuid4()),
+        email_id=email_obj.id,
+        previous_category=previous_cat,
+        new_category=matched_cat,
+        action="MANUAL_OVERRIDE",
+        reason=reason or "Manual category override by user",
+        created_at=datetime.utcnow(),
+    )
+    db.add(audit)
     db.commit()
     db.refresh(email_obj)
     return email_obj
+
+
+def get_email_stats(db: Session) -> Dict[str, int]:
+    total = db.query(Email).count()
+    urgent = db.query(Email).filter(Email.category == "Urgent").count()
+    work = db.query(Email).filter(Email.category == "Work").count()
+    personal = db.query(Email).filter(Email.category == "Personal").count()
+    promotional = db.query(Email).filter(Email.category == "Promotional").count()
+    uncategorized = db.query(Email).filter(Email.category == "Uncategorized").count()
+    overridden = db.query(Email).filter(Email.is_overridden.is_(True)).count()
+
+    return {
+        "total": total,
+        "urgent": urgent,
+        "work": work,
+        "personal": personal,
+        "promotional": promotional,
+        "uncategorized": uncategorized,
+        "overridden": overridden,
+    }

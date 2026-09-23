@@ -1,19 +1,18 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Email Classification System API",
-    "description": "Backend service for automated AI email parsing, classification, and review.",
+    "title": "Email Ingestion & AI Categorization API",
+    "description": "API for ingesting, parsing, AI classifying, and manually reviewing emails.",
     "version": "1.0.0"
   },
   "paths": {
     "/api/v1/emails/text": {
       "post": {
         "tags": [
-          "Emails"
+          "emails"
         ],
-        "summary": "Ingest email via raw text payload",
-        "description": "Ingest email by raw text and automatically classify category.",
-        "operationId": "ingest_text_email_api_v1_emails_text_post",
+        "summary": "Ingest Email Text",
+        "operationId": "ingest_email_text_api_v1_emails_text_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -51,16 +50,15 @@
     "/api/v1/emails/upload": {
       "post": {
         "tags": [
-          "Emails"
+          "emails"
         ],
-        "summary": "Ingest email via file upload",
-        "description": "Ingest email via .eml, .msg, or .txt file upload up to 10MB.",
-        "operationId": "ingest_file_email_api_v1_emails_upload_post",
+        "summary": "Ingest Email File",
+        "operationId": "ingest_email_file_api_v1_emails_upload_post",
         "requestBody": {
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Body_ingest_file_email_api_v1_emails_upload_post"
+                "$ref": "#/components/schemas/Body_ingest_email_file_api_v1_emails_upload_post"
               }
             }
           },
@@ -93,38 +91,28 @@
     "/api/v1/emails": {
       "get": {
         "tags": [
-          "Emails"
+          "emails"
         ],
-        "summary": "List and filter classified emails",
-        "description": "List emails with pagination, category filter, status filter, and search query.",
-        "operationId": "list_classified_emails_api_v1_emails_get",
+        "summary": "List Emails",
+        "operationId": "list_emails_api_v1_emails_get",
         "parameters": [
           {
-            "name": "skip",
+            "name": "search",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "description": "Pagination offset",
-              "default": 0,
-              "title": "Skip"
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search term for subject, body, or file_name",
+              "title": "Search"
             },
-            "description": "Pagination offset"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "description": "Items per page",
-              "default": 20,
-              "title": "Limit"
-            },
-            "description": "Items per page"
+            "description": "Search term for subject, body, or file_name"
           },
           {
             "name": "category",
@@ -163,22 +151,27 @@
             "description": "Filter by status"
           },
           {
-            "name": "search",
+            "name": "skip",
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Search keyword in subject or body",
-              "title": "Search"
-            },
-            "description": "Search keyword in subject or body"
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
           }
         ],
         "responses": {
@@ -205,22 +198,42 @@
         }
       }
     },
-    "/api/v1/emails/{email_id}": {
+    "/api/v1/emails/stats": {
       "get": {
         "tags": [
-          "Emails"
+          "emails"
         ],
-        "summary": "Get email detail by UUID",
-        "description": "Retrieve full email content and classification details by ID.",
-        "operationId": "get_email_detail_api_v1_emails__email_id__get",
+        "summary": "Get Email Stats",
+        "operationId": "get_email_stats_api_v1_emails_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailStatsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/emails/{id}": {
+      "get": {
+        "tags": [
+          "emails"
+        ],
+        "summary": "Get Email By Id",
+        "operationId": "get_email_by_id_api_v1_emails__id__get",
         "parameters": [
           {
-            "name": "email_id",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Email Id"
+              "title": "Id"
             }
           }
         ],
@@ -248,22 +261,21 @@
         }
       }
     },
-    "/api/v1/emails/{email_id}/override": {
+    "/api/v1/emails/{id}/override": {
       "patch": {
         "tags": [
-          "Emails"
+          "emails"
         ],
-        "summary": "Manual classification override",
-        "description": "Manually override the AI-assigned category and create an audit log entry.",
-        "operationId": "override_email_classification_api_v1_emails__email_id__override_patch",
+        "summary": "Override Email Category",
+        "operationId": "override_email_category_api_v1_emails__id__override_patch",
         "parameters": [
           {
-            "name": "email_id",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Email Id"
+              "title": "Id"
             }
           }
         ],
@@ -301,13 +313,10 @@
         }
       }
     },
-    "/health": {
+    "/": {
       "get": {
-        "tags": [
-          "Health"
-        ],
-        "summary": "Health Check",
-        "operationId": "health_check_health_get",
+        "summary": "Root",
+        "operationId": "root__get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -320,13 +329,10 @@
         }
       }
     },
-    "/": {
+    "/health": {
       "get": {
-        "tags": [
-          "Root"
-        ],
-        "summary": "Root",
-        "operationId": "root__get",
+        "summary": "Health Check",
+        "operationId": "health_check_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -342,7 +348,7 @@
   },
   "components": {
     "schemas": {
-      "Body_ingest_file_email_api_v1_emails_upload_post": {
+      "Body_ingest_email_file_api_v1_emails_upload_post": {
         "properties": {
           "file": {
             "type": "string",
@@ -354,7 +360,7 @@
         "required": [
           "file"
         ],
-        "title": "Body_ingest_file_email_api_v1_emails_upload_post"
+        "title": "Body_ingest_email_file_api_v1_emails_upload_post"
       },
       "CategoryOverride": {
         "properties": {
@@ -362,6 +368,18 @@
             "type": "string",
             "title": "Category",
             "description": "Target category: Work, Personal, Urgent, Promotional, or Uncategorized"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason",
+            "description": "Optional reason for manual override"
           }
         },
         "type": "object",
@@ -369,6 +387,62 @@
           "category"
         ],
         "title": "CategoryOverride"
+      },
+      "ClassificationAuditLogRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "email_id": {
+            "type": "string",
+            "title": "Email Id"
+          },
+          "previous_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Category"
+          },
+          "new_category": {
+            "type": "string",
+            "title": "New Category"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email_id",
+          "new_category",
+          "action",
+          "created_at"
+        ],
+        "title": "ClassificationAuditLogRead"
       },
       "EmailCreateText": {
         "properties": {
@@ -385,44 +459,42 @@
           },
           "body": {
             "type": "string",
-            "minLength": 0,
-            "title": "Body"
+            "title": "Body",
+            "description": "Raw email text or content",
+            "default": ""
           }
         },
         "type": "object",
-        "required": [
-          "body"
-        ],
         "title": "EmailCreateText"
       },
       "EmailListResponse": {
         "properties": {
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "skip": {
-            "type": "integer",
-            "title": "Skip"
-          },
-          "limit": {
-            "type": "integer",
-            "title": "Limit"
-          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/EmailRead"
             },
             "type": "array",
             "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "skip": {
+            "type": "integer",
+            "title": "Skip",
+            "default": 0
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "default": 20
           }
         },
         "type": "object",
         "required": [
-          "total",
-          "skip",
-          "limit",
-          "items"
+          "items",
+          "total"
         ],
         "title": "EmailListResponse"
       },
@@ -448,7 +520,14 @@
             "title": "Body"
           },
           "preview": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Preview"
           },
           "file_name": {
@@ -478,7 +557,14 @@
             "title": "Category"
           },
           "original_category": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Original Category"
           },
           "confidence_score": {
@@ -502,15 +588,21 @@
             "type": "string",
             "format": "date-time",
             "title": "Updated At"
+          },
+          "audit_logs": {
+            "items": {
+              "$ref": "#/components/schemas/ClassificationAuditLogRead"
+            },
+            "type": "array",
+            "title": "Audit Logs",
+            "default": []
           }
         },
         "type": "object",
         "required": [
           "id",
           "body",
-          "preview",
           "category",
-          "original_category",
           "confidence_score",
           "status",
           "is_overridden",
@@ -518,6 +610,47 @@
           "updated_at"
         ],
         "title": "EmailRead"
+      },
+      "EmailStatsResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "default": 0
+          },
+          "urgent": {
+            "type": "integer",
+            "title": "Urgent",
+            "default": 0
+          },
+          "work": {
+            "type": "integer",
+            "title": "Work",
+            "default": 0
+          },
+          "personal": {
+            "type": "integer",
+            "title": "Personal",
+            "default": 0
+          },
+          "promotional": {
+            "type": "integer",
+            "title": "Promotional",
+            "default": 0
+          },
+          "uncategorized": {
+            "type": "integer",
+            "title": "Uncategorized",
+            "default": 0
+          },
+          "overridden": {
+            "type": "integer",
+            "title": "Overridden",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "EmailStatsResponse"
       },
       "HTTPValidationError": {
         "properties": {

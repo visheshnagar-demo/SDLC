@@ -1,35 +1,32 @@
 import pytest
-from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+from fastapi.testclient import TestClient
 
 from server.database import Base, get_db
-import server.models  # noqa: F401
 from server.main import app
 
-# In-memory SQLite test database with StaticPool
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+TEST_DATABASE_URL = "sqlite:///:memory:"
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
+test_engine = create_engine(
+    TEST_DATABASE_URL,
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup_test_db():
-    Base.metadata.create_all(bind=engine)
+def setup_test_database():
+    Base.metadata.create_all(bind=test_engine)
     yield
-    Base.metadata.drop_all(bind=engine)
+    Base.metadata.drop_all(bind=test_engine)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def db_session():
-    """Provides a fresh database session for a test function."""
-    connection = engine.connect()
+    connection = test_engine.connect()
     transaction = connection.begin()
     session = TestingSessionLocal(bind=connection)
 
@@ -40,7 +37,7 @@ def db_session():
     connection.close()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def client(db_session):
     def override_get_db():
         try:

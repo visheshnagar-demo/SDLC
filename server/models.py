@@ -1,7 +1,8 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Text, Float, Boolean, DateTime, ForeignKey, func
+from sqlalchemy import Column, String, Text, Float, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
+
 from server.database import Base
 
 
@@ -11,32 +12,24 @@ class Email(Base):
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     subject = Column(String(500), nullable=True)
     body = Column(Text, nullable=False)
-    preview = Column(String(255), nullable=False)
+    preview = Column(String(500), nullable=True)
     file_name = Column(String(255), nullable=True)
     file_type = Column(String(50), nullable=True)
-    category = Column(String(50), nullable=False)
-    original_category = Column(String(50), nullable=False)
+    category = Column(String(50), nullable=False, default="Uncategorized")
+    original_category = Column(String(50), nullable=True)
     confidence_score = Column(Float, nullable=False, default=0.0)
     status = Column(String(50), nullable=False, default="PENDING")
     is_overridden = Column(Boolean, nullable=False, default=False)
-    created_at = Column(
-        DateTime(timezone=True),
-        nullable=False,
-        default=datetime.utcnow,
-        server_default=func.now(),
-    )
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(
-        DateTime(timezone=True),
-        nullable=False,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
-        server_default=func.now(),
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
 
     audit_logs = relationship(
         lambda: ClassificationAuditLog,
         back_populates="email",
         cascade="all, delete-orphan",
+        order_by=lambda: ClassificationAuditLog.created_at.desc(),
     )
 
 
@@ -44,17 +37,14 @@ class ClassificationAuditLog(Base):
     __tablename__ = "classification_audit_logs"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    email_id = Column(
-        String(36), ForeignKey("emails.id", ondelete="CASCADE"), nullable=False
-    )
-    previous_category = Column(String(50), nullable=False)
+    email_id = Column(String(36), ForeignKey("emails.id"), nullable=False)
+    previous_category = Column(String(50), nullable=True)
     new_category = Column(String(50), nullable=False)
-    modified_by = Column(String(255), nullable=True, default="user")
-    created_at = Column(
-        DateTime(timezone=True),
-        nullable=False,
-        default=datetime.utcnow,
-        server_default=func.now(),
-    )
+    action = Column(String(100), nullable=False)
+    reason = Column(String(500), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
-    email = relationship(lambda: Email, back_populates="audit_logs")
+    email = relationship(
+        lambda: Email,
+        back_populates="audit_logs",
+    )
