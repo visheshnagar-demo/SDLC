@@ -1,88 +1,33 @@
-# Project
+# Sales Order ETL Pipeline (Cloud Run Job)
 
-## Server
+Serverless batch ETL pipeline containerized as a Google Cloud Run Job that ingests raw sales order CSV files from Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/raw_sales_data.csv`), cleans and deduplicates the records, and loads them into a partitioned BigQuery table (`analytics.vishesh-test1`).
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+## Pipeline Architecture
 
-### Setup
+- **Extraction**: Reads raw sales CSV files from GCS bucket with fail-fast validation.
+- **Validation & Circuit Breaker**: Dynamic schema-on-read inspection and circuit breaker tripping if quarantine rate > 20%.
+- **Transformation & Deduplication**: Whitespace trimming, email normalization, float/timestamp coercion, and deduplication by `order_id` (retaining the latest `created_at`).
+- **Loading**: Partitioned (`DAY` on `created_at`) and clustered (`order_id`, `customer_id`) BigQuery batch load.
+- **Observability**: Structured JSON telemetry emitted to standard output for Google Cloud Logging.
 
-1. Create and activate virtual environment:
+## Local Execution & Testing
+
+1. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. Run automated test suite:
+   ```bash
+   pytest tests/
+   ```
+3. Run the standalone pipeline runner:
+   ```bash
+   python -m server.main
+   ```
+
+## Cloud Run Job Deployment
+
+The container is built from the root `Dockerfile` and deployed as a batch Job:
 ```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+docker build -t gcr.io/${GCP_PROJECT_ID}/sales-order-etl:latest .
 ```
-
-2. Install dependencies:
-```bash
-cd server
-pip install -r requirements.txt
-cd ..
-```
-
-### Running Tests
-```bash
-cd server
-python -m pytest -v
-cd ..
-```
-
-### Starting the Development Server
-```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
-```bash
-# Copy the example environment file
-cp .env.example .env
-```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-

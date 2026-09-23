@@ -1,0 +1,180 @@
+{
+  "source_columns": [
+    "order_id",
+    "customer_id",
+    "customer_name",
+    "customer_email",
+    "product_category",
+    "amount",
+    "currency",
+    "order_status",
+    "created_at"
+  ],
+  "columns": [
+    {
+      "source_name": "order_id",
+      "target_name": "order_id",
+      "name": "order_id",
+      "source": "order_id",
+      "target": "order_id",
+      "type": "INTEGER",
+      "target_type": "INTEGER",
+      "transform": "cast_int"
+    },
+    {
+      "source_name": "customer_id",
+      "target_name": "customer_id",
+      "name": "customer_id",
+      "source": "customer_id",
+      "target": "customer_id",
+      "type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_whitespace"
+    },
+    {
+      "source_name": "customer_name",
+      "target_name": "customer_name",
+      "name": "customer_name",
+      "source": "customer_name",
+      "target": "customer_name",
+      "type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_whitespace"
+    },
+    {
+      "source_name": "customer_email",
+      "target_name": "customer_email",
+      "name": "customer_email",
+      "source": "customer_email",
+      "target": "customer_email",
+      "type": "STRING",
+      "target_type": "STRING",
+      "transform": "lowercase_strip"
+    },
+    {
+      "source_name": "product_category",
+      "target_name": "product_category",
+      "name": "product_category",
+      "source": "product_category",
+      "target": "product_category",
+      "type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_whitespace"
+    },
+    {
+      "source_name": "amount",
+      "target_name": "amount",
+      "name": "amount",
+      "source": "amount",
+      "target": "amount",
+      "type": "FLOAT",
+      "target_type": "FLOAT",
+      "transform": "cast_float"
+    },
+    {
+      "source_name": "currency",
+      "target_name": "currency",
+      "name": "currency",
+      "source": "currency",
+      "target": "currency",
+      "type": "STRING",
+      "target_type": "STRING",
+      "transform": "uppercase_strip"
+    },
+    {
+      "source_name": "order_status",
+      "target_name": "order_status",
+      "name": "order_status",
+      "source": "order_status",
+      "target": "order_status",
+      "type": "STRING",
+      "target_type": "STRING",
+      "transform": "uppercase_strip"
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "name": "created_at",
+      "source": "created_at",
+      "target": "created_at",
+      "type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "transform": "parse_iso8601"
+    }
+  ],
+  "mappings": [
+    {
+      "source": "order_id",
+      "target": "order_id",
+      "type": "INTEGER",
+      "transform": "cast_int"
+    },
+    {
+      "source": "customer_id",
+      "target": "customer_id",
+      "type": "STRING",
+      "transform": "strip_whitespace"
+    },
+    {
+      "source": "customer_name",
+      "target": "customer_name",
+      "type": "STRING",
+      "transform": "strip_whitespace"
+    },
+    {
+      "source": "customer_email",
+      "target": "customer_email",
+      "type": "STRING",
+      "transform": "lowercase_strip"
+    },
+    {
+      "source": "product_category",
+      "target": "product_category",
+      "type": "STRING",
+      "transform": "strip_whitespace"
+    },
+    {
+      "source": "amount",
+      "target": "amount",
+      "type": "FLOAT",
+      "transform": "cast_float"
+    },
+    {
+      "source": "currency",
+      "target": "currency",
+      "type": "STRING",
+      "transform": "uppercase_strip"
+    },
+    {
+      "source": "order_status",
+      "target": "order_status",
+      "type": "STRING",
+      "transform": "uppercase_strip"
+    },
+    {
+      "source": "created_at",
+      "target": "created_at",
+      "type": "TIMESTAMP",
+      "transform": "parse_iso8601"
+    }
+  ],
+  "audit_columns": [
+    {
+      "name": "_etl_ingested_at",
+      "type": "TIMESTAMP"
+    },
+    {
+      "name": "_etl_batch_id",
+      "type": "STRING"
+    },
+    {
+      "name": "_etl_source_file",
+      "type": "STRING"
+    }
+  ],
+  "deduplication_keys": [
+    "order_id"
+  ],
+  "deduplication_order_by": "created_at",
+  "deduplication_order_direction": "desc"
+}
