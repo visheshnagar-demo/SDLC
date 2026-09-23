@@ -1,0 +1,91 @@
+{
+  "pipeline_id": "postgres_to_bigquery",
+  "source": {
+    "type": "postgresql",
+    "table_name": "test_data",
+    "database": "postgres",
+    "instance_connection_name": "upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db",
+    "user": "559906504681-compute@developer"
+  },
+  "target": {
+    "type": "bigquery",
+    "project": "upbeat-repeater-477110-q6",
+    "dataset": "analytics",
+    "table_name": "postgres_test2",
+    "write_mode": "overwrite"
+  },
+  "columns": [
+    {
+      "source_name": "id",
+      "target_name": "id",
+      "source_col": "id",
+      "target_col": "id",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "type": "STRING",
+      "transforms": ["trim_whitespace", "drop_nulls"],
+      "drop": false,
+      "description": "Unique identifier"
+    },
+    {
+      "source_name": "name",
+      "target_name": "name",
+      "source_col": "name",
+      "target_col": "name",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "type": "STRING",
+      "transforms": ["trim_whitespace", "normalize_nulls"],
+      "drop": false,
+      "description": "Name of the record"
+    },
+    {
+      "source_name": "value",
+      "target_name": "value",
+      "source_col": "value",
+      "target_col": "value",
+      "source_type": "FLOAT64",
+      "target_type": "FLOAT64",
+      "type": "FLOAT64",
+      "transforms": ["numeric_cast"],
+      "drop": false,
+      "description": "Numeric value"
+    },
+    {
+      "source_name": "status",
+      "target_name": "status",
+      "source_col": "status",
+      "target_col": "status",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "type": "STRING",
+      "transforms": ["trim_whitespace", "normalize_nulls"],
+      "drop": false,
+      "description": "Record status"
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "source_col": "created_at",
+      "target_col": "created_at",
+      "source_type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "type": "TIMESTAMP",
+      "transforms": ["utc_iso8601"],
+      "drop": false,
+      "description": "Creation timestamp in UTC"
+    },
+    {
+      "source_name": "updated_at",
+      "target_name": "updated_at",
+      "source_col": "updated_at",
+      "target_col": "updated_at",
+      "source_type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "type": "TIMESTAMP",
+      "transforms": ["utc_iso8601"],
+      "drop": false,
+      "description": "Last update timestamp in UTC"
+    }
+  ]
+}
