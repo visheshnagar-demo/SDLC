@@ -2,7 +2,7 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from server.api.v1 import api_v1_router
+from server.routes import api_v1_router
 from server.database import init_db
 from server.config import settings
 
@@ -16,6 +16,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.PROJECT_NAME,
     lifespan=lifespan,
+    version="1.0.0",
+    description="AI Travel Planner Backend Service for generating customizable itineraries.",
 )
 
 allowed_origins_raw = os.getenv(
@@ -38,4 +40,4 @@ app.include_router(api_v1_router)
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "service": "payment-gateway-service"}
+    return {"status": "ok", "service": "ai-travel-planner-service"}

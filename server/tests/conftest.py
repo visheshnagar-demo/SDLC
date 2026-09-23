@@ -8,7 +8,6 @@ from server.database import Base, get_db, seed_data
 import server.models  # noqa: F401
 from server.main import app
 
-# In-memory SQLite for testing with StaticPool
 TEST_DATABASE_URL = "sqlite:///:memory:"
 
 test_engine = create_engine(
