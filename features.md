@@ -17,3 +17,14 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-359 - Personal Warranty Manager - Product Registration, Warranty Tracking, Document Management, and Claim History
+
+### Feature Summary
+A Personal Warranty Manager web application enabling users to register purchased products, upload and manage warranty receipts and documents, track active and expiring warranty timelines with alerts, and record repair and claim history.
+
+### Key Features
+- Product Registration & Metadata Management
+- Warranty Period Tracking & Expiration Alerts
+- Document Management (Receipt & Warranty Card Uploads)
+- Repair & Claim History Logging

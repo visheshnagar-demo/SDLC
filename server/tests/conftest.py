@@ -1,18 +1,22 @@
+import os
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from fastapi.testclient import TestClient
 
-from server.database import Base, get_db, seed_data
-import server.models  # noqa: F401
+os.environ["TESTING"] = "true"
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+
 from server.main import app
+from server.database import Base, get_db, seed_data
+from server.models import User  # noqa: F401
 
-# In-memory SQLite for testing with StaticPool
-TEST_DATABASE_URL = "sqlite:///:memory:"
+# In-memory test database with StaticPool to share connection across threads
+SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
 test_engine = create_engine(
-    TEST_DATABASE_URL,
+    SQLALCHEMY_DATABASE_URL,
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
@@ -20,24 +24,26 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup_database():
+def setup_test_db():
     Base.metadata.create_all(bind=test_engine)
     db = TestingSessionLocal()
-    try:
-        seed_data(db)
-    finally:
-        db.close()
+    seed_data(db)
+    db.close()
     yield
     Base.metadata.drop_all(bind=test_engine)
 
 
 @pytest.fixture
 def db_session():
-    db = TestingSessionLocal()
+    connection = test_engine.connect()
+    transaction = connection.begin()
+    session = TestingSessionLocal(bind=connection)
     try:
-        yield db
+        yield session
     finally:
-        db.close()
+        session.close()
+        transaction.rollback()
+        connection.close()
 
 
 @pytest.fixture
@@ -52,3 +58,27 @@ def client(db_session):
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def auth_headers(client):
+    # Log in as the seeded regular test user
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"email": "test@example.com", "password": "testpassword"},
+    )
+    assert response.status_code == 200, f"Login failed: {response.text}"
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def admin_auth_headers(client):
+    # Log in as seeded admin user
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"email": "admin@example.com", "password": "adminpassword"},
+    )
+    assert response.status_code == 200, f"Admin login failed: {response.text}"
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
