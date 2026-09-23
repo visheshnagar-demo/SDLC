@@ -1,88 +1,86 @@
-# Project
+# PostgreSQL to BigQuery ETL Data Cleaning & Ingestion Pipeline (`SCRUM-351`)
 
-## Server
+This repository contains the production-grade ETL pipeline that extracts raw data from PostgreSQL (`instance: sdlc-etl-demo-db`, `database: postgre`, `table: test_data`), performs fundamental data cleaning and transformations, and loads the validated dataset into Google Cloud BigQuery (`project: upbeat-repeater-477110-q6`, `dataset: analytics`, `table: test6`).
+
+---
+
+## 1. Pipeline Architecture
+
+- **Source**: PostgreSQL (`sdlc-etl-demo-db.postgre.test_data`)
+- **Staging / Processing**: Pandas / PyArrow in-memory transformation & Parquet staging
+- **Target Sink**: BigQuery (`upbeat-repeater-477110-q6.analytics.test6`)
+- **Deployment**: Standalone Google Cloud Run Job & FastAPI Service
+
+### Data Cleaning & Transformations
+- Whitespace trimming across all string/text attributes.
+- Null sanitization (converting `"null"`, `"None"`, `"N/A"`, `""`, `"NaN"` to `None` / SQL `NULL`).
+- Numeric coercion with currency/thousands separator stripping.
+- ISO 8601 UTC timestamp standardization for datetime columns.
+- Primary key deduplication keeping latest valid records.
+- Ingestion metadata tracking with `_etl_loaded_at`.
+
+---
+
+## 2. Directory Structure
+
+```
+├── Dockerfile
+├── README.md
+├── env.deploy.json
+├── env.deploy.yaml
+├── requirements.txt
+├── transformation_spec.json
+├── dags/
+│   └── postgres_to_bigquery_test6_dag.py
+├── pipeline/
+│   ├── run_postgres_to_bigquery_test6.py
+│   └── postgres_to_bigquery_test6_README.md
+├── schemas/
+│   └── test6_schema.json
+├── sql/
+│   └── ddl/
+│       └── test6.sql
+├── server/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── requirements.txt
+│   └── etl/
+│       ├── __init__.py
+│       ├── extractor.py
+│       ├── loader.py
+│       ├── logger.py
+│       ├── main.py
+│       └── transformer.py
+└── tests/
+    ├── __init__.py
+    ├── test_etl_pipeline.py
+    └── test_postgres_to_bigquery_test6_pipeline.py
+```
+
+---
+
+## 3. Local Execution
 
 ### Prerequisites
-- Python 3.9+
-- pip and venv
+- Python 3.11+
+- Google Cloud SDK authenticated or Service Account configured
 
-### Setup
-
-1. Create and activate virtual environment:
+### Install Dependencies
 ```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
-```
-
-2. Install dependencies:
-```bash
-cd server
 pip install -r requirements.txt
-cd ..
 ```
 
-### Running Tests
+### Run Pipeline (Standalone Batch Job)
 ```bash
-cd server
-python -m pytest -v
-cd ..
+python -m pipeline.run_postgres_to_bigquery_test6
 ```
 
-### Starting the Development Server
+### Run FastAPI Server
 ```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn server.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
+### Run Tests
 ```bash
-# Copy the example environment file
-cp .env.example .env
+pytest tests/ -v
 ```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-

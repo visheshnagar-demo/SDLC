@@ -1,0 +1,38 @@
+[
+  {
+    "name": "id",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Target field id"
+  },
+  {
+    "name": "name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Target field name"
+  },
+  {
+    "name": "email",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Target field email"
+  },
+  {
+    "name": "value",
+    "type": "FLOAT64",
+    "mode": "NULLABLE",
+    "description": "Target field value"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Target field created_at"
+  },
+  {
+    "name": "updated_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Target field updated_at"
+  }
+]

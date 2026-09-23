@@ -1,0 +1,40 @@
+{
+  "columns": [
+    {
+      "source_name": "id",
+      "target_name": "id",
+      "target_type": "INTEGER",
+      "transform": "cast_integer"
+    },
+    {
+      "source_name": "name",
+      "target_name": "name",
+      "target_type": "STRING",
+      "transform": "strip_and_clean"
+    },
+    {
+      "source_name": "email",
+      "target_name": "email",
+      "target_type": "STRING",
+      "transform": "strip_and_clean"
+    },
+    {
+      "source_name": "value",
+      "target_name": "value",
+      "target_type": "FLOAT64",
+      "transform": "cast_float"
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "target_type": "TIMESTAMP",
+      "transform": "parse_iso_timestamp"
+    },
+    {
+      "source_name": "updated_at",
+      "target_name": "updated_at",
+      "target_type": "TIMESTAMP",
+      "transform": "parse_iso_timestamp"
+    }
+  ]
+}
