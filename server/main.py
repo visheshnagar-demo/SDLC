@@ -2,9 +2,16 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from server.api.v1 import api_v1_router
 from server.database import init_db
 from server.config import settings
+from server.routers import (
+    auth,
+    products,
+    warranties,
+    documents,
+    claims,
+    alerts,
+)
 
 
 @asynccontextmanager
@@ -33,9 +40,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(api_v1_router)
+app.include_router(auth.router, prefix=settings.API_V1_STR)
+app.include_router(products.router, prefix=settings.API_V1_STR)
+app.include_router(warranties.router, prefix=settings.API_V1_STR)
+app.include_router(documents.router, prefix=settings.API_V1_STR)
+app.include_router(claims.router, prefix=settings.API_V1_STR)
+app.include_router(alerts.router, prefix=settings.API_V1_STR)
 
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "service": "payment-gateway-service"}
+    return {"status": "ok", "service": "personal-warranty-manager"}
