@@ -5,7 +5,7 @@ Serverless batch ETL pipeline extracting operational data from Google Cloud SQL 
 ## Pipeline Architecture
 
 - **Source**: Cloud SQL PostgreSQL (`upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db`, database `postgres`, table `test_data`)
-- **Extraction**: IAM-authenticated connection via `cloud-sql-python-connector` (service account: `559906504681-compute@developer`)
+- **Extraction**: IAM-authenticated connection via `cloud-sql-python-connector` (service account: `559906504681-compute@developer.gserviceaccount.com`)
 - **Transformation Engine**: Python 3.11 / Pandas / PyArrow
   - Leading and trailing whitespace trimming
   - Payload column standardization (`data_payload` -> `cleaned_payload`)
@@ -55,7 +55,8 @@ Set required environment variables:
 ```bash
 export INSTANCE_CONNECTION_NAME="upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db"
 export POSTGRES_DB="postgres"
-export POSTGRES_USER="559906504681-compute@developer"
+export POSTGRES_USER="559906504681-compute@developer.gserviceaccount.com"
+export POSTGRES_TABLE="test_data"
 export CLOUD_SQL_IP_TYPE="PRIVATE"
 export GCP_PROJECT_ID="upbeat-repeater-477110-q6"
 export BIGQUERY_DATASET="analytics"

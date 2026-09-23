@@ -56,7 +56,10 @@ class CloudSQLExtractor:
         if source_table is not None:
             self.source_table = source_table
         else:
-            self.source_table = os.getenv("SOURCE_TABLE", "test_data")
+            self.source_table = (
+                os.getenv("POSTGRES_TABLE")
+                or os.getenv("SOURCE_TABLE", "test_data")
+            )
 
         if db_url is not None:
             self.db_url = db_url
