@@ -1,88 +1,96 @@
-# Project
+# Cloud SQL PostgreSQL to BigQuery ETL Pipeline (SCRUM-354)
 
-## Server
+An enterprise-grade, batch ETL pipeline that extracts relational records from Google Cloud SQL PostgreSQL, cleans and normalizes the data in-memory, and loads it into Google BigQuery using Cloud Run Job serverless architecture.
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+## Architecture Overview
 
-### Setup
-
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+```
+[Cloud SQL PostgreSQL: test_data]
+               │ (IAM Database Auth via Cloud SQL Connector)
+               ▼
+   [PostgresExtractor: SQLAlchemy]
+               │
+               ▼
+      [DataCleaner: Pandas]
+   ├── String whitespace trimming
+   ├── Pseudo-null standardization
+   ├── UTC timestamp normalization
+   ├── Deduplication on primary keys
+   └── Injection of _etl_loaded_at metadata
+               │
+               ▼
+   [BigQueryLoader: BQ SDK]
+               │ (LoadJobConfig with WRITE_TRUNCATE/APPEND)
+               ▼
+[BigQuery: upbeat-repeater-477110-q6.analytics.postgres_test1]
 ```
 
-2. Install dependencies:
+## Security & IAM Authentication
+
+This pipeline utilizes Google Cloud IAM database authentication (`cloud-sql-python-connector` with `enable_iam_auth=True`).
+- **Service Account / IAM User**: `559906504681-compute@developer`
+- **Zero Static Secrets**: No database passwords stored in plaintext or environment variables.
+- **VPC / IP Configuration**: Connects over private IP (`CLOUD_SQL_IP_TYPE=PRIVATE`).
+
+## Project Layout
+
+```
+├── .env.example
+├── Dockerfile
+├── README.md
+├── env.deploy.json
+├── requirements.txt
+├── schemas/
+│   └── postgres_test1_schema.json
+├── server/
+│   ├── __init__.py
+│   ├── requirements.txt
+│   ├── etl/
+│   │   ├── __init__.py
+│   │   ├── cleaner.py
+│   │   ├── extractor.py
+│   │   ├── loader.py
+│   │   ├── main.py
+│   │   └── pipeline.py
+│   └── tests/
+│       ├── __init__.py
+│       └── test_etl_pipeline.py
+├── sql/
+│   └── ddl/
+│       └── postgres_test1.sql
+├── tests/
+│   ├── __init__.py
+│   └── test_etl_pipeline.py
+└── transformation_spec.json
+```
+
+## Local Execution & Testing
+
+### 1. Install Dependencies
 ```bash
-cd server
 pip install -r requirements.txt
-cd ..
 ```
 
-### Running Tests
+### 2. Run Test Suite
 ```bash
-cd server
-python -m pytest -v
-cd ..
+pytest tests/ -v
 ```
 
-### Starting the Development Server
+### 3. Run Pipeline Locally (with configured GCP credentials)
 ```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+python -m server.etl.main --source-table test_data --target-dataset analytics --target-table postgres_test1
 ```
 
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
+## Container Deployment (Cloud Run Job)
 
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
+Build and deploy container image:
 ```bash
-# Copy the example environment file
-cp .env.example .env
+docker build -t gcr.io/upbeat-repeater-477110-q6/postgres-to-bq-etl:latest .
 ```
-
-### 2. Start the Backend (Terminal 1)
+Execute as Cloud Run Job:
 ```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+gcloud run jobs create postgres-to-bq-job \
+  --image gcr.io/upbeat-repeater-477110-q6/postgres-to-bq-etl:latest \
+  --region us-central1 \
+  --env-vars-file env.deploy.json
 ```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-
