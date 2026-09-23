@@ -2,8 +2,6 @@ import io
 from email.message import EmailMessage
 from unittest.mock import patch
 
-from pypdf import PdfWriter
-
 
 def test_health_check(client):
     response = client.get("/health")
@@ -131,11 +129,13 @@ def test_classify_email_txt_upload(client):
 
 
 def test_classify_email_pdf_upload(client):
-    writer = PdfWriter()
-    page = writer.add_blank_page(width=200, height=200)
-    pdf_buffer = io.BytesIO()
-    writer.write(pdf_buffer)
-    pdf_bytes = pdf_buffer.getvalue()
+    # Minimal valid PDF with no extractable text
+    pdf_bytes = (
+        b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj "
+        b"3 0 obj<</Type/Page/MediaBox[0 0 200 200]/Parent 2 0 R>>endobj\nxref\n0 4\n0000000000 65535 f \n"
+        b"0000000009 00000 n \n0000000052 00000 n \n0000000108 00000 n \ntrailer<</Size 4/Root 1 0 R>>\n"
+        b"startxref\n178\n%%EOF"
+    )
 
     files = {"file": ("document.pdf", io.BytesIO(pdf_bytes), "application/pdf")}
     response = client.post("/api/v1/emails/classify", files=files)

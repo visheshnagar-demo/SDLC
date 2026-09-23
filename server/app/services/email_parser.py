@@ -2,8 +2,7 @@ import email
 import io
 import re
 from email import policy
-
-from pypdf import PdfReader
+from typing import Any
 
 MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
 ALLOWED_EXTENSIONS = {".eml", ".txt", ".pdf"}
@@ -68,8 +67,8 @@ def parse_eml_bytes(content: bytes) -> tuple[str | None, str | None, str]:
     except Exception as e:
         raise ValueError(f"Failed to parse EML file: {e!s}")
 
-    sender = msg.get("From")
-    subject = msg.get("Subject")
+    sender = str(msg.get("From")) if msg.get("From") else None
+    subject = str(msg.get("Subject")) if msg.get("Subject") else None
 
     body = ""
     if msg.is_multipart():
@@ -77,8 +76,8 @@ def parse_eml_bytes(content: bytes) -> tuple[str | None, str | None, str]:
             content_type = part.get_content_type()
             content_disposition = str(part.get("Content-Disposition") or "")
             if content_type == "text/plain" and "attachment" not in content_disposition:
-                payload = part.get_payload(decode=True)
-                if payload:
+                payload: Any = part.get_payload(decode=True)
+                if isinstance(payload, bytes):
                     body += (
                         payload.decode(
                             part.get_content_charset() or "utf-8", errors="replace"
@@ -89,21 +88,21 @@ def parse_eml_bytes(content: bytes) -> tuple[str | None, str | None, str]:
         if not body.strip():
             for part in msg.walk():
                 if part.get_content_type() == "text/html":
-                    payload = part.get_payload(decode=True)
-                    if payload:
-                        html_text = payload.decode(
+                    payload_html: Any = part.get_payload(decode=True)
+                    if isinstance(payload_html, bytes):
+                        html_text = payload_html.decode(
                             part.get_content_charset() or "utf-8", errors="replace"
                         )
                         body = re.sub(r"<[^>]+>", " ", html_text)
                         break
     else:
-        payload = msg.get_payload(decode=True)
-        if payload:
-            body = payload.decode(
+        raw_payload: Any = msg.get_payload(decode=True)
+        if isinstance(raw_payload, bytes):
+            body = raw_payload.decode(
                 msg.get_content_charset() or "utf-8", errors="replace"
             )
         else:
-            body = msg.get_payload() or ""
+            body = str(msg.get_payload() or "")
 
     body = body.strip()
     if not body:
@@ -136,8 +135,18 @@ def parse_pdf_bytes(content: bytes) -> tuple[str | None, str | None, str]:
     Extracts text from a PDF file stream using pypdf.
     """
     try:
+        try:
+            import PIL
+
+            if not hasattr(PIL, "__version__"):
+                setattr(PIL, "__version__", "10.0.0")
+        except Exception:
+            pass
+
+        from pypdf import PdfReader
+
         reader = PdfReader(io.BytesIO(content))
-        extracted_pages = []
+        extracted_pages: list[str] = []
         for page in reader.pages:
             t = page.extract_text()
             if t:

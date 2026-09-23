@@ -45,7 +45,23 @@ graph TD
 - server/tests/test_parser.py
 
 ## Frontend Modules (client/)
-- (no client/ files found yet)
+- client/eslint.config.js
+- client/postcss.config.js
+- client/src/App.jsx
+- client/src/App.test.jsx
+- client/src/components/CategoryOverrideModal.jsx
+- client/src/components/CategoryOverrideModal.test.jsx
+- client/src/components/ClassificationDashboard.jsx
+- client/src/components/ClassificationDashboard.test.jsx
+- client/src/components/EmailInputForm.jsx
+- client/src/components/EmailInputForm.test.jsx
+- client/src/components/Navbar.jsx
+- client/src/main.jsx
+- client/src/services/api.js
+- client/src/services/api.test.js
+- client/src/setup.js
+- client/tailwind.config.js
+- client/vite.config.js
 
 ## API Endpoints
 - POST /api/v1/emails/classify
