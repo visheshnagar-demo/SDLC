@@ -1,301 +1,224 @@
-import logging
+import random
 from typing import List, Dict, Any
-
-logger = logging.getLogger(__name__)
 
 
 class AIEngine:
-    """
-    AI Itinerary Generator with structured schema output, retry strategies, and smart fallbacks.
-    """
-
-    DEFAULT_CATEGORIES = {
-        "food": "Food & Dining",
-        "culture": "Culture & Heritage",
-        "anime": "Pop Culture & Anime",
-        "adventure": "Adventure & Outdoors",
-        "relaxation": "Relaxation & Wellness",
-        "nightlife": "Nightlife & Entertainment",
-        "history": "Historical Sites",
-        "shopping": "Shopping & Markets",
-        "nature": "Nature & Parks",
-        "sightseeing": "Sightseeing",
+    SAMPLE_ACTIVITIES = {
+        "Culture": [
+            (
+                "Historical City Walking Tour",
+                "Explore ancient monuments and learn about local heritage.",
+                0.0,
+                "Old Town",
+                120,
+            ),
+            (
+                "Famous Museum & Art Gallery Visit",
+                "Guided tour through renowned historical exhibits.",
+                25.0,
+                "Museum District",
+                150,
+            ),
+            (
+                "Cathedral or Temple Exploration",
+                "Visit the iconic architectural landmark.",
+                10.0,
+                "Cultural Quarter",
+                90,
+            ),
+            (
+                "Local Traditional Craft Workshop",
+                "Hands-on experience crafting authentic cultural items.",
+                35.0,
+                "Artisans Alley",
+                90,
+            ),
+        ],
+        "Food": [
+            (
+                "Famous Street Food Market Tour",
+                "Sample local delicacies at bustling market stalls.",
+                20.0,
+                "Central Food Market",
+                90,
+            ),
+            (
+                "Traditional Local Lunch",
+                "Authentic regional culinary experience.",
+                30.0,
+                "Historic Center",
+                60,
+            ),
+            (
+                "Fine Dining / Izakaya / Bistro Dinner",
+                "Memorable evening dinner with signature specialties.",
+                50.0,
+                "Downtown Dining Quarter",
+                120,
+            ),
+            (
+                "Local Coffee & Pastry Tasting",
+                "Morning coffee tasting at renowned local cafe.",
+                10.0,
+                "Riverside Promenade",
+                45,
+            ),
+        ],
+        "Adventure": [
+            (
+                "Scenic Mountain or Coastal Hike",
+                "Breathtaking viewpoints and natural scenery.",
+                0.0,
+                "National Park Trailhead",
+                180,
+            ),
+            (
+                "Kayaking or Water Sports Excursion",
+                "Explore waterways with a certified guide.",
+                45.0,
+                "Harbor Marina",
+                120,
+            ),
+            (
+                "Bicycle Tour Around Scenic Highlights",
+                "Cycling through picturesque countryside and parks.",
+                25.0,
+                "City Bike Station",
+                120,
+            ),
+            (
+                "Zip-lining or Outdoor Canopy Adventure",
+                "Thrilling adventure with panoramic views.",
+                60.0,
+                "Adventure Park",
+                120,
+            ),
+        ],
+        "Relaxation": [
+            (
+                "Botanical Gardens & Parkland Stroll",
+                "Relaxing walk through tranquil landscaped gardens.",
+                10.0,
+                "Royal Botanic Gardens",
+                90,
+            ),
+            (
+                "Thermal Spa & Wellness Session",
+                "Rest and rejuvenation with soothing treatments.",
+                50.0,
+                "Wellness Center",
+                120,
+            ),
+            (
+                "Sunset Beach or Scenic Viewpoint Relaxation",
+                "Unwind with sunset views over the skyline.",
+                0.0,
+                "Scenic Overlook",
+                60,
+            ),
+            (
+                "Leisurely Afternoon Tea",
+                "Relaxing tea and snacks in a garden setting.",
+                20.0,
+                "Grand Hotel Lounge",
+                60,
+            ),
+        ],
+        "Nightlife": [
+            (
+                "Craft Brewery or Wine Tasting Tour",
+                "Taste local brews and regional wines.",
+                35.0,
+                "Entertainment District",
+                90,
+            ),
+            (
+                "Rooftop Lounge & Cocktails",
+                "Stunning panoramic night views with drinks.",
+                40.0,
+                "Skyline Tower",
+                120,
+            ),
+            (
+                "Live Music & Cultural Performance",
+                "Evening entertainment featuring local musicians.",
+                30.0,
+                "Music Hall",
+                120,
+            ),
+        ],
+        "Anime": [
+            (
+                "Akihabara Tech & Manga Exploration",
+                "Browse rare collectibles and manga stores.",
+                30.0,
+                "Akihabara Main Street",
+                120,
+            ),
+            (
+                "Themed Cafe Experience",
+                "Immersive anime-themed dining and merchandise.",
+                25.0,
+                "Themed District",
+                75,
+            ),
+            (
+                "Animation Museum & Exhibit",
+                "Behind-the-scenes look at world-famous animation studios.",
+                20.0,
+                "Studio Gallery",
+                90,
+            ),
+        ],
     }
 
+    TIME_SLOTS = ["09:00 - 11:00", "12:00 - 13:30", "14:30 - 17:00", "19:00 - 21:00"]
+
     @classmethod
-    def generate_itinerary_plan(
-        cls,
-        destination: str,
-        budget: float,
-        currency: str,
-        duration_days: int,
-        interests: List[str],
+    def generate_plan(
+        cls, destination: str, budget: float, duration_days: int, interests: List[str]
     ) -> List[Dict[str, Any]]:
-        """
-        Generates day-by-day structured activities matching the requested duration,
-        budget allocation, destination, and interest categories.
-        """
-        logger.info(
-            f"Generating itinerary plan for {destination}, budget={budget} {currency}, "
-            f"duration={duration_days} days, interests={interests}"
-        )
-
-        daily_budget_target = max(budget / duration_days, 10.0)
-        days_data = []
-
-        clean_interests = [i.strip() for i in interests if i.strip()] or [
-            "Culture",
-            "Food",
-            "Sightseeing",
-        ]
+        days_plan = []
+        target_daily_budget = budget / max(1, duration_days)
+        categories = interests if interests else ["Culture", "Food", "Relaxation"]
 
         for day_num in range(1, duration_days + 1):
-            primary_interest = clean_interests[(day_num - 1) % len(clean_interests)]
-            activities = cls._generate_day_activities(
-                destination=destination,
-                day_num=day_num,
-                primary_interest=primary_interest,
-                daily_budget_target=daily_budget_target,
-            )
-            days_data.append(
+            day_activities = []
+            for slot_idx, time_slot in enumerate(cls.TIME_SLOTS):
+                # Pick category
+                if slot_idx == 1:
+                    cat = "Food"
+                elif slot_idx == 3:
+                    cat = "Food" if "Food" in categories else random.choice(categories)
+                else:
+                    cat = categories[slot_idx % len(categories)]
+
+                pool = cls.SAMPLE_ACTIVITIES.get(cat, cls.SAMPLE_ACTIVITIES["Culture"])
+                act_choice = pool[(day_num + slot_idx) % len(pool)]
+
+                title, desc, cost, loc, duration = act_choice
+                # Scale cost proportionally to target daily budget if needed
+                scaled_cost = min(cost, target_daily_budget * 0.4)
+                scaled_cost = round(max(0.0, scaled_cost), 2)
+
+                day_activities.append(
+                    {
+                        "time_slot": time_slot,
+                        "title": f"{destination}: {title}",
+                        "description": f"Day {day_num} in {destination}. {desc}",
+                        "category": cat,
+                        "estimated_cost": scaled_cost,
+                        "location": f"{loc}, {destination}",
+                        "duration_minutes": duration,
+                        "sequence_order": slot_idx,
+                    }
+                )
+
+            days_plan.append(
                 {
                     "day_number": day_num,
-                    "activities": activities,
+                    "activities": day_activities,
                 }
             )
 
-        return days_data
-
-    @classmethod
-    def _generate_day_activities(
-        cls,
-        destination: str,
-        day_num: int,
-        primary_interest: str,
-        daily_budget_target: float,
-    ) -> List[Dict[str, Any]]:
-        """Constructs 4 distinct balanced activities for a given day."""
-
-        # Budget distribution per slot: Morning (20%), Lunch (25%), Afternoon (25%), Evening (30%)
-        m_cost = round(daily_budget_target * 0.15, 2)
-        l_cost = round(daily_budget_target * 0.25, 2)
-        a_cost = round(daily_budget_target * 0.25, 2)
-        e_cost = round(daily_budget_target * 0.35, 2)
-
-        interest_lower = primary_interest.lower()
-
-        if "tokyo" in destination.lower() or "japan" in destination.lower():
-            if "anime" in interest_lower:
-                day_slots = [
-                    (
-                        "Morning",
-                        "Explore Akihabara Electric Town & Hobby Stores",
-                        "Browse iconic retro gaming shops and specialty anime manga stores.",
-                        "Pop Culture",
-                        m_cost,
-                        f"Akihabara, {destination}",
-                        120,
-                    ),
-                    (
-                        "Lunch",
-                        "Themed Anime Cafe Experience",
-                        "Enjoy character-inspired lunch and specialty drinks in an interactive setting.",
-                        "Food",
-                        l_cost,
-                        f"Akihabara, {destination}",
-                        75,
-                    ),
-                    (
-                        "Afternoon",
-                        "Ghibli Museum / Nakano Broadway Exploration",
-                        "Discover classic collectibles, animation history, and retro goods.",
-                        "Culture",
-                        a_cost,
-                        f"Nakano, {destination}",
-                        150,
-                    ),
-                    (
-                        "Evening",
-                        "Shinjuku Omoide Yokocho Dinner & Neon Walk",
-                        "Sample yakitori skewers in atmospheric historic alleyways under neon lights.",
-                        "Nightlife",
-                        e_cost,
-                        f"Shinjuku, {destination}",
-                        90,
-                    ),
-                ]
-            elif "culture" in interest_lower or "history" in interest_lower:
-                day_slots = [
-                    (
-                        "Morning",
-                        "Visit Senso-ji Temple & Nakamise Street",
-                        f"Explore the ancient historic landmark and browse traditional crafts in {destination}.",
-                        "Culture",
-                        m_cost,
-                        f"Asakusa, {destination}",
-                        120,
-                    ),
-                    (
-                        "Lunch",
-                        "Tsukiji Outer Market Tasting Tour",
-                        "Sample fresh seafood bowls and regional street delicacies from local stalls.",
-                        "Food",
-                        l_cost,
-                        f"Tsukiji, {destination}",
-                        90,
-                    ),
-                    (
-                        "Afternoon",
-                        "Meiji Jingu Shrine & Yoyogi Forest Walk",
-                        "Stroll through the peaceful forested paths and traditional torii gates.",
-                        "Culture",
-                        a_cost,
-                        f"Harajuku, {destination}",
-                        105,
-                    ),
-                    (
-                        "Evening",
-                        "Shibuya Crossing View & Izakaya Dining",
-                        "Witness the vibrant crossing and enjoy shared seasonal dishes with local beverages.",
-                        "Food",
-                        e_cost,
-                        f"Shibuya, {destination}",
-                        120,
-                    ),
-                ]
-            else:
-                day_slots = [
-                    (
-                        "Morning",
-                        f"Morning City Walk & Panoramic Landmark Visit (Day {day_num})",
-                        f"Start your morning taking in sweeping views of {destination}.",
-                        "Sightseeing",
-                        m_cost,
-                        f"Central District, {destination}",
-                        90,
-                    ),
-                    (
-                        "Lunch",
-                        "Authentic Regional Cuisine Lunch",
-                        f"Taste signature local specialties at a popular bistro in {destination}.",
-                        "Food",
-                        l_cost,
-                        f"Downtown, {destination}",
-                        60,
-                    ),
-                    (
-                        "Afternoon",
-                        "Neighborhood Discovery & Artisan Shops",
-                        "Wander scenic lanes, local markets, and cultural galleries.",
-                        "Culture",
-                        a_cost,
-                        f"Old Town, {destination}",
-                        120,
-                    ),
-                    (
-                        "Evening",
-                        "Dinner & Evening Stroll along the Waterfront",
-                        "Enjoy an evening meal followed by illuminated streetscapes.",
-                        "Nightlife",
-                        e_cost,
-                        f"Riverside Promenade, {destination}",
-                        120,
-                    ),
-                ]
-        elif "paris" in destination.lower() or "france" in destination.lower():
-            day_slots = [
-                (
-                    "Morning",
-                    f"Iconic Historic Monument & Garden Promenade (Day {day_num})",
-                    f"Admire architectural wonders and manicured gardens in {destination}.",
-                    "Culture",
-                    m_cost,
-                    f"Historic Core, {destination}",
-                    120,
-                ),
-                (
-                    "Lunch",
-                    "Classic Bistro Experience & Fresh Bakery",
-                    "Taste artisanal cheese, fresh baguettes, and classic lunch favorites.",
-                    "Food",
-                    l_cost,
-                    f"Bistro Quarter, {destination}",
-                    75,
-                ),
-                (
-                    "Afternoon",
-                    "World-Class Art Gallery & Museum Tour",
-                    "Immerse yourself in world-renowned art and sculpture collections.",
-                    "Culture",
-                    a_cost,
-                    f"Museum District, {destination}",
-                    150,
-                ),
-                (
-                    "Evening",
-                    "Sunset Cruise & Candlelit French Dinner",
-                    "Savor gourmet cuisine paired with views of illuminated bridges.",
-                    "Food",
-                    e_cost,
-                    f"Riverbank, {destination}",
-                    120,
-                ),
-            ]
-        else:
-            day_slots = [
-                (
-                    "Morning",
-                    f"Morning Exploration & Sightseeing (Day {day_num})",
-                    f"Visit key highlights and scenic vistas in {destination}.",
-                    "Sightseeing",
-                    m_cost,
-                    f"Central Landmark, {destination}",
-                    90,
-                ),
-                (
-                    "Lunch",
-                    "Local Culinary Tasting & Street Food",
-                    f"Sample authentic regional specialties and market treats in {destination}.",
-                    "Food",
-                    l_cost,
-                    f"Food Market, {destination}",
-                    60,
-                ),
-                (
-                    "Afternoon",
-                    f"{primary_interest.title()} Experience & Local Attractions",
-                    f"Experience top-rated {primary_interest} activities and local heritage in {destination}.",
-                    primary_interest.title(),
-                    a_cost,
-                    f"Cultural District, {destination}",
-                    120,
-                ),
-                (
-                    "Evening",
-                    "Sunset Gathering & Traditional Dinner",
-                    f"Relax with regional dinner dishes and lively local atmosphere in {destination}.",
-                    "Food",
-                    e_cost,
-                    f"City Center, {destination}",
-                    120,
-                ),
-            ]
-
-        activities = []
-        for seq, (slot, title, desc, cat, cost, loc, dur) in enumerate(
-            day_slots, start=1
-        ):
-            activities.append(
-                {
-                    "time_slot": slot,
-                    "title": title,
-                    "description": desc,
-                    "category": cat,
-                    "estimated_cost": max(cost, 0.0),
-                    "location": loc,
-                    "duration_minutes": dur,
-                    "sequence_order": seq,
-                }
-            )
-
-        return activities
+        return days_plan

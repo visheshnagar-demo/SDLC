@@ -1,82 +1,58 @@
-from fastapi import APIRouter, Depends, status
+from typing import Dict, Any
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+
 from server.database import get_db
 from server.schemas import (
-    ActivityCreateRequest,
-    ActivityUpdateRequest,
+    ActivityCreate,
+    ActivityUpdate,
     ActivityResponse,
     ActivityReorderRequest,
     ItineraryResponse,
-    BudgetSummaryResponse,
 )
 from server.services.itinerary_service import ItineraryService
 
-router = APIRouter()
-
-
-@router.post(
-    "/{id}/activities",
-    response_model=ActivityResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Add Custom Activity to Itinerary",
+router = APIRouter(
+    prefix="/api/v1/itineraries/{itinerary_id}/activities", tags=["Activities"]
 )
-def add_activity(
-    id: str,
-    req: ActivityCreateRequest,
-    db: Session = Depends(get_db),
-):
-    return ItineraryService.add_activity(itinerary_id=id, req=req, db=db)
 
 
-@router.put(
-    "/{id}/activities/{activity_id}",
-    response_model=ActivityResponse,
-    summary="Edit Existing Activity",
-)
+@router.post("", response_model=ActivityResponse, status_code=status.HTTP_201_CREATED)
+def add_activity(itinerary_id: str, req: ActivityCreate, db: Session = Depends(get_db)):
+    return ItineraryService.add_activity(itinerary_id, req, db)
+
+
+@router.put("/{activity_id}", response_model=ActivityResponse)
 def update_activity(
-    id: str,
+    itinerary_id: str,
     activity_id: str,
-    req: ActivityUpdateRequest,
+    req: ActivityUpdate,
     db: Session = Depends(get_db),
 ):
-    return ItineraryService.update_activity(
-        itinerary_id=id, activity_id=activity_id, req=req, db=db
-    )
+    activity = ItineraryService.update_activity(itinerary_id, activity_id, req, db)
+    if not activity:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Activity with ID {activity_id} not found in itinerary {itinerary_id}",
+        )
+    return activity
 
 
-@router.delete(
-    "/{id}/activities/{activity_id}",
-    response_model=BudgetSummaryResponse,
-    summary="Delete Activity and Recalculate Budget",
-)
+@router.delete("/{activity_id}", status_code=status.HTTP_200_OK)
 def delete_activity(
-    id: str,
-    activity_id: str,
-    db: Session = Depends(get_db),
-):
-    updated_itinerary = ItineraryService.delete_activity(
-        itinerary_id=id, activity_id=activity_id, db=db
-    )
-    remaining = round(
-        updated_itinerary.budget - updated_itinerary.total_estimated_cost, 2
-    )
-    return BudgetSummaryResponse(
-        total_estimated_cost=updated_itinerary.total_estimated_cost,
-        budget=updated_itinerary.budget,
-        currency=updated_itinerary.currency,
-        budget_status=updated_itinerary.budget_status,
-        remaining_budget=remaining,
-    )
+    itinerary_id: str, activity_id: str, db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    result = ItineraryService.delete_activity(itinerary_id, activity_id, db)
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Activity with ID {activity_id} not found in itinerary {itinerary_id}",
+        )
+    return result
 
 
-@router.post(
-    "/{id}/activities/reorder",
-    response_model=ItineraryResponse,
-    summary="Reorder Activities Within or Across Days",
-)
+@router.post("/reorder", response_model=ItineraryResponse)
 def reorder_activities(
-    id: str,
-    req: ActivityReorderRequest,
-    db: Session = Depends(get_db),
+    itinerary_id: str, req: ActivityReorderRequest, db: Session = Depends(get_db)
 ):
-    return ItineraryService.reorder_activities(itinerary_id=id, req=req, db=db)
+    return ItineraryService.reorder_activities(itinerary_id, req, db)

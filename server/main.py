@@ -2,42 +2,56 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from server.routes import api_v1_router
-from server.database import init_db
-from server.config import settings
+
+from server.database import init_db, SessionLocal, seed_data
+from server.routes.itineraries import router as itineraries_router
+from server.routes.activities import router as activities_router
+from server.routes.export import router as export_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Initialize DB schema and seed data
     init_db()
+    db = SessionLocal()
+    try:
+        seed_data(db)
+    finally:
+        db.close()
     yield
 
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    lifespan=lifespan,
+    title="AI Travel Planner API",
+    description="Customizable AI-Powered Itinerary Generation and Travel Budget Management",
     version="1.0.0",
-    description="AI Travel Planner Backend Service for generating customizable itineraries.",
+    lifespan=lifespan,
 )
 
-allowed_origins_raw = os.getenv(
+# CORS configuration
+ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000"
-)
-allowed_origins = [
-    origin.strip() for origin in allowed_origins_raw.split(",") if origin.strip()
-]
+).split(",")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(api_v1_router)
+# Include routers
+app.include_router(itineraries_router)
+app.include_router(activities_router)
+app.include_router(export_router)
+
+
+@app.get("/")
+def root():
+    return {"message": "AI Travel Planner API is running", "version": "1.0.0"}
 
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "service": "ai-travel-planner-service"}
+    return {"status": "healthy"}

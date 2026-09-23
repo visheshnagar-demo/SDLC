@@ -1,8 +1,8 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "AI Travel Planner Service",
-    "description": "AI Travel Planner Backend Service for generating customizable itineraries.",
+    "title": "AI Travel Planner API",
+    "description": "Customizable AI-Powered Itinerary Generation and Travel Budget Management",
     "version": "1.0.0"
   },
   "paths": {
@@ -11,7 +11,7 @@
         "tags": [
           "Itineraries"
         ],
-        "summary": "Generate AI Travel Itinerary",
+        "summary": "Generate Itinerary",
         "operationId": "generate_itinerary_api_v1_itineraries_generate_post",
         "requestBody": {
           "content": {
@@ -47,12 +47,69 @@
         }
       }
     },
+    "/api/v1/itineraries": {
+      "get": {
+        "tags": [
+          "Itineraries"
+        ],
+        "summary": "List Itineraries",
+        "operationId": "list_itineraries_api_v1_itineraries_get",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItineraryResponse"
+                  },
+                  "title": "Response List Itineraries Api V1 Itineraries Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/itineraries/shared/{share_token}": {
       "get": {
         "tags": [
           "Itineraries"
         ],
-        "summary": "Get Shared Itinerary by Share Token",
+        "summary": "Get Shared Itinerary",
         "operationId": "get_shared_itinerary_api_v1_itineraries_shared__share_token__get",
         "parameters": [
           {
@@ -89,81 +146,21 @@
         }
       }
     },
-    "/api/v1/itineraries": {
+    "/api/v1/itineraries/{itinerary_id}": {
       "get": {
         "tags": [
           "Itineraries"
         ],
-        "summary": "List All Saved Itineraries",
-        "operationId": "list_itineraries_api_v1_itineraries_get",
+        "summary": "Get Itinerary",
+        "operationId": "get_itinerary_api_v1_itineraries__itinerary_id__get",
         "parameters": [
           {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 20,
-              "title": "Limit"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ItineraryResponse"
-                  },
-                  "title": "Response List Itineraries Api V1 Itineraries Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/itineraries/{id}": {
-      "get": {
-        "tags": [
-          "Itineraries"
-        ],
-        "summary": "Retrieve Full Itinerary Details",
-        "operationId": "get_itinerary_api_v1_itineraries__id__get",
-        "parameters": [
-          {
-            "name": "id",
+            "name": "itinerary_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Itinerary Id"
             }
           }
         ],
@@ -194,16 +191,16 @@
         "tags": [
           "Itineraries"
         ],
-        "summary": "Update Itinerary Metadata and Budget",
-        "operationId": "update_itinerary_api_v1_itineraries__id__put",
+        "summary": "Update Itinerary",
+        "operationId": "update_itinerary_api_v1_itineraries__itinerary_id__put",
         "parameters": [
           {
-            "name": "id",
+            "name": "itinerary_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Itinerary Id"
             }
           }
         ],
@@ -241,21 +238,21 @@
         }
       }
     },
-    "/api/v1/itineraries/{id}/activities": {
+    "/api/v1/itineraries/{itinerary_id}/activities": {
       "post": {
         "tags": [
           "Activities"
         ],
-        "summary": "Add Custom Activity to Itinerary",
-        "operationId": "add_activity_api_v1_itineraries__id__activities_post",
+        "summary": "Add Activity",
+        "operationId": "add_activity_api_v1_itineraries__itinerary_id__activities_post",
         "parameters": [
           {
-            "name": "id",
+            "name": "itinerary_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Itinerary Id"
             }
           }
         ],
@@ -264,7 +261,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ActivityCreateRequest"
+                "$ref": "#/components/schemas/ActivityCreate"
               }
             }
           }
@@ -293,21 +290,21 @@
         }
       }
     },
-    "/api/v1/itineraries/{id}/activities/{activity_id}": {
+    "/api/v1/itineraries/{itinerary_id}/activities/{activity_id}": {
       "put": {
         "tags": [
           "Activities"
         ],
-        "summary": "Edit Existing Activity",
-        "operationId": "update_activity_api_v1_itineraries__id__activities__activity_id__put",
+        "summary": "Update Activity",
+        "operationId": "update_activity_api_v1_itineraries__itinerary_id__activities__activity_id__put",
         "parameters": [
           {
-            "name": "id",
+            "name": "itinerary_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Itinerary Id"
             }
           },
           {
@@ -325,7 +322,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ActivityUpdateRequest"
+                "$ref": "#/components/schemas/ActivityUpdate"
               }
             }
           }
@@ -357,16 +354,16 @@
         "tags": [
           "Activities"
         ],
-        "summary": "Delete Activity and Recalculate Budget",
-        "operationId": "delete_activity_api_v1_itineraries__id__activities__activity_id__delete",
+        "summary": "Delete Activity",
+        "operationId": "delete_activity_api_v1_itineraries__itinerary_id__activities__activity_id__delete",
         "parameters": [
           {
-            "name": "id",
+            "name": "itinerary_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Itinerary Id"
             }
           },
           {
@@ -385,7 +382,9 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BudgetSummaryResponse"
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Delete Activity Api V1 Itineraries  Itinerary Id  Activities  Activity Id  Delete"
                 }
               }
             }
@@ -403,21 +402,21 @@
         }
       }
     },
-    "/api/v1/itineraries/{id}/activities/reorder": {
+    "/api/v1/itineraries/{itinerary_id}/activities/reorder": {
       "post": {
         "tags": [
           "Activities"
         ],
-        "summary": "Reorder Activities Within or Across Days",
-        "operationId": "reorder_activities_api_v1_itineraries__id__activities_reorder_post",
+        "summary": "Reorder Activities",
+        "operationId": "reorder_activities_api_v1_itineraries__itinerary_id__activities_reorder_post",
         "parameters": [
           {
-            "name": "id",
+            "name": "itinerary_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Itinerary Id"
             }
           }
         ],
@@ -455,21 +454,21 @@
         }
       }
     },
-    "/api/v1/itineraries/{id}/export/pdf": {
+    "/api/v1/itineraries/{itinerary_id}/export/pdf": {
       "get": {
         "tags": [
           "Export & Sharing"
         ],
-        "summary": "Download Formatted PDF Itinerary",
-        "operationId": "export_pdf_api_v1_itineraries__id__export_pdf_get",
+        "summary": "Export Pdf",
+        "operationId": "export_pdf_api_v1_itineraries__itinerary_id__export_pdf_get",
         "parameters": [
           {
-            "name": "id",
+            "name": "itinerary_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Itinerary Id"
             }
           }
         ],
@@ -495,21 +494,21 @@
         }
       }
     },
-    "/api/v1/itineraries/{id}/export/ics": {
+    "/api/v1/itineraries/{itinerary_id}/export/ics": {
       "get": {
         "tags": [
           "Export & Sharing"
         ],
-        "summary": "Download iCalendar (.ics) File",
-        "operationId": "export_ics_api_v1_itineraries__id__export_ics_get",
+        "summary": "Export Ics",
+        "operationId": "export_ics_api_v1_itineraries__itinerary_id__export_ics_get",
         "parameters": [
           {
-            "name": "id",
+            "name": "itinerary_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Itinerary Id"
             }
           }
         ],
@@ -535,21 +534,21 @@
         }
       }
     },
-    "/api/v1/itineraries/{id}/share": {
+    "/api/v1/itineraries/{itinerary_id}/share": {
       "post": {
         "tags": [
           "Export & Sharing"
         ],
-        "summary": "Generate Public Shareable Token and Link",
-        "operationId": "share_itinerary_api_v1_itineraries__id__share_post",
+        "summary": "Share Itinerary",
+        "operationId": "share_itinerary_api_v1_itineraries__itinerary_id__share_post",
         "parameters": [
           {
-            "name": "id",
+            "name": "itinerary_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Itinerary Id"
             }
           }
         ],
@@ -577,6 +576,22 @@
         }
       }
     },
+    "/": {
+      "get": {
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
@@ -596,13 +611,12 @@
   },
   "components": {
     "schemas": {
-      "ActivityCreateRequest": {
+      "ActivityCreate": {
         "properties": {
           "time_slot": {
             "type": "string",
             "title": "Time Slot",
-            "description": "Time of day (e.g. Morning, Lunch, Afternoon, Evening)",
-            "default": "Morning"
+            "description": "Time slot or time interval, e.g. '09:00 - 11:00'"
           },
           "title": {
             "type": "string",
@@ -624,8 +638,8 @@
           "category": {
             "type": "string",
             "maxLength": 100,
-            "title": "Category",
-            "default": "General"
+            "minLength": 1,
+            "title": "Category"
           },
           "estimated_cost": {
             "type": "number",
@@ -642,19 +656,34 @@
                 "type": "null"
               }
             ],
-            "title": "Location"
+            "title": "Location",
+            "default": ""
           },
           "duration_minutes": {
-            "type": "integer",
-            "minimum": 1.0,
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Duration Minutes",
             "default": 60
           },
           "sequence_order": {
-            "type": "integer",
-            "minimum": 1.0,
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Sequence Order",
-            "default": 1
+            "default": 0
           },
           "day_id": {
             "anyOf": [
@@ -666,13 +695,26 @@
               }
             ],
             "title": "Day Id"
+          },
+          "day_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Day Number"
           }
         },
         "type": "object",
         "required": [
-          "title"
+          "time_slot",
+          "title",
+          "category"
         ],
-        "title": "ActivityCreateRequest"
+        "title": "ActivityCreate"
       },
       "ActivityReorderItem": {
         "properties": {
@@ -680,20 +722,25 @@
             "type": "string",
             "title": "Activity Id"
           },
-          "day_id": {
-            "type": "string",
-            "title": "Day Id"
-          },
           "sequence_order": {
             "type": "integer",
-            "minimum": 1.0,
             "title": "Sequence Order"
+          },
+          "day_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Day Id"
           }
         },
         "type": "object",
         "required": [
           "activity_id",
-          "day_id",
           "sequence_order"
         ],
         "title": "ActivityReorderItem"
@@ -701,17 +748,46 @@
       "ActivityReorderRequest": {
         "properties": {
           "activities": {
-            "items": {
-              "$ref": "#/components/schemas/ActivityReorderItem"
-            },
-            "type": "array",
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ActivityReorderItem"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Activities"
+          },
+          "activity_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Ids"
+          },
+          "day_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Day Id"
           }
         },
         "type": "object",
-        "required": [
-          "activities"
-        ],
         "title": "ActivityReorderRequest"
       },
       "ActivityResponse": {
@@ -719,8 +795,7 @@
           "time_slot": {
             "type": "string",
             "title": "Time Slot",
-            "description": "Time of day (e.g. Morning, Lunch, Afternoon, Evening)",
-            "default": "Morning"
+            "description": "Time slot or time interval, e.g. '09:00 - 11:00'"
           },
           "title": {
             "type": "string",
@@ -742,8 +817,8 @@
           "category": {
             "type": "string",
             "maxLength": 100,
-            "title": "Category",
-            "default": "General"
+            "minLength": 1,
+            "title": "Category"
           },
           "estimated_cost": {
             "type": "number",
@@ -760,19 +835,34 @@
                 "type": "null"
               }
             ],
-            "title": "Location"
+            "title": "Location",
+            "default": ""
           },
           "duration_minutes": {
-            "type": "integer",
-            "minimum": 1.0,
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Duration Minutes",
             "default": 60
           },
           "sequence_order": {
-            "type": "integer",
-            "minimum": 1.0,
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Sequence Order",
-            "default": 1
+            "default": 0
           },
           "id": {
             "type": "string",
@@ -781,29 +871,19 @@
           "day_id": {
             "type": "string",
             "title": "Day Id"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
+          "time_slot",
           "title",
+          "category",
           "id",
-          "day_id",
-          "created_at",
-          "updated_at"
+          "day_id"
         ],
         "title": "ActivityResponse"
       },
-      "ActivityUpdateRequest": {
+      "ActivityUpdate": {
         "properties": {
           "time_slot": {
             "anyOf": [
@@ -819,9 +899,7 @@
           "title": {
             "anyOf": [
               {
-                "type": "string",
-                "maxLength": 255,
-                "minLength": 1
+                "type": "string"
               },
               {
                 "type": "null"
@@ -890,7 +968,7 @@
             "anyOf": [
               {
                 "type": "integer",
-                "minimum": 1.0
+                "minimum": 0.0
               },
               {
                 "type": "null"
@@ -900,40 +978,7 @@
           }
         },
         "type": "object",
-        "title": "ActivityUpdateRequest"
-      },
-      "BudgetSummaryResponse": {
-        "properties": {
-          "total_estimated_cost": {
-            "type": "number",
-            "title": "Total Estimated Cost"
-          },
-          "budget": {
-            "type": "number",
-            "title": "Budget"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
-          "budget_status": {
-            "type": "string",
-            "title": "Budget Status"
-          },
-          "remaining_budget": {
-            "type": "number",
-            "title": "Remaining Budget"
-          }
-        },
-        "type": "object",
-        "required": [
-          "total_estimated_cost",
-          "budget",
-          "currency",
-          "budget_status",
-          "remaining_budget"
-        ],
-        "title": "BudgetSummaryResponse"
+        "title": "ActivityUpdate"
       },
       "HTTPValidationError": {
         "properties": {
@@ -950,10 +995,6 @@
       },
       "ItineraryDayResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
           "day_number": {
             "type": "integer",
             "title": "Day Number"
@@ -971,7 +1012,16 @@
           },
           "daily_estimated_cost": {
             "type": "number",
-            "title": "Daily Estimated Cost"
+            "title": "Daily Estimated Cost",
+            "default": 0.0
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "itinerary_id": {
+            "type": "string",
+            "title": "Itinerary Id"
           },
           "activities": {
             "items": {
@@ -980,25 +1030,13 @@
             "type": "array",
             "title": "Activities",
             "default": []
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
-          "id",
           "day_number",
-          "daily_estimated_cost",
-          "created_at",
-          "updated_at"
+          "id",
+          "itinerary_id"
         ],
         "title": "ItineraryDayResponse"
       },
@@ -1006,7 +1044,6 @@
         "properties": {
           "destination": {
             "type": "string",
-            "maxLength": 255,
             "minLength": 1,
             "title": "Destination",
             "description": "Destination city/country"
@@ -1015,31 +1052,9 @@
             "type": "number",
             "exclusiveMinimum": 0.0,
             "title": "Budget",
-            "description": "Total travel budget must be positive"
+            "description": "Total budget, must be > 0"
           },
           "currency": {
-            "type": "string",
-            "maxLength": 10,
-            "minLength": 1,
-            "title": "Currency",
-            "default": "USD"
-          },
-          "duration_days": {
-            "type": "integer",
-            "maximum": 30.0,
-            "minimum": 1.0,
-            "title": "Duration Days",
-            "description": "Duration in days must be between 1 and 30"
-          },
-          "interests": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Interests",
-            "description": "List of interest tags"
-          },
-          "user_id": {
             "anyOf": [
               {
                 "type": "string"
@@ -1048,7 +1063,24 @@
                 "type": "null"
               }
             ],
-            "title": "User Id"
+            "title": "Currency",
+            "description": "Currency code (e.g. USD, EUR)",
+            "default": "USD"
+          },
+          "duration_days": {
+            "type": "integer",
+            "maximum": 30.0,
+            "minimum": 1.0,
+            "title": "Duration Days",
+            "description": "Duration in days (1-30)"
+          },
+          "interests": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Interests",
+            "description": "List of interest categories"
           }
         },
         "type": "object",
@@ -1064,17 +1096,6 @@
           "id": {
             "type": "string",
             "title": "Id"
-          },
-          "user_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "User Id"
           },
           "destination": {
             "type": "string",
@@ -1109,7 +1130,14 @@
             "title": "Budget Status"
           },
           "share_token": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Share Token"
           },
           "days": {
@@ -1119,16 +1147,6 @@
             "type": "array",
             "title": "Days",
             "default": []
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At"
           }
         },
         "type": "object",
@@ -1139,10 +1157,7 @@
           "currency",
           "duration_days",
           "total_estimated_cost",
-          "budget_status",
-          "share_token",
-          "created_at",
-          "updated_at"
+          "budget_status"
         ],
         "title": "ItineraryResponse"
       },
@@ -1151,9 +1166,7 @@
           "destination": {
             "anyOf": [
               {
-                "type": "string",
-                "maxLength": 255,
-                "minLength": 1
+                "type": "string"
               },
               {
                 "type": "null"
@@ -1176,9 +1189,7 @@
           "currency": {
             "anyOf": [
               {
-                "type": "string",
-                "maxLength": 10,
-                "minLength": 1
+                "type": "string"
               },
               {
                 "type": "null"

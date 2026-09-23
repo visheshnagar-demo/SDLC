@@ -1,69 +1,61 @@
-from fastapi import APIRouter, Depends, Response, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
+
 from server.database import get_db
 from server.schemas import ShareResponse
 from server.services.itinerary_service import ItineraryService
 from server.services.export_service import ExportService
 
-router = APIRouter()
-
-
-@router.get(
-    "/{id}/export/pdf",
-    summary="Download Formatted PDF Itinerary",
+router = APIRouter(
+    prefix="/api/v1/itineraries/{itinerary_id}", tags=["Export & Sharing"]
 )
-def export_pdf(
-    id: str,
-    db: Session = Depends(get_db),
-):
-    itinerary = ItineraryService.get_itinerary_by_id(id, db)
-    pdf_bytes = ExportService.export_pdf(itinerary)
-    sanitized_dest = "".join(
-        c for c in itinerary.destination if c.isalnum() or c in ("-", "_")
-    ).rstrip()
-    filename = f"itinerary-{sanitized_dest or id}.pdf"
+
+
+@router.get("/export/pdf")
+def export_pdf(itinerary_id: str, db: Session = Depends(get_db)):
+    itinerary = ItineraryService.get_itinerary(itinerary_id, db)
+    if not itinerary:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Itinerary with ID {itinerary_id} not found",
+        )
+    pdf_bytes = ExportService.generate_pdf(itinerary)
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={
+            "Content-Disposition": f'attachment; filename="itinerary-{itinerary_id}.pdf"'
+        },
     )
 
 
-@router.get(
-    "/{id}/export/ics",
-    summary="Download iCalendar (.ics) File",
-)
-def export_ics(
-    id: str,
-    db: Session = Depends(get_db),
-):
-    itinerary = ItineraryService.get_itinerary_by_id(id, db)
-    ics_bytes = ExportService.export_ics(itinerary)
-    sanitized_dest = "".join(
-        c for c in itinerary.destination if c.isalnum() or c in ("-", "_")
-    ).rstrip()
-    filename = f"itinerary-{sanitized_dest or id}.ics"
+@router.get("/export/ics")
+def export_ics(itinerary_id: str, db: Session = Depends(get_db)):
+    itinerary = ItineraryService.get_itinerary(itinerary_id, db)
+    if not itinerary:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Itinerary with ID {itinerary_id} not found",
+        )
+    ics_bytes = ExportService.generate_ics(itinerary)
     return Response(
         content=ics_bytes,
         media_type="text/calendar",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={
+            "Content-Disposition": f'attachment; filename="itinerary-{itinerary_id}.ics"'
+        },
     )
 
 
-@router.post(
-    "/{id}/share",
-    response_model=ShareResponse,
-    summary="Generate Public Shareable Token and Link",
-)
-def share_itinerary(
-    id: str,
-    request: Request,
-    db: Session = Depends(get_db),
-):
-    itinerary = ItineraryService.get_itinerary_by_id(id, db)
+@router.post("/share", response_model=ShareResponse)
+def share_itinerary(itinerary_id: str, request: Request, db: Session = Depends(get_db)):
+    itinerary = ItineraryService.get_itinerary(itinerary_id, db)
+    if not itinerary:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Itinerary with ID {itinerary_id} not found",
+        )
+    token = ExportService.generate_share_token(itinerary, db)
     base_url = str(request.base_url).rstrip("/")
-    share_url = f"{base_url}/shared/{itinerary.share_token}"
-    return ShareResponse(
-        share_token=itinerary.share_token,
-        share_url=share_url,
-    )
+    return ShareResponse(share_token=token, share_url=f"{base_url}/shared/{token}")
