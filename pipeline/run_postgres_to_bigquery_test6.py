@@ -53,7 +53,7 @@ class PipelineRunner:
             os.getenv("INSTANCE_CONNECTION_NAME")
             or os.getenv("POSTGRES_INSTANCE_CONNECTION_NAME")
             or os.getenv("CLOUD_SQL_CONNECTION_NAME")
-            or ""
+            or "upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db"
         )
         host = os.getenv("POSTGRES_HOST") or os.getenv("DB_HOST", "")
         if not instance_connection_name and host and host.count(":") == 2:
@@ -61,8 +61,8 @@ class PipelineRunner:
             host = ""
 
         port = os.getenv("POSTGRES_PORT") or os.getenv("DB_PORT", "5432")
-        user = os.getenv("POSTGRES_USER") or os.getenv("DB_USER", "")
-        dbname = os.getenv("POSTGRES_DB") or os.getenv("DB_NAME", "")
+        user = os.getenv("POSTGRES_USER") or os.getenv("DB_USER", "559906504681-compute@developer")
+        dbname = os.getenv("POSTGRES_DB") or os.getenv("DB_NAME", "postgre")
         # NOTE: POSTGRES_PASSWORD is intentionally NOT read here.
         # All Cloud SQL connections use IAM database authentication.
         # A password would bypass IAM auth and fail anyway (no password set in DB).
@@ -222,7 +222,7 @@ class PipelineRunner:
         if not os.path.exists(self.staging_file) or os.path.getsize(self.staging_file) == 0:
             logger.warning("Staging file %s is empty or missing. Skipping load phase.", self.staging_file)
             return True
-        project_id = os.getenv("GCP_PROJECT_ID") or os.getenv("PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("GCLOUD_PROJECT")
+        project_id = os.getenv("GCP_PROJECT_ID") or os.getenv("PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("GCLOUD_PROJECT") or "upbeat-repeater-477110-q6"
         dataset_id = os.getenv("BIGQUERY_DATASET") or "analytics"
         table_id = os.getenv("BIGQUERY_TABLE") or "test6"
         write_mode = "overwrite"

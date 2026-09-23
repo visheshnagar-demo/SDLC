@@ -25,15 +25,15 @@ def extract_from_postgres(
         os.getenv("INSTANCE_CONNECTION_NAME")
         or os.getenv("POSTGRES_INSTANCE_CONNECTION_NAME")
         or os.getenv("CLOUD_SQL_CONNECTION_NAME")
-        or ""
+        or "upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db"
     )
     host = os.getenv("POSTGRES_HOST") or os.getenv("DB_HOST", "")
     if not instance_connection_name and host and host.count(":") == 2:
         instance_connection_name = host
         host = ""
 
-    user = os.getenv("POSTGRES_USER") or os.getenv("DB_USER", "")
-    dbname = os.getenv("POSTGRES_DB") or os.getenv("DB_NAME", "")
+    user = os.getenv("POSTGRES_USER") or os.getenv("DB_USER", "559906504681-compute@developer")
+    dbname = os.getenv("POSTGRES_DB") or os.getenv("DB_NAME", "postgre")
 
     if instance_connection_name and user:
         try:
