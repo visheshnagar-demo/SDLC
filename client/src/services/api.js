@@ -4,88 +4,72 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  timeout: 10000,
+  timeout: 30000,
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Standardized error payload extractions
-    const message =
-      error.response?.data?.detail ||
-      error.message ||
-      "An unexpected network error occurred";
-    return Promise.reject(
-      new Error(
-        typeof message === "object" ? JSON.stringify(message) : message,
-      ),
-    );
+export const emailService = {
+  /**
+   * Ingest an email via raw text payload
+   * @param {{ subject?: string, body: string }} payload
+   */
+  async ingestRawText(payload) {
+    const response = await apiClient.post("/api/v1/emails/text", payload);
+    return response.data;
   },
-);
 
-export const createCheckoutSession = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/checkout-session",
-    payload,
-  );
-  return response.data;
+  /**
+   * Ingest an email via multipart file upload (.eml, .msg, .txt up to 10MB)
+   * @param {File} file
+   */
+  async uploadEmailFile(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await apiClient.post("/api/v1/emails/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * List and filter classified emails with pagination and search
+   * @param {{ skip?: number, limit?: number, search?: string, category?: string, status?: string }} params
+   */
+  async getEmails(params = {}) {
+    const response = await apiClient.get("/api/v1/emails", { params });
+    return response.data;
+  },
+
+  /**
+   * Get email details by ID
+   * @param {string} id
+   */
+  async getEmailById(id) {
+    const response = await apiClient.get(`/api/v1/emails/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Override category classification manually
+   * @param {string} id
+   * @param {{ category: string, notes?: string }} payload
+   */
+  async overrideCategory(id, payload) {
+    const response = await apiClient.patch(
+      `/api/v1/emails/${id}/override`,
+      payload,
+    );
+    return response.data;
+  },
+
+  /**
+   * Health check endpoint
+   */
+  async checkHealth() {
+    const response = await apiClient.get("/health");
+    return response.data;
+  },
 };
 
-export const payWithDigitalWallet = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/digital-wallet",
-    payload,
-  );
-  return response.data;
-};
-
-export const getExchangeRates = async (baseCurrency = "USD") => {
-  const response = await apiClient.get("/api/v1/payments/rates", {
-    params: { base_currency: baseCurrency },
-  });
-  return response.data;
-};
-
-export const listTransactions = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/payments/transactions", {
-    params,
-  });
-  return response.data;
-};
-
-export const getTransactionDetail = async (transactionId) => {
-  const response = await apiClient.get(
-    `/api/v1/payments/transactions/${transactionId}`,
-  );
-  return response.data;
-};
-
-export const createRefund = async (payload) => {
-  const response = await apiClient.post("/api/v1/refunds", payload);
-  return response.data;
-};
-
-export const listRefunds = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/refunds", { params });
-  return response.data;
-};
-
-export const listAuditLogs = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/audit-logs", { params });
-  return response.data;
-};
-
-export default {
-  apiClient,
-  createCheckoutSession,
-  payWithDigitalWallet,
-  getExchangeRates,
-  listTransactions,
-  getTransactionDetail,
-  createRefund,
-  listRefunds,
-  listAuditLogs,
-};
+export default emailService;
