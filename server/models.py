@@ -25,13 +25,6 @@ class Email(Base):
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
 
-    audit_logs = relationship(
-        lambda: ClassificationAuditLog,
-        back_populates="email",
-        cascade="all, delete-orphan",
-        order_by=lambda: ClassificationAuditLog.created_at.desc(),
-    )
-
 
 class ClassificationAuditLog(Base):
     __tablename__ = "classification_audit_logs"
@@ -45,6 +38,14 @@ class ClassificationAuditLog(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     email = relationship(
-        lambda: Email,
+        Email,
         back_populates="audit_logs",
     )
+
+
+Email.audit_logs = relationship(
+    ClassificationAuditLog,
+    back_populates="email",
+    cascade="all, delete-orphan",
+    order_by=ClassificationAuditLog.created_at.desc(),
+)
