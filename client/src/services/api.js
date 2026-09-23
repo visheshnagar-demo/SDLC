@@ -2,90 +2,74 @@ import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-export const apiClient = axios.create({
+const apiClient = axios.create({
   baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Standardized error payload extractions
-    const message =
-      error.response?.data?.detail ||
-      error.message ||
-      "An unexpected network error occurred";
-    return Promise.reject(
-      new Error(
-        typeof message === "object" ? JSON.stringify(message) : message,
-      ),
-    );
-  },
-);
+export const getSubjects = async () => {
+  const response = await apiClient.get("/api/v1/subjects");
+  return response.data;
+};
 
-export const createCheckoutSession = async (payload) => {
+export const createSubject = async (subjectData) => {
+  const response = await apiClient.post("/api/v1/subjects", subjectData);
+  return response.data;
+};
+
+export const deleteSubject = async (subjectId) => {
+  const response = await apiClient.delete(`/api/v1/subjects/${subjectId}`);
+  return response.data;
+};
+
+export const getAvailability = async () => {
+  const response = await apiClient.get("/api/v1/availability");
+  return response.data;
+};
+
+export const saveAvailability = async (availabilityData) => {
   const response = await apiClient.post(
-    "/api/v1/payments/checkout-session",
-    payload,
+    "/api/v1/availability",
+    availabilityData,
   );
   return response.data;
 };
 
-export const payWithDigitalWallet = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/digital-wallet",
-    payload,
+export const getSchedules = async () => {
+  const response = await apiClient.get("/api/v1/schedules");
+  return response.data;
+};
+
+export const getSchedule = async (id) => {
+  const response = await apiClient.get(`/api/v1/schedules/${id}`);
+  return response.data;
+};
+
+export const generateSchedule = async (payload) => {
+  const response = await apiClient.post("/api/v1/schedules/generate", payload);
+  return response.data;
+};
+
+export const updateSessionStatus = async (sessionId, status) => {
+  const response = await apiClient.patch(
+    `/api/v1/schedules/sessions/${sessionId}`,
+    {
+      status,
+    },
   );
-  return response.data;
-};
-
-export const getExchangeRates = async (baseCurrency = "USD") => {
-  const response = await apiClient.get("/api/v1/payments/rates", {
-    params: { base_currency: baseCurrency },
-  });
-  return response.data;
-};
-
-export const listTransactions = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/payments/transactions", {
-    params,
-  });
-  return response.data;
-};
-
-export const getTransactionDetail = async (transactionId) => {
-  const response = await apiClient.get(
-    `/api/v1/payments/transactions/${transactionId}`,
-  );
-  return response.data;
-};
-
-export const createRefund = async (payload) => {
-  const response = await apiClient.post("/api/v1/refunds", payload);
-  return response.data;
-};
-
-export const listRefunds = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/refunds", { params });
-  return response.data;
-};
-
-export const listAuditLogs = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/audit-logs", { params });
   return response.data;
 };
 
 export default {
-  apiClient,
-  createCheckoutSession,
-  payWithDigitalWallet,
-  getExchangeRates,
-  listTransactions,
-  getTransactionDetail,
-  createRefund,
-  listRefunds,
-  listAuditLogs,
+  getSubjects,
+  createSubject,
+  deleteSubject,
+  getAvailability,
+  saveAvailability,
+  getSchedules,
+  getSchedule,
+  generateSchedule,
+  updateSessionStatus,
 };
