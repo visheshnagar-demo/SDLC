@@ -71,7 +71,7 @@ class DataTransformer:
         if "raw_data" not in df.columns:
             non_id_cols = [c for c in df.columns if c not in ("id", "cleaned_at", "ingested_at")]
             if non_id_cols:
-                df["raw_data"] = df[non_id_cols].astype(str).agg(" | ".join, axis=1)
+                df["raw_data"] = df[non_id_cols].apply(lambda row: " | ".join(str(val) if pd.notna(val) else "" for val in row), axis=1)
             else:
                 df["raw_data"] = None
 
