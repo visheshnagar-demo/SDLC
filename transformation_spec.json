@@ -41,5 +41,54 @@
       "nullable": false,
       "transform": "current_timestamp_utc"
     }
+  ],
+  "transformations": [
+    {
+      "step": 1,
+      "name": "whitespace_trimming",
+      "type": "strip_whitespace",
+      "description": "Strip leading and trailing whitespace from string columns",
+      "source_columns": ["id", "raw_data"],
+      "target_columns": ["id", "raw_data"]
+    },
+    {
+      "step": 2,
+      "name": "null_value_normalization",
+      "type": "normalize_nulls",
+      "description": "Normalize string null representations ('null', 'None', 'N/A', '') to standard SQL NULL",
+      "source_columns": ["raw_data", "cleaned_at"],
+      "target_columns": ["raw_data", "cleaned_at"]
+    },
+    {
+      "step": 3,
+      "name": "type_coercion",
+      "type": "type_cast",
+      "description": "Coerce id to string, raw_data to string, and parse cleaned_at to UTC timestamp",
+      "source_columns": ["id", "raw_data", "cleaned_at"],
+      "target_columns": ["id", "raw_data", "cleaned_at"]
+    },
+    {
+      "step": 4,
+      "name": "record_deduplication",
+      "type": "deduplication",
+      "description": "Deduplicate records by key 'id', keeping the most recent valid record",
+      "key": "id",
+      "keep": "last"
+    },
+    {
+      "step": 5,
+      "name": "quarantine_invalid_records",
+      "type": "quarantine",
+      "description": "Quarantine records with missing or empty 'id' and enforce circuit breaker threshold",
+      "filter_condition": "id is not null and trim(id) != ''"
+    },
+    {
+      "step": 6,
+      "name": "ingestion_timestamp",
+      "type": "add_column",
+      "description": "Append ingested_at UTC timestamp to target schema",
+      "target_column": "ingested_at",
+      "target_type": "TIMESTAMP"
+    }
   ]
 }
