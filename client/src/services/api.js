@@ -50,16 +50,14 @@ export const getExchangeRates = async (baseCurrency = "USD") => {
 };
 
 export const listTransactions = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/payments/transactions", {
+  const response = await apiClient.get("/api/v1/transactions", {
     params,
   });
   return response.data;
 };
 
 export const getTransactionDetail = async (transactionId) => {
-  const response = await apiClient.get(
-    `/api/v1/payments/transactions/${transactionId}`,
-  );
+  const response = await apiClient.get(`/api/v1/transactions/${transactionId}`);
   return response.data;
 };
 
@@ -78,6 +76,37 @@ export const listAuditLogs = async (params = {}) => {
   return response.data;
 };
 
+// Email classification endpoints
+export const ingestTextEmail = async (payload) => {
+  const response = await apiClient.post("/api/v1/emails/text", payload);
+  return response.data;
+};
+
+export const ingestFileEmail = async (formData) => {
+  const response = await apiClient.post("/api/v1/emails/upload", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
+
+export const listEmails = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/emails", { params });
+  return response.data;
+};
+
+export const getEmailDetail = async (emailId) => {
+  const response = await apiClient.get(`/api/v1/emails/${emailId}`);
+  return response.data;
+};
+
+export const overrideEmailCategory = async (emailId, payload) => {
+  const response = await apiClient.patch(
+    `/api/v1/emails/${emailId}/override`,
+    payload,
+  );
+  return response.data;
+};
+
 export default {
   apiClient,
   createCheckoutSession,
@@ -88,4 +117,9 @@ export default {
   createRefund,
   listRefunds,
   listAuditLogs,
+  ingestTextEmail,
+  ingestFileEmail,
+  listEmails,
+  getEmailDetail,
+  overrideEmailCategory,
 };

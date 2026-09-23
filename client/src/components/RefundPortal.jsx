@@ -54,7 +54,15 @@ export const RefundPortal = () => {
       const data = await listTransactions(params);
       setTransactions(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(err.message || "Failed to load transactions");
+      if (
+        err.message === "Not Found" ||
+        err.message?.toLowerCase().includes("not found") ||
+        err.message?.includes("404")
+      ) {
+        setTransactions([]);
+      } else {
+        setError(err.message || "Failed to load transactions");
+      }
     } finally {
       setLoading(false);
     }
