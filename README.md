@@ -1,88 +1,66 @@
-# Project
+# Cloud Run Job ETL Pipeline: Sales Orders Ingestion
 
-## Server
+An enterprise batch ETL data pipeline deployed as a GCP Cloud Run Job. Ingests sales order CSV records from Google Cloud Storage, validates, cleans, deduplicates, and loads them into a partitioned BigQuery table.
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+## Architecture
 
-### Setup
+- **Ingestion**: Fetches raw sales order CSV files from `gs://sdlc-workspec-store/etl/data/raw_sales_data.csv`.
+- **Validation**: Schema-on-read validation with fail-fast circuit breakers for empty or corrupted datasets.
+- **Transformation**: String whitespace trimming, type coercion, UTC timestamp normalization, and partition field extraction (`order_date`).
+- **Deduplication**: Deduplicates records by primary key (`order_id`) retaining the latest record.
+- **Load**: Loads clean DataFrames into BigQuery table `analytics.harshada-test2` with daily partitioning on `order_date` and clustering on `customer_id`, `product_category`.
+- **Observability**: Structured JSON logging and audit execution summaries.
 
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+## Directory Structure
+
+```
+├── app.py                      # Main Cloud Run Job entrypoint
+├── Dockerfile                  # Container image build specification
+├── env.deploy.json             # Deployment environment configuration
+├── pipeline/
+│   ├── __init__.py
+│   ├── ingestor.py             # GCS raw CSV extractor
+│   ├── validator.py            # Data validation and circuit breaker
+│   ├── transformer.py          # Field transformations & derived fields
+│   ├── deduplicator.py         # Primary key deduplication
+│   ├── loader.py               # Partitioned BigQuery loader
+│   ├── logger.py               # Structured JSON logger
+│   └── run_sales_etl.py        # Pipeline execution workflow runner
+├── schemas/
+│   ├── sales_schema.json       # BigQuery schema JSON
+│   └── harshada-test2_schema.json
+├── sql/
+│   └── ddl/
+│       ├── sales_orders.sql    # BigQuery target table DDL
+│       └── harshada-test2.sql
+├── tests/
+│   ├── __init__.py
+│   ├── test_etl_pipeline.py    # Unit & transformation tests
+│   └── test_sales_etl_pipeline.py # Integration test suite
+├── transformation_spec.json   # Transformation specification
+├── requirements.txt            # Python dependencies
+└── README.md                   # Pipeline documentation
 ```
 
-2. Install dependencies:
+## Local Execution
+
+Run pipeline tests locally:
 ```bash
-cd server
-pip install -r requirements.txt
-cd ..
+pytest tests/
 ```
 
-### Running Tests
+Run ETL pipeline with local CSV override:
 ```bash
-cd server
-python -m pytest -v
-cd ..
+python app.py
 ```
 
-### Starting the Development Server
-```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+## Deployment Configuration (`env.deploy.json`)
+
+```json
+{
+  "GCS_SOURCE_BUCKET": "sdlc-workspec-store",
+  "GCS_SOURCE_PREFIX": "etl/data/raw_sales_data.csv",
+  "BIGQUERY_DATASET": "analytics",
+  "BIGQUERY_TABLE": "harshada-test2"
+}
 ```
-
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
-```bash
-# Copy the example environment file
-cp .env.example .env
-```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-

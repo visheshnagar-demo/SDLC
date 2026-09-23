@@ -1,0 +1,68 @@
+[
+  {
+    "name": "order_id",
+    "type": "INTEGER",
+    "mode": "REQUIRED",
+    "description": "Unique sales order identifier"
+  },
+  {
+    "name": "customer_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Customer identifier"
+  },
+  {
+    "name": "customer_name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Full name of customer"
+  },
+  {
+    "name": "customer_email",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Customer email address"
+  },
+  {
+    "name": "product_category",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Category of product purchased"
+  },
+  {
+    "name": "amount",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Sales order total amount"
+  },
+  {
+    "name": "currency",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Three-letter ISO currency code"
+  },
+  {
+    "name": "order_status",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Status of the order"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Timestamp when order was created in UTC"
+  },
+  {
+    "name": "order_date",
+    "type": "DATE",
+    "mode": "NULLABLE",
+    "description": "Transaction date derived from created_at for partitioning"
+  },
+  {
+    "name": "ingestion_timestamp",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "UTC timestamp when record was ingested into BigQuery"
+  }
+]
