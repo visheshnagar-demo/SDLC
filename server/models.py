@@ -5,7 +5,21 @@ from typing import Optional
 
 
 @dataclass
-class SalesRecord:
+class RawSalesRecord:
+    """Represents a raw sales record extracted from CSV."""
+    order_id: int
+    customer_id: str
+    customer_name: Optional[str] = None
+    customer_email: Optional[str] = None
+    product_category: Optional[str] = None
+    amount: Optional[float] = None
+    currency: Optional[str] = None
+    order_status: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+
+@dataclass
+class CleanedSalesRecord:
     """Represents a sanitized and validated sales record ready for BigQuery loading."""
     order_id: int
     customer_id: str
@@ -19,6 +33,10 @@ class SalesRecord:
     _etl_ingested_at: Optional[datetime] = None
     _etl_batch_id: Optional[str] = None
     _etl_source_file: Optional[str] = None
+
+
+# Backward compatibility alias
+SalesRecord = CleanedSalesRecord
 
 
 @dataclass
