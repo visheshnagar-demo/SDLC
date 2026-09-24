@@ -1,4 +1,110 @@
 {
+  "source": {
+    "type": "gcs",
+    "bucket": "sdlc-workspec-store",
+    "prefix": "etl/data/my_file (1).csv",
+    "file_format": "csv"
+  },
+  "target": {
+    "type": "bigquery",
+    "project_id": "upbeat-repeater-477110-q6",
+    "dataset": "analytics",
+    "table_name": "test02",
+    "write_mode": "overwrite"
+  },
+  "transformations": [
+    {
+      "source_column": "Rank",
+      "target_column": "Rank",
+      "target_type": "INTEGER",
+      "transform": "to_integer",
+      "description": "Tour rank based on gross revenue"
+    },
+    {
+      "source_column": "Peak",
+      "target_column": "Peak",
+      "target_type": "INTEGER",
+      "transform": "strip_footnotes_and_to_int",
+      "description": "Peak position at release"
+    },
+    {
+      "source_column": "All Time Peak",
+      "target_column": "All_Time_Peak",
+      "target_type": "INTEGER",
+      "transform": "strip_footnotes_and_to_int",
+      "description": "All-time peak position"
+    },
+    {
+      "source_column": "Actual gross",
+      "target_column": "Actual_gross",
+      "target_type": "INTEGER",
+      "transform": "parse_currency_to_int",
+      "description": "Actual gross revenue in USD"
+    },
+    {
+      "source_column": "Adjusted gross (in 2022 dollars)",
+      "target_column": "Adjusted_gross_2022_dollars",
+      "target_type": "INTEGER",
+      "transform": "parse_currency_to_int",
+      "description": "Adjusted gross revenue in 2022 USD"
+    },
+    {
+      "source_column": "Artist",
+      "target_column": "Artist",
+      "target_type": "STRING",
+      "transform": "trim_string",
+      "description": "Touring artist name"
+    },
+    {
+      "source_column": "Tour title",
+      "target_column": "Tour_title",
+      "target_type": "STRING",
+      "transform": "trim_string",
+      "description": "Official tour title"
+    },
+    {
+      "source_column": "Year(s)",
+      "target_column": "Years",
+      "target_type": "STRING",
+      "transform": "trim_string",
+      "description": "Tour year or year range"
+    },
+    {
+      "source_column": "Shows",
+      "target_column": "Shows",
+      "target_type": "INTEGER",
+      "transform": "to_integer",
+      "description": "Total number of shows performed"
+    },
+    {
+      "source_column": "Average gross",
+      "target_column": "Average_gross",
+      "target_type": "INTEGER",
+      "transform": "parse_currency_to_int",
+      "description": "Average gross revenue per show in USD"
+    },
+    {
+      "source_column": "Ref.",
+      "target_column": "Ref",
+      "target_type": "STRING",
+      "transform": "trim_string",
+      "description": "Reference citation"
+    },
+    {
+      "source_column": "_etl_loaded_at",
+      "target_column": "_etl_loaded_at",
+      "target_type": "TIMESTAMP",
+      "transform": "current_timestamp",
+      "description": "Timestamp when record was loaded by ETL"
+    },
+    {
+      "source_column": "_source_file",
+      "target_column": "_source_file",
+      "target_type": "STRING",
+      "transform": "source_uri",
+      "description": "Source file path for lineage tracking"
+    }
+  ],
   "columns": [
     {
       "source_name": "Rank",

@@ -37,12 +37,18 @@ def test_schema_definition():
     assert "_etl_loaded_at" in field_names
 
 
-def test_transformation_spec_mapping():
-    """Verifies transformation specification contains required source-to-target mappings and sort config."""
+def test_transformation_spec_contract():
+    """Verifies transformation specification contains required top-level contract keys."""
     spec_path = "transformation_spec.json"
     assert os.path.isfile(spec_path), f"Transformation spec missing: {spec_path}"
     with open(spec_path, "r", encoding="utf-8") as f:
         spec = json.load(f)
+
+    assert "source" in spec, "transformation_spec.json missing 'source' key"
+    assert "target" in spec, "transformation_spec.json missing 'target' key"
+    assert "transformations" in spec, "transformation_spec.json missing 'transformations' key"
+    assert isinstance(spec["transformations"], list)
+    assert len(spec["transformations"]) > 0
 
     mappings = spec.get("source_to_target_mappings", [])
     target_cols = [m.get("target_column") for m in mappings]
@@ -54,6 +60,21 @@ def test_transformation_spec_mapping():
     assert len(sort_by) > 0
     assert sort_by[0]["column"] == "Rank"
     assert sort_by[0]["order"] == "ASC"
+
+
+def test_deploy_env_configuration():
+    """Verifies env.deploy.json contains required deployment configuration keys."""
+    env_path = "env.deploy.json"
+    assert os.path.isfile(env_path), f"env.deploy.json missing: {env_path}"
+    with open(env_path, "r", encoding="utf-8") as f:
+        env_deploy = json.load(f)
+
+    assert "failure_behavior" in env_deploy, "env.deploy.json missing 'failure_behavior'"
+    assert env_deploy["failure_behavior"] in ["fail_fast", "continue", "retry"]
+    assert "GCS_SOURCE_BUCKET" in env_deploy
+    assert "GCP_PROJECT_ID" in env_deploy
+    assert "BIGQUERY_DATASET" in env_deploy
+    assert "BIGQUERY_TABLE" in env_deploy
 
 
 def test_transformer_logic_with_pandas():
