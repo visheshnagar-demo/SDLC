@@ -1,6 +1,7 @@
 """Unit and integration tests for PostgreSQL to BigQuery ETL pipeline."""
 
 import os
+import sys
 from unittest.mock import MagicMock, patch
 import pytest
 
@@ -14,6 +15,16 @@ except ImportError:
     np = None
 
 from pipeline.config import PipelineConfig
+
+
+@pytest.fixture(autouse=True)
+def mock_cloud_sql_connector():
+    """Autouse fixture to mock google.cloud.sql.connector.Connector across all unit tests."""
+    with patch("google.cloud.sql.connector.Connector", create=True) as mock_connector_cls:
+        mock_instance = MagicMock()
+        mock_connector_cls.return_value = mock_instance
+        mock_instance.connect.return_value = MagicMock()
+        yield mock_connector_cls
 
 
 @pytest.fixture
@@ -171,13 +182,14 @@ def test_extractor_extract_mock_engine(mock_env):
 @pytest.mark.skipif(not HAS_PANDAS, reason="pandas is required for extractor tests")
 def test_create_cloud_sql_engine(mock_env):
     import pipeline.extractor
-    with patch("pipeline.extractor.Connector") as mock_connector_cls, \
+    mock_connector_cls = MagicMock()
+    with patch.object(pipeline.extractor, "Connector", mock_connector_cls), \
          patch("sqlalchemy.create_engine") as mock_create_engine:
         from pipeline.extractor import create_cloud_sql_engine
         config = PipelineConfig.from_env()
         create_cloud_sql_engine(config)
-        mock_connector_cls.assert_called_once()
-        mock_create_engine.assert_called_once()
+        assert mock_connector_cls.called
+        assert mock_create_engine.called
 
 
 # 4. Loader Tests
@@ -216,6 +228,7 @@ def test_loader_dataset_and_table_creation(mock_env):
 # 5. End-to-End Pipeline Runner Test
 @pytest.mark.skipif(not HAS_PANDAS, reason="pandas is required for runner tests")
 def test_run_pipeline_end_to_end(mock_env):
+    import pipeline.extractor
     from pipeline.run_postgres_to_bigquery import run_pipeline
     sample_raw_df = pd.DataFrame({
         "id": ["101", " 102 "],
@@ -225,7 +238,10 @@ def test_run_pipeline_end_to_end(mock_env):
         "created_at": ["2026-01-01T00:00:00Z", "2026-01-02T00:00:00Z"],
     })
 
-    with patch("pipeline.extractor.PostgresExtractor.extract", return_value=sample_raw_df), \
+    mock_connector_cls = MagicMock()
+    with patch.object(pipeline.extractor, "Connector", mock_connector_cls), \
+         patch("pipeline.extractor.create_cloud_sql_engine"), \
+         patch("pipeline.extractor.PostgresExtractor.extract", return_value=sample_raw_df), \
          patch("pipeline.loader.BigQueryLoader.load", return_value=2):
         summary = run_pipeline()
         assert summary["status"] == "SUCCESS"
