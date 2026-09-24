@@ -1,4 +1,72 @@
 {
+  "source": {
+    "type": "cloud_sql_postgres",
+    "instance": "upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db",
+    "database": "postgres",
+    "table": "test_data"
+  },
+  "target": {
+    "type": "bigquery",
+    "project": "upbeat-repeater-477110-q6",
+    "dataset": "analytics",
+    "table": "postgres_test2"
+  },
+  "transformations": [
+    {
+      "source_name": "id",
+      "target_name": "id",
+      "source": "id",
+      "target": "id",
+      "type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip"
+    },
+    {
+      "source_name": "data_payload",
+      "target_name": "data_payload",
+      "source": "data_payload",
+      "target": "data_payload",
+      "type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip"
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "source": "created_at",
+      "target": "created_at",
+      "type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "transform": "to_utc_timestamp"
+    },
+    {
+      "source_name": "updated_at",
+      "target_name": "updated_at",
+      "source": "updated_at",
+      "target": "updated_at",
+      "type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "transform": "to_utc_timestamp"
+    },
+    {
+      "source_name": "_etl_loaded_at",
+      "target_name": "_etl_loaded_at",
+      "source": "_etl_loaded_at",
+      "target": "_etl_loaded_at",
+      "type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "transform": "current_timestamp"
+    },
+    {
+      "source_name": "_etl_source_instance",
+      "target_name": "_etl_source_instance",
+      "source": "_etl_source_instance",
+      "target": "_etl_source_instance",
+      "type": "STRING",
+      "target_type": "STRING",
+      "transform": "constant:sdlc-etl-demo-db"
+    }
+  ],
   "columns": [
     {
       "source_name": "id",

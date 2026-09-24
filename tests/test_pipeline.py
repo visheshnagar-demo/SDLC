@@ -59,10 +59,27 @@ class TestSchemaIntegrity(unittest.TestCase):
         self.assertTrue(os.path.isfile(spec_file), f"Spec file not found: {spec_file}")
         with open(spec_file, "r", encoding="utf-8") as f:
             spec = json.load(f)
+        self.assertIn("source", spec)
+        self.assertIn("target", spec)
+        self.assertIn("transformations", spec)
         self.assertIn("columns", spec)
         cols = [c["target"] for c in spec["columns"]]
         self.assertIn("id", cols)
         self.assertIn("data_payload", cols)
+
+    def test_env_deploy_json_validity(self):
+        env_file = "env.deploy.json"
+        self.assertTrue(os.path.isfile(env_file), f"Env deploy file not found: {env_file}")
+        with open(env_file, "r", encoding="utf-8") as f:
+            env_config = json.load(f)
+        self.assertIn("INSTANCE_CONNECTION_NAME", env_config)
+        self.assertIn("POSTGRES_DB", env_config)
+        self.assertIn("POSTGRES_USER", env_config)
+        self.assertIn("CLOUD_SQL_IP_TYPE", env_config)
+        self.assertEqual(env_config["CLOUD_SQL_IP_TYPE"], "PRIVATE")
+        self.assertNotIn("POSTGRES_PASSWORD", env_config)
+        self.assertIn("failure_behavior", env_config)
+        self.assertEqual(env_config["failure_behavior"], "fail_fast")
 
 
 # Conditional Dataframe tests if pandas is available in the test environment
