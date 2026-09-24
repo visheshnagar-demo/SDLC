@@ -1,6 +1,149 @@
 {
+  "source": {
+    "type": "gcs",
+    "bucket": "sdlc-workspec-store",
+    "path": "etl/data/my_file (1).csv",
+    "uri": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "format": "csv",
+    "table": "my_file (1).csv"
+  },
+  "target": {
+    "type": "bigquery",
+    "project_id": "upbeat-repeater-477110-q6",
+    "dataset": "analytics",
+    "table": "test03",
+    "write_mode": "overwrite",
+    "write_disposition": "WRITE_TRUNCATE"
+  },
+  "order_by": {
+    "column": "rank",
+    "direction": "ASC",
+    "nulls": "LAST"
+  },
   "source_table": "my_file (1).csv",
   "target_table": "test03",
+  "transformations": [
+    {
+      "source_column": "Rank",
+      "target_column": "rank",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transformation": "to_integer",
+      "type": "to_integer",
+      "description": "Convert rank to integer and sort ascending",
+      "nullable": true
+    },
+    {
+      "source_column": "Peak",
+      "target_column": "peak",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "type": "trim_whitespace",
+      "description": "Trim whitespace and normalize nulls",
+      "nullable": true
+    },
+    {
+      "source_column": "All Time Peak",
+      "target_column": "all_time_peak",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "type": "trim_whitespace",
+      "description": "Trim whitespace and normalize nulls",
+      "nullable": true
+    },
+    {
+      "source_column": "Actual gross",
+      "target_column": "actual_gross",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "type": "trim_whitespace",
+      "description": "Trim whitespace and normalize nulls",
+      "nullable": true
+    },
+    {
+      "source_column": "Adjusted gross (in 2022 dollars)",
+      "target_column": "adjusted_gross_in_2022_dollars",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "type": "trim_whitespace",
+      "description": "Trim whitespace and normalize nulls",
+      "nullable": true
+    },
+    {
+      "source_column": "Artist",
+      "target_column": "artist",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "type": "trim_whitespace",
+      "description": "Trim whitespace and normalize nulls",
+      "nullable": true
+    },
+    {
+      "source_column": "Tour title",
+      "target_column": "tour_title",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "type": "trim_whitespace",
+      "description": "Trim whitespace and normalize nulls",
+      "nullable": true
+    },
+    {
+      "source_column": "Year(s)",
+      "target_column": "years",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "type": "trim_whitespace",
+      "description": "Trim whitespace and normalize nulls",
+      "nullable": true
+    },
+    {
+      "source_column": "Shows",
+      "target_column": "shows",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transformation": "to_integer",
+      "type": "to_integer",
+      "description": "Convert shows to integer",
+      "nullable": true
+    },
+    {
+      "source_column": "Average gross",
+      "target_column": "average_gross",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "type": "trim_whitespace",
+      "description": "Trim whitespace and normalize nulls",
+      "nullable": true
+    },
+    {
+      "source_column": "Ref.",
+      "target_column": "ref",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "type": "trim_whitespace",
+      "description": "Trim whitespace and normalize nulls",
+      "nullable": true
+    },
+    {
+      "source_column": "ingested_at",
+      "target_column": "ingested_at",
+      "source_type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "transformation": "CURRENT_TIMESTAMP",
+      "type": "timestamp_generation",
+      "description": "UTC timestamp of ingestion",
+      "nullable": true
+    }
+  ],
   "columns": [
     {
       "source_name": "Rank",
