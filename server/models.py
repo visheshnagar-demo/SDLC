@@ -141,3 +141,44 @@ class WebhookEvent(Base):
     id = Column(String, primary_key=True)
     event_type = Column(String, nullable=False)
     processed_at = Column(DateTime, default=get_utc_now, nullable=False)
+
+
+class Job(Base):
+    __tablename__ = "jobs"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
+    department = Column(String(100), index=True, nullable=False)
+    location = Column(String(100), index=True, nullable=False)
+    employment_type = Column(String(50), nullable=False)
+    salary_min = Column(Float, nullable=True)
+    salary_max = Column(Float, nullable=True)
+    currency = Column(String(3), default="USD", nullable=False)
+    status = Column(String(30), default="draft", index=True, nullable=False)
+    created_by = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=get_utc_now, index=True, nullable=False)
+    updated_at = Column(
+        DateTime,
+        default=get_utc_now,
+        onupdate=get_utc_now,
+        nullable=False,
+    )
+
+    audit_logs = relationship(
+        "JobAuditLog", back_populates="job", cascade="all, delete-orphan"
+    )
+
+
+class JobAuditLog(Base):
+    __tablename__ = "job_audit_logs"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    job_id = Column(String, ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False)
+    action = Column(String(50), nullable=False)
+    previous_state = Column(Text, nullable=True)
+    new_state = Column(Text, nullable=True)
+    performed_by = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+
+    job = relationship("Job", back_populates="audit_logs")

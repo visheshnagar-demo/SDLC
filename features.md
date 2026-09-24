@@ -17,3 +17,15 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-385 - Build a Jobs Management System
+
+### Feature Summary
+A comprehensive Jobs Management System allowing hiring managers and administrators to post, edit, search, filter, track, and manage job listings and applicant workflows seamlessly.
+
+### Key Features
+- Job Creation & Management (Create, Edit, Delete, Archive jobs)
+- Job Listings & Advanced Filtering (Search by title, department, status, location)
+- Job Details & Status Tracking (Draft, Published, Closed, Archived)
+- Candidate Application Tracking & Workflow Management
+- Role-Based Access Control (RBAC) & Audit Logging
