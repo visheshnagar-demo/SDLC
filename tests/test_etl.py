@@ -37,6 +37,18 @@ def test_schema_definition():
     assert "_etl_loaded_at" in field_names
 
 
+def test_openapi_schema_presence():
+    """Verifies openapi.json is present at root and in server/ directory with valid structure."""
+    for path in ["openapi.json", os.path.join("server", "openapi.json")]:
+        assert os.path.isfile(path), f"openapi.json missing: {path}"
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        assert "openapi" in data or "swagger" in data
+        assert "paths" in data
+        assert "components" in data
+        assert "TourRecord" in data["components"]["schemas"]
+
+
 def test_transformation_spec_contract():
     """Verifies transformation specification contains required top-level contract keys."""
     spec_path = "transformation_spec.json"
