@@ -1,0 +1,61 @@
+{
+  "pipeline_id": "postgres_to_bigquery",
+  "source_table": "test_data",
+  "target_table": "analytics.postgres_test2",
+  "columns": [
+    {
+      "name": "id",
+      "source_name": "id",
+      "target_name": "id",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "to_string",
+      "nullable": false
+    },
+    {
+      "name": "name",
+      "source_name": "name",
+      "target_name": "name",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip",
+      "nullable": true
+    },
+    {
+      "name": "age",
+      "source_name": "age",
+      "target_name": "age",
+      "source_type": "INTEGER",
+      "target_type": "INT64",
+      "transform": "to_int",
+      "nullable": true
+    },
+    {
+      "name": "email",
+      "source_name": "email",
+      "target_name": "email",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_and_lower",
+      "nullable": true
+    },
+    {
+      "name": "created_at",
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "source_type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "transform": "to_timestamp",
+      "nullable": true
+    },
+    {
+      "name": "_extracted_at",
+      "source_name": "_extracted_at",
+      "target_name": "_extracted_at",
+      "source_type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "transform": "current_timestamp",
+      "nullable": false
+    }
+  ]
+}

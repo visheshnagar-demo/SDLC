@@ -1,0 +1,38 @@
+[
+  {
+    "name": "id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Unique record identifier"
+  },
+  {
+    "name": "name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Cleaned name"
+  },
+  {
+    "name": "age",
+    "type": "INT64",
+    "mode": "NULLABLE",
+    "description": "User age"
+  },
+  {
+    "name": "email",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Cleaned email address"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Record creation timestamp"
+  },
+  {
+    "name": "_extracted_at",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "ETL extraction timestamp"
+  }
+]
