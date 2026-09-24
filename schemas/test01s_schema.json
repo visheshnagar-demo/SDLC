@@ -1,0 +1,80 @@
+[
+  {
+    "name": "rank",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Ranking of the tour"
+  },
+  {
+    "name": "peak",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Peak position achieved"
+  },
+  {
+    "name": "all_time_peak",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "All time peak position"
+  },
+  {
+    "name": "actual_gross",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Actual gross earnings"
+  },
+  {
+    "name": "adjusted_gross_in_2022_dollars",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Adjusted gross in 2022 dollars"
+  },
+  {
+    "name": "artist",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Artist name"
+  },
+  {
+    "name": "tour_title",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Tour title"
+  },
+  {
+    "name": "years",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Years active/performed"
+  },
+  {
+    "name": "shows",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Number of shows"
+  },
+  {
+    "name": "average_gross",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Average gross per show"
+  },
+  {
+    "name": "ref",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Reference citations"
+  },
+  {
+    "name": "_etl_loaded_at",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "Timestamp when the record was loaded by ETL"
+  },
+  {
+    "name": "_source_file",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Source GCS file URI"
+  }
+]

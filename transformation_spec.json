@@ -1,0 +1,41 @@
+{
+  "columns": [
+    {
+      "source_name": "id",
+      "target_name": "id",
+      "target_type": "STRING",
+      "transform": "strip_whitespace_and_validate_not_null"
+    },
+    {
+      "source_name": "name",
+      "target_name": "name",
+      "target_type": "STRING",
+      "transform": "strip_whitespace_null_normalize"
+    },
+    {
+      "source_name": "age",
+      "target_name": "age",
+      "target_type": "INT64",
+      "transform": "parse_integer_null_normalize"
+    },
+    {
+      "source_name": "email",
+      "target_name": "email",
+      "target_type": "STRING",
+      "transform": "lowercase_strip_whitespace_null_normalize"
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "target_type": "TIMESTAMP",
+      "transform": "parse_iso8601_utc_timestamp"
+    }
+  ],
+  "audit_columns": [
+    {
+      "name": "_extracted_at",
+      "type": "TIMESTAMP",
+      "value": "CURRENT_TIMESTAMP"
+    }
+  ]
+}

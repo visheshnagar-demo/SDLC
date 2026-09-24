@@ -1,88 +1,79 @@
-# Project
+# GCS to BigQuery ETL Pipeline (SCRUM-375)
 
-## Server
+Automated ETL pipeline designed to extract tour earnings datasets from Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/my_file (1).csv`), sanitize and coerce tabular attributes into strongly-typed structures, and idempotently load the dataset into Google BigQuery (`upbeat-repeater-477110-q6.analytics.test01`).
+
+---
+
+## 1. Architecture Overview
+
+- **Extraction**: Streams raw CSV files from GCS or local storage via `GCSExtractor`.
+- **Transformation**: Normalizes column names, removes footnote markers (e.g., `[4]`, `[7]`), strips currency symbols and commas, coerces nulls, and appends audit metadata (`_etl_loaded_at`, `_source_file`).
+- **Circuit Breaker**: Isolates malformed rows into quarantine and halts execution if error rate breaches the 5% threshold.
+- **BigQuery Loading**: Uses BigQuery Load Job API with atomic `WRITE_TRUNCATE` or `WRITE_APPEND` semantics and daily time-partitioning on `_etl_loaded_at`.
+- **Execution Runtimes**: Deployable as a Cloud Run Job (zero-idle container), Python CLI, or Apache Airflow DAG.
+
+---
+
+## 2. Target BigQuery Schema (`analytics.test01`)
+
+| Column Name | Type | Mode | Description |
+| :--- | :--- | :--- | :--- |
+| `rank` | `INTEGER` | `NULLABLE` | Ranking of the tour |
+| `peak` | `INTEGER` | `NULLABLE` | Peak position achieved |
+| `all_time_peak` | `INTEGER` | `NULLABLE` | All-time peak position |
+| `actual_gross` | `INTEGER` | `NULLABLE` | Actual gross earnings |
+| `adjusted_gross_in_2022_dollars` | `INTEGER` | `NULLABLE` | Adjusted gross in 2022 dollars |
+| `artist` | `STRING` | `NULLABLE` | Artist name |
+| `tour_title` | `STRING` | `NULLABLE` | Tour title |
+| `years` | `STRING` | `NULLABLE` | Years active / performed |
+| `shows` | `INTEGER` | `NULLABLE` | Number of shows |
+| `average_gross` | `INTEGER` | `NULLABLE` | Average gross per show |
+| `ref` | `STRING` | `NULLABLE` | Reference citations |
+| `_etl_loaded_at` | `TIMESTAMP` | `REQUIRED` | Load timestamp (partitioning column) |
+| `_source_file` | `STRING` | `REQUIRED` | Source GCS file URI |
+
+---
+
+## 3. Local Development & Execution
 
 ### Prerequisites
-- Python 3.9+
-- pip and venv
+- Python 3.11+
+- Google Cloud SDK (`gcloud auth application-default login`)
 
 ### Setup
-
-1. Create and activate virtual environment:
 ```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+pip install -r requirements.txt
 ```
 
-2. Install dependencies:
+### Running the Pipeline
 ```bash
-cd server
-pip install -r requirements.txt
-cd ..
+python -m server.main --source "gs://sdlc-workspec-store/etl/data/my_file (1).csv" \
+                      --project "upbeat-repeater-477110-q6" \
+                      --dataset "analytics" \
+                      --table "test01" \
+                      --write-disposition "WRITE_TRUNCATE"
+```
+
+Or using standalone Cloud Run entrypoint:
+```bash
+python -m pipeline.run_test01_pipeline
 ```
 
 ### Running Tests
 ```bash
-cd server
-python -m pytest -v
-cd ..
+pytest
 ```
 
-### Starting the Development Server
+---
+
+## 4. Container Deployment (Cloud Run Job)
+
 ```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+docker build -t gcr.io/upbeat-repeater-477110-q6/etl-test01:latest .
+docker run --rm \
+  -e SOURCE_GCS_URI="gs://sdlc-workspec-store/etl/data/my_file (1).csv" \
+  -e GCP_PROJECT="upbeat-repeater-477110-q6" \
+  -e BIGQUERY_DATASET="analytics" \
+  -e BIGQUERY_TABLE="test01" \
+  gcr.io/upbeat-repeater-477110-q6/etl-test01:latest
 ```
-
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
-```bash
-# Copy the example environment file
-cp .env.example .env
-```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-
