@@ -15,11 +15,31 @@ try:
     from google.cloud.exceptions import NotFound
 except ImportError:
     bigquery = None
-    NotFound = Exception
+    NotFound = None
+
+try:
+    from google.api_core.exceptions import NotFound as ApiNotFound
+except ImportError:
+    ApiNotFound = None
 
 from pipeline.config import PipelineConfig
 
 logger = logging.getLogger(__name__)
+
+
+def is_not_found_exception(exc: Exception) -> bool:
+    """Check if exception represents a BigQuery NotFound error or not-found mock exception."""
+    if NotFound is not None and isinstance(exc, NotFound):
+        return True
+    if ApiNotFound is not None and isinstance(exc, ApiNotFound):
+        return True
+    exc_name = type(exc).__name__.lower()
+    if "notfound" in exc_name:
+        return True
+    msg = str(exc).lower()
+    if "not found" in msg or "not_found" in msg or "404" in msg or "does not exist" in msg:
+        return True
+    return False
 
 
 class BigQueryLoader:
@@ -101,7 +121,7 @@ class BigQueryLoader:
             self.client.get_dataset(self.dataset_id)
             logger.info("Dataset '%s' exists.", self.dataset_id)
         except Exception as e:
-            if "NotFound" in type(e).__name__ or (NotFound and isinstance(e, NotFound)):
+            if is_not_found_exception(e):
                 logger.info("Dataset '%s' not found. Creating dataset...", self.dataset_id)
                 if bigquery and hasattr(bigquery, "Dataset"):
                     dataset = bigquery.Dataset(self.dataset_id)
@@ -120,7 +140,7 @@ class BigQueryLoader:
             self.client.get_table(self.table_id)
             logger.info("Table '%s' exists.", self.table_id)
         except Exception as e:
-            if "NotFound" in type(e).__name__ or (NotFound and isinstance(e, NotFound)):
+            if is_not_found_exception(e):
                 logger.info("Table '%s' not found. Creating table...", self.table_id)
                 schema = self.get_schema(schema_file_path)
                 if bigquery and hasattr(bigquery, "Table"):
