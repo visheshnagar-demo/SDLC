@@ -81,6 +81,17 @@ class TestSchemaIntegrity(unittest.TestCase):
         self.assertIn("failure_behavior", env_config)
         self.assertEqual(env_config["failure_behavior"], "fail_fast")
 
+    def test_openapi_json_validity(self):
+        openapi_file = "openapi.json"
+        self.assertTrue(os.path.isfile(openapi_file), f"OpenAPI file not found: {openapi_file}")
+        with open(openapi_file, "r", encoding="utf-8") as f:
+            spec = json.load(f)
+        self.assertIn("openapi", spec)
+        self.assertIn("info", spec)
+        self.assertIn("paths", spec)
+        self.assertIn("components", spec)
+        self.assertIn("CleanedRecord", spec["components"]["schemas"])
+
 
 # Conditional Dataframe tests if pandas is available in the test environment
 try:
