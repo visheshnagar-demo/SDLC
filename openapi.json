@@ -1,147 +1,21 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Payment Gateway Service",
-    "version": "0.1.0"
+    "title": "Museum Artifact Preservation System API",
+    "description": "Backend API for cataloging artifacts, recording restorations, monitoring micro-climate environmental telemetry, scheduling inspections, and managing inter-museum loans.",
+    "version": "1.0.0"
   },
   "paths": {
-    "/api/v1/payments/checkout-session": {
-      "post": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Create Session",
-        "operationId": "create_session_api_v1_payments_checkout_session_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CheckoutSessionRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CheckoutSessionResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/digital-wallet": {
-      "post": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Pay Digital Wallet",
-        "operationId": "pay_digital_wallet_api_v1_payments_digital_wallet_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DigitalWalletPaymentRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DigitalWalletPaymentResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/rates": {
+    "/api/v1/artifacts": {
       "get": {
         "tags": [
-          "payments"
+          "Artifacts"
         ],
-        "summary": "Get Rates",
-        "operationId": "get_rates_api_v1_payments_rates_get",
+        "summary": "List Artifacts",
+        "operationId": "list_artifacts_api_v1_artifacts_get",
         "parameters": [
           {
-            "name": "base_currency",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "Base currency code",
-              "default": "USD",
-              "title": "Base Currency"
-            },
-            "description": "Base currency code"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExchangeRatesResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "List Transactions",
-        "operationId": "list_transactions_api_v1_payments_transactions_get",
-        "parameters": [
-          {
-            "name": "search",
+            "name": "q",
             "in": "query",
             "required": false,
             "schema": {
@@ -153,10 +27,28 @@
                   "type": "null"
                 }
               ],
-              "description": "Search transaction ID or email",
-              "title": "Search"
+              "description": "Search term for accession number, title, origin, medium",
+              "title": "Q"
             },
-            "description": "Search transaction ID or email"
+            "description": "Search term for accession number, title, origin, medium"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by category",
+              "title": "Category"
+            },
+            "description": "Filter by category"
           },
           {
             "name": "status",
@@ -171,13 +63,13 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by transaction status",
+              "description": "Filter by status",
               "title": "Status"
             },
-            "description": "Filter by transaction status"
+            "description": "Filter by status"
           },
           {
-            "name": "currency",
+            "name": "location_id",
             "in": "query",
             "required": false,
             "schema": {
@@ -189,10 +81,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by currency",
-              "title": "Currency"
+              "description": "Filter by location ID",
+              "title": "Location Id"
             },
-            "description": "Filter by currency"
+            "description": "Filter by location ID"
           },
           {
             "name": "skip",
@@ -211,9 +103,9 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 500,
               "minimum": 1,
-              "default": 50,
+              "default": 100,
               "title": "Limit"
             }
           }
@@ -226,92 +118,9 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TransactionSummary"
+                    "$ref": "#/components/schemas/ArtifactResponse"
                   },
-                  "title": "Response List Transactions Api V1 Payments Transactions Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions/{transaction_id}": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Get Transaction",
-        "operationId": "get_transaction_api_v1_payments_transactions__transaction_id__get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Transaction Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TransactionDetail"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/refunds": {
-      "post": {
-        "tags": [
-          "refunds"
-        ],
-        "summary": "Create Refund Endpoint",
-        "operationId": "create_refund_endpoint_api_v1_refunds_post",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RefundRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RefundSummary"
+                  "title": "Response List Artifacts Api V1 Artifacts Get"
                 }
               }
             }
@@ -328,15 +137,322 @@
           }
         }
       },
+      "post": {
+        "tags": [
+          "Artifacts"
+        ],
+        "summary": "Create Artifact",
+        "operationId": "create_artifact_api_v1_artifacts_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArtifactCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArtifactResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/artifacts/{id}": {
       "get": {
         "tags": [
-          "refunds"
+          "Artifacts"
         ],
-        "summary": "List Refunds Endpoint",
-        "operationId": "list_refunds_endpoint_api_v1_refunds_get",
+        "summary": "Get Artifact",
+        "operationId": "get_artifact_api_v1_artifacts__id__get",
         "parameters": [
           {
-            "name": "transaction_id",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArtifactDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Artifacts"
+        ],
+        "summary": "Update Artifact",
+        "operationId": "update_artifact_api_v1_artifacts__id__put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArtifactUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArtifactResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Artifacts"
+        ],
+        "summary": "Delete Artifact",
+        "operationId": "delete_artifact_api_v1_artifacts__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/locations": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "summary": "List Locations",
+        "operationId": "list_locations_api_v1_locations_get",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LocationResponse"
+                  },
+                  "title": "Response List Locations Api V1 Locations Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Locations"
+        ],
+        "summary": "Create Location",
+        "operationId": "create_location_api_v1_locations_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/locations/{id}": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "summary": "Get Location",
+        "operationId": "get_location_api_v1_locations__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/restorations": {
+      "get": {
+        "tags": [
+          "Restoration & Conservation"
+        ],
+        "summary": "List Restorations",
+        "operationId": "list_restorations_api_v1_restorations_get",
+        "parameters": [
+          {
+            "name": "artifact_id",
             "in": "query",
             "required": false,
             "schema": {
@@ -348,10 +464,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
+              "description": "Filter treatments by artifact ID",
+              "title": "Artifact Id"
             },
-            "description": "Filter by transaction ID"
+            "description": "Filter treatments by artifact ID"
           },
           {
             "name": "skip",
@@ -370,9 +486,9 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 500,
               "minimum": 1,
-              "default": 50,
+              "default": 100,
               "title": "Limit"
             }
           }
@@ -385,9 +501,48 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/RefundSummary"
+                    "$ref": "#/components/schemas/RestorationResponse"
                   },
-                  "title": "Response List Refunds Endpoint Api V1 Refunds Get"
+                  "title": "Response List Restorations Api V1 Restorations Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Restoration & Conservation"
+        ],
+        "summary": "Create Restoration",
+        "operationId": "create_restoration_api_v1_restorations_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestorationCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestorationResponse"
                 }
               }
             }
@@ -405,17 +560,59 @@
         }
       }
     },
-    "/api/v1/webhooks/stripe": {
-      "post": {
+    "/api/v1/restorations/{id}": {
+      "get": {
         "tags": [
-          "webhooks"
+          "Restoration & Conservation"
         ],
-        "summary": "Handle Stripe Webhook",
-        "operationId": "handle_stripe_webhook_api_v1_webhooks_stripe_post",
+        "summary": "Get Restoration",
+        "operationId": "get_restoration_api_v1_restorations__id__get",
         "parameters": [
           {
-            "name": "stripe-signature",
-            "in": "header",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestorationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/environmental-readings": {
+      "get": {
+        "tags": [
+          "Environmental Telemetry"
+        ],
+        "summary": "List Readings",
+        "operationId": "list_readings_api_v1_environmental_readings_get",
+        "parameters": [
+          {
+            "name": "location_id",
+            "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
@@ -426,10 +623,626 @@
                   "type": "null"
                 }
               ],
-              "title": "Stripe-Signature"
+              "description": "Filter readings by location ID",
+              "title": "Location Id"
+            },
+            "description": "Filter readings by location ID"
+          },
+          {
+            "name": "is_breach",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter only breach readings",
+              "title": "Is Breach"
+            },
+            "description": "Filter only breach readings"
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EnvironmentalReadingResponse"
+                  },
+                  "title": "Response List Readings Api V1 Environmental Readings Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Environmental Telemetry"
+        ],
+        "summary": "Ingest Reading",
+        "operationId": "ingest_reading_api_v1_environmental_readings_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnvironmentalReadingCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnvironmentalReadingResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/environmental-readings/summary/sensor-status": {
+      "get": {
+        "tags": [
+          "Environmental Telemetry"
+        ],
+        "summary": "Get Sensor Status Summary",
+        "operationId": "get_sensor_status_summary_api_v1_environmental_readings_summary_sensor_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Sensor Status Summary Api V1 Environmental Readings Summary Sensor Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inspections": {
+      "get": {
+        "tags": [
+          "Inspections"
+        ],
+        "summary": "List Inspections",
+        "operationId": "list_inspections_api_v1_inspections_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by status (Scheduled, Completed, Overdue, Cancelled)",
+              "title": "Status"
+            },
+            "description": "Filter by status (Scheduled, Completed, Overdue, Cancelled)"
+          },
+          {
+            "name": "artifact_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by artifact ID",
+              "title": "Artifact Id"
+            },
+            "description": "Filter by artifact ID"
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InspectionResponse"
+                  },
+                  "title": "Response List Inspections Api V1 Inspections Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Inspections"
+        ],
+        "summary": "Schedule Inspection",
+        "operationId": "schedule_inspection_api_v1_inspections_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InspectionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inspections/{id}": {
+      "get": {
+        "tags": [
+          "Inspections"
+        ],
+        "summary": "Get Inspection",
+        "operationId": "get_inspection_api_v1_inspections__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inspections/{id}/complete": {
+      "put": {
+        "tags": [
+          "Inspections"
+        ],
+        "summary": "Complete Inspection",
+        "operationId": "complete_inspection_api_v1_inspections__id__complete_put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InspectionComplete"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/loans": {
+      "get": {
+        "tags": [
+          "Museum Loans"
+        ],
+        "summary": "List Loans",
+        "operationId": "list_loans_api_v1_loans_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by status (Requested, Approved, In Transit, Active Loan, Returned, Cancelled)",
+              "title": "Status"
+            },
+            "description": "Filter by status (Requested, Approved, In Transit, Active Loan, Returned, Cancelled)"
+          },
+          {
+            "name": "partner_museum",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by partner museum name",
+              "title": "Partner Museum"
+            },
+            "description": "Filter by partner museum name"
+          },
+          {
+            "name": "artifact_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by artifact ID",
+              "title": "Artifact Id"
+            },
+            "description": "Filter by artifact ID"
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MuseumLoanResponse"
+                  },
+                  "title": "Response List Loans Api V1 Loans Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Museum Loans"
+        ],
+        "summary": "Create Loan",
+        "operationId": "create_loan_api_v1_loans_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MuseumLoanCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MuseumLoanResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/loans/{id}": {
+      "get": {
+        "tags": [
+          "Museum Loans"
+        ],
+        "summary": "Get Loan",
+        "operationId": "get_loan_api_v1_loans__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MuseumLoanResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/loans/{id}/status": {
+      "put": {
+        "tags": [
+          "Museum Loans"
+        ],
+        "summary": "Update Loan Status",
+        "operationId": "update_loan_status_api_v1_loans__id__status_put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoanStatusUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MuseumLoanResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_api_v1_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -438,120 +1251,17 @@
                 "schema": {}
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
         }
       }
     },
-    "/api/v1/audit-logs": {
+    "/healthz": {
       "get": {
         "tags": [
-          "audit-logs"
+          "Health"
         ],
-        "summary": "List Audit Logs",
-        "operationId": "list_audit_logs_api_v1_audit_logs_get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
-          },
-          {
-            "name": "event_type",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by event type",
-              "title": "Event Type"
-            },
-            "description": "Filter by event type"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AuditLogEntry"
-                  },
-                  "title": "Response List Audit Logs Api V1 Audit Logs Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/health": {
-      "get": {
         "summary": "Health Check",
-        "operationId": "health_check_health_get",
+        "operationId": "health_check_healthz_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -567,13 +1277,19 @@
   },
   "components": {
     "schemas": {
-      "AuditLogEntry": {
+      "ArtifactCreate": {
         "properties": {
-          "id": {
+          "accession_no": {
             "type": "string",
-            "title": "Id"
+            "maxLength": 50,
+            "title": "Accession No"
           },
-          "transaction_id": {
+          "title": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Title"
+          },
+          "description": {
             "anyOf": [
               {
                 "type": "string"
@@ -582,22 +1298,505 @@
                 "type": "null"
               }
             ],
-            "title": "Transaction Id"
+            "title": "Description"
           },
-          "event_type": {
+          "category": {
             "type": "string",
-            "title": "Event Type"
+            "maxLength": 100,
+            "title": "Category"
           },
-          "ip_address": {
+          "medium": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medium"
+          },
+          "creation_era": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Creation Era"
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin"
+          },
+          "accession_date": {
             "type": "string",
-            "title": "Ip Address"
+            "format": "date",
+            "title": "Accession Date"
           },
-          "masked_payload": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Masked Payload"
+          "current_location_id": {
+            "type": "string",
+            "title": "Current Location Id"
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Status",
+            "default": "On Display"
+          },
+          "condition_rating": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Condition Rating",
+            "default": "Good"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "accession_no",
+          "title",
+          "category",
+          "current_location_id"
+        ],
+        "title": "ArtifactCreate"
+      },
+      "ArtifactDetailResponse": {
+        "properties": {
+          "accession_no": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Accession No"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "category": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Category"
+          },
+          "medium": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medium"
+          },
+          "creation_era": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Creation Era"
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin"
+          },
+          "accession_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Accession Date"
+          },
+          "current_location_id": {
+            "type": "string",
+            "title": "Current Location Id"
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Status",
+            "default": "On Display"
+          },
+          "condition_rating": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Condition Rating",
+            "default": "Good"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
           },
           "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocationResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "restorations": {
+            "items": {
+              "$ref": "#/components/schemas/RestorationResponse"
+            },
+            "type": "array",
+            "title": "Restorations",
+            "default": []
+          },
+          "inspections": {
+            "items": {
+              "$ref": "#/components/schemas/InspectionResponse"
+            },
+            "type": "array",
+            "title": "Inspections",
+            "default": []
+          },
+          "loans": {
+            "items": {
+              "$ref": "#/components/schemas/MuseumLoanResponse"
+            },
+            "type": "array",
+            "title": "Loans",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "accession_no",
+          "title",
+          "category",
+          "current_location_id",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ArtifactDetailResponse"
+      },
+      "ArtifactResponse": {
+        "properties": {
+          "accession_no": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Accession No"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "category": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Category"
+          },
+          "medium": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medium"
+          },
+          "creation_era": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Creation Era"
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin"
+          },
+          "accession_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Accession Date"
+          },
+          "current_location_id": {
+            "type": "string",
+            "title": "Current Location Id"
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Status",
+            "default": "On Display"
+          },
+          "condition_rating": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Condition Rating",
+            "default": "Good"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "accession_no",
+          "title",
+          "category",
+          "current_location_id",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ArtifactResponse"
+      },
+      "ArtifactUpdate": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "medium": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medium"
+          },
+          "creation_era": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Creation Era"
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin"
+          },
+          "accession_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accession Date"
+          },
+          "current_location_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Location Id"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "condition_rating": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Condition Rating"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          }
+        },
+        "type": "object",
+        "title": "ArtifactUpdate"
+      },
+      "EnvironmentalReadingCreate": {
+        "properties": {
+          "location_id": {
+            "type": "string",
+            "title": "Location Id"
+          },
+          "temperature_celsius": {
+            "type": "number",
+            "title": "Temperature Celsius"
+          },
+          "humidity_percentage": {
+            "type": "number",
+            "title": "Humidity Percentage"
+          },
+          "reading_timestamp": {
             "anyOf": [
               {
                 "type": "string",
@@ -607,151 +1806,40 @@
                 "type": "null"
               }
             ],
-            "title": "Created At"
+            "title": "Reading Timestamp"
           }
         },
         "type": "object",
         "required": [
-          "id",
-          "event_type",
-          "ip_address",
-          "masked_payload"
+          "location_id",
+          "temperature_celsius",
+          "humidity_percentage"
         ],
-        "title": "AuditLogEntry"
+        "title": "EnvironmentalReadingCreate"
       },
-      "CartItem": {
+      "EnvironmentalReadingResponse": {
         "properties": {
-          "name": {
+          "id": {
             "type": "string",
-            "title": "Name"
+            "title": "Id"
           },
-          "quantity": {
-            "type": "integer",
-            "title": "Quantity",
-            "default": 1
+          "location_id": {
+            "type": "string",
+            "title": "Location Id"
           },
-          "unit_price": {
+          "temperature_celsius": {
             "type": "number",
-            "title": "Unit Price"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "unit_price"
-        ],
-        "title": "CartItem"
-      },
-      "CheckoutSessionRequest": {
-        "properties": {
-          "amount": {
+            "title": "Temperature Celsius"
+          },
+          "humidity_percentage": {
             "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount",
-            "description": "Amount in base currency"
+            "title": "Humidity Percentage"
           },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "description": "Settlement/target currency",
-            "default": "USD"
+          "is_breach": {
+            "type": "boolean",
+            "title": "Is Breach"
           },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "items": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/CartItem"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Items"
-          }
-        },
-        "type": "object",
-        "required": [
-          "amount",
-          "customer_email"
-        ],
-        "title": "CheckoutSessionRequest"
-      },
-      "CheckoutSessionResponse": {
-        "properties": {
-          "session_id": {
-            "type": "string",
-            "title": "Session Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "client_secret": {
-            "type": "string",
-            "title": "Client Secret"
-          },
-          "base_amount": {
-            "type": "number",
-            "title": "Base Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_amount": {
-            "type": "number",
-            "title": "Target Amount"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          }
-        },
-        "type": "object",
-        "required": [
-          "session_id",
-          "payment_intent_id",
-          "client_secret",
-          "base_amount",
-          "base_currency",
-          "target_amount",
-          "target_currency",
-          "exchange_rate"
-        ],
-        "title": "CheckoutSessionResponse"
-      },
-      "DigitalWalletPaymentRequest": {
-        "properties": {
-          "wallet_type": {
-            "type": "string",
-            "title": "Wallet Type",
-            "description": "apple_pay or google_pay"
-          },
-          "payment_token": {
-            "type": "string",
-            "title": "Payment Token"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "default": "USD"
-          },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
-          },
-          "customer_email": {
+          "breach_details": {
             "anyOf": [
               {
                 "type": "string"
@@ -760,81 +1848,30 @@
                 "type": "null"
               }
             ],
-            "title": "Customer Email",
-            "default": "customer@example.com"
+            "title": "Breach Details"
+          },
+          "reading_timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Reading Timestamp"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
           }
         },
         "type": "object",
         "required": [
-          "wallet_type",
-          "payment_token",
-          "amount"
+          "id",
+          "location_id",
+          "temperature_celsius",
+          "humidity_percentage",
+          "is_breach",
+          "reading_timestamp",
+          "created_at"
         ],
-        "title": "DigitalWalletPaymentRequest"
-      },
-      "DigitalWalletPaymentResponse": {
-        "properties": {
-          "transaction_id": {
-            "type": "string",
-            "title": "Transaction Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "wallet_type": {
-            "type": "string",
-            "title": "Wallet Type"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          }
-        },
-        "type": "object",
-        "required": [
-          "transaction_id",
-          "payment_intent_id",
-          "wallet_type",
-          "amount",
-          "currency",
-          "status"
-        ],
-        "title": "DigitalWalletPaymentResponse"
-      },
-      "ExchangeRatesResponse": {
-        "properties": {
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "rates": {
-            "additionalProperties": {
-              "type": "number"
-            },
-            "type": "object",
-            "title": "Rates"
-          },
-          "timestamp": {
-            "type": "string",
-            "title": "Timestamp"
-          }
-        },
-        "type": "object",
-        "required": [
-          "base_currency",
-          "rates",
-          "timestamp"
-        ],
-        "title": "ExchangeRatesResponse"
+        "title": "EnvironmentalReadingResponse"
       },
       "HTTPValidationError": {
         "properties": {
@@ -849,22 +1886,24 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "RefundRequest": {
+      "InspectionComplete": {
         "properties": {
-          "transaction_id": {
+          "surface_condition": {
             "type": "string",
-            "title": "Transaction Id"
+            "maxLength": 50,
+            "title": "Surface Condition"
           },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
+          "pest_activity": {
+            "type": "boolean",
+            "title": "Pest Activity",
+            "default": false
           },
-          "reason": {
+          "structural_integrity": {
             "type": "string",
-            "title": "Reason"
+            "maxLength": 50,
+            "title": "Structural Integrity"
           },
-          "memo": {
+          "findings_notes": {
             "anyOf": [
               {
                 "type": "string"
@@ -873,40 +1912,57 @@
                 "type": "null"
               }
             ],
-            "title": "Memo"
+            "title": "Findings Notes"
+          },
+          "completed_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed Date"
+          },
+          "next_recommended_inspection_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Recommended Inspection Date"
           }
         },
         "type": "object",
         "required": [
-          "transaction_id",
-          "amount",
-          "reason"
+          "surface_condition",
+          "structural_integrity"
         ],
-        "title": "RefundRequest"
+        "title": "InspectionComplete"
       },
-      "RefundSummary": {
+      "InspectionCreate": {
         "properties": {
-          "id": {
+          "artifact_id": {
             "type": "string",
-            "title": "Id"
+            "title": "Artifact Id"
           },
-          "transaction_id": {
+          "assigned_inspector": {
             "type": "string",
-            "title": "Transaction Id"
+            "maxLength": 150,
+            "title": "Assigned Inspector"
           },
-          "refund_amount": {
-            "type": "number",
-            "title": "Refund Amount"
-          },
-          "currency": {
+          "scheduled_date": {
             "type": "string",
-            "title": "Currency"
+            "format": "date",
+            "title": "Scheduled Date"
           },
-          "reason": {
-            "type": "string",
-            "title": "Reason"
-          },
-          "memo": {
+          "inspection_status": {
             "anyOf": [
               {
                 "type": "string"
@@ -915,177 +1971,558 @@
                 "type": "null"
               }
             ],
-            "title": "Memo"
+            "title": "Inspection Status",
+            "default": "Scheduled"
           },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "created_at": {
+          "findings_notes": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Created At"
+            "title": "Findings Notes"
           }
         },
         "type": "object",
         "required": [
-          "id",
-          "transaction_id",
-          "refund_amount",
-          "currency",
-          "reason",
-          "status"
+          "artifact_id",
+          "assigned_inspector",
+          "scheduled_date"
         ],
-        "title": "RefundSummary"
+        "title": "InspectionCreate"
       },
-      "TransactionDetail": {
+      "InspectionResponse": {
         "properties": {
+          "artifact_id": {
+            "type": "string",
+            "title": "Artifact Id"
+          },
+          "assigned_inspector": {
+            "type": "string",
+            "maxLength": 150,
+            "title": "Assigned Inspector"
+          },
+          "scheduled_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Scheduled Date"
+          },
+          "inspection_status": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Inspection Status",
+            "default": "Scheduled"
+          },
+          "surface_condition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Surface Condition"
+          },
+          "pest_activity": {
+            "type": "boolean",
+            "title": "Pest Activity",
+            "default": false
+          },
+          "structural_integrity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Structural Integrity"
+          },
+          "findings_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Findings Notes"
+          },
+          "next_recommended_inspection_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Recommended Inspection Date"
+          },
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "payment_method": {
-            "type": "string",
-            "title": "Payment Method"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "converted_amount": {
-            "type": "number",
-            "title": "Converted Amount"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "refunded_amount": {
-            "type": "number",
-            "title": "Refunded Amount"
-          },
-          "remaining_refundable_balance": {
-            "type": "number",
-            "title": "Remaining Refundable Balance"
-          },
-          "refunds": {
-            "items": {
-              "$ref": "#/components/schemas/RefundSummary"
-            },
-            "type": "array",
-            "title": "Refunds"
-          },
-          "created_at": {
+          "completed_date": {
             "anyOf": [
               {
                 "type": "string",
-                "format": "date-time"
+                "format": "date"
               },
               {
                 "type": "null"
               }
             ],
+            "title": "Completed Date"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
+          "artifact_id",
+          "assigned_inspector",
+          "scheduled_date",
           "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "base_currency",
-          "target_currency",
-          "converted_amount",
-          "exchange_rate",
-          "status",
-          "refunded_amount",
-          "remaining_refundable_balance"
+          "created_at",
+          "updated_at"
         ],
-        "title": "TransactionDetail"
+        "title": "InspectionResponse"
       },
-      "TransactionSummary": {
+      "LoanStatusUpdate": {
         "properties": {
+          "loan_status": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Loan Status"
+          },
+          "transit_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transit Notes"
+          },
+          "return_inspection_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Return Inspection Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loan_status"
+        ],
+        "title": "LoanStatusUpdate"
+      },
+      "LocationCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Name"
+          },
+          "zone_type": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Zone Type"
+          },
+          "temp_min_celsius": {
+            "type": "number",
+            "title": "Temp Min Celsius",
+            "default": 18.0
+          },
+          "temp_max_celsius": {
+            "type": "number",
+            "title": "Temp Max Celsius",
+            "default": 22.0
+          },
+          "humidity_min_percent": {
+            "type": "number",
+            "title": "Humidity Min Percent",
+            "default": 45.0
+          },
+          "humidity_max_percent": {
+            "type": "number",
+            "title": "Humidity Max Percent",
+            "default": 55.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "zone_type"
+        ],
+        "title": "LocationCreate"
+      },
+      "LocationResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Name"
+          },
+          "zone_type": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Zone Type"
+          },
+          "temp_min_celsius": {
+            "type": "number",
+            "title": "Temp Min Celsius",
+            "default": 18.0
+          },
+          "temp_max_celsius": {
+            "type": "number",
+            "title": "Temp Max Celsius",
+            "default": 22.0
+          },
+          "humidity_min_percent": {
+            "type": "number",
+            "title": "Humidity Min Percent",
+            "default": 45.0
+          },
+          "humidity_max_percent": {
+            "type": "number",
+            "title": "Humidity Max Percent",
+            "default": 55.0
+          },
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "payment_method": {
-            "type": "string",
-            "title": "Payment Method"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
           "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "zone_type",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "LocationResponse"
+      },
+      "MuseumLoanCreate": {
+        "properties": {
+          "artifact_id": {
+            "type": "string",
+            "title": "Artifact Id"
+          },
+          "partner_museum_name": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Partner Museum Name"
+          },
+          "contact_person": {
+            "type": "string",
+            "maxLength": 150,
+            "title": "Contact Person"
+          },
+          "contact_email": {
+            "type": "string",
+            "maxLength": 150,
+            "title": "Contact Email"
+          },
+          "loan_start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Loan Start Date"
+          },
+          "loan_end_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Loan End Date"
+          },
+          "indemnity_valuation": {
+            "type": "number",
+            "title": "Indemnity Valuation"
+          },
+          "transit_requirements": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Created At"
+            "title": "Transit Requirements"
+          },
+          "loan_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Loan Status",
+            "default": "Requested"
           }
         },
         "type": "object",
         "required": [
-          "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "currency",
-          "status"
+          "artifact_id",
+          "partner_museum_name",
+          "contact_person",
+          "contact_email",
+          "loan_start_date",
+          "loan_end_date",
+          "indemnity_valuation"
         ],
-        "title": "TransactionSummary"
+        "title": "MuseumLoanCreate"
+      },
+      "MuseumLoanResponse": {
+        "properties": {
+          "artifact_id": {
+            "type": "string",
+            "title": "Artifact Id"
+          },
+          "partner_museum_name": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Partner Museum Name"
+          },
+          "contact_person": {
+            "type": "string",
+            "maxLength": 150,
+            "title": "Contact Person"
+          },
+          "contact_email": {
+            "type": "string",
+            "maxLength": 150,
+            "title": "Contact Email"
+          },
+          "loan_start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Loan Start Date"
+          },
+          "loan_end_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Loan End Date"
+          },
+          "indemnity_valuation": {
+            "type": "number",
+            "title": "Indemnity Valuation"
+          },
+          "transit_requirements": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transit Requirements"
+          },
+          "loan_status": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Loan Status",
+            "default": "Requested"
+          },
+          "return_inspection_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Return Inspection Notes"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "artifact_id",
+          "partner_museum_name",
+          "contact_person",
+          "contact_email",
+          "loan_start_date",
+          "loan_end_date",
+          "indemnity_valuation",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "MuseumLoanResponse"
+      },
+      "RestorationCreate": {
+        "properties": {
+          "artifact_id": {
+            "type": "string",
+            "title": "Artifact Id"
+          },
+          "conservator_name": {
+            "type": "string",
+            "maxLength": 150,
+            "title": "Conservator Name"
+          },
+          "treatment_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Treatment Date"
+          },
+          "technique": {
+            "type": "string",
+            "maxLength": 150,
+            "title": "Technique"
+          },
+          "materials_used": {
+            "type": "string",
+            "title": "Materials Used"
+          },
+          "assessment_notes": {
+            "type": "string",
+            "title": "Assessment Notes"
+          },
+          "condition_before": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Condition Before"
+          },
+          "condition_after": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Condition After"
+          }
+        },
+        "type": "object",
+        "required": [
+          "artifact_id",
+          "conservator_name",
+          "treatment_date",
+          "technique",
+          "materials_used",
+          "assessment_notes",
+          "condition_before",
+          "condition_after"
+        ],
+        "title": "RestorationCreate"
+      },
+      "RestorationResponse": {
+        "properties": {
+          "artifact_id": {
+            "type": "string",
+            "title": "Artifact Id"
+          },
+          "conservator_name": {
+            "type": "string",
+            "maxLength": 150,
+            "title": "Conservator Name"
+          },
+          "treatment_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Treatment Date"
+          },
+          "technique": {
+            "type": "string",
+            "maxLength": 150,
+            "title": "Technique"
+          },
+          "materials_used": {
+            "type": "string",
+            "title": "Materials Used"
+          },
+          "assessment_notes": {
+            "type": "string",
+            "title": "Assessment Notes"
+          },
+          "condition_before": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Condition Before"
+          },
+          "condition_after": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Condition After"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "artifact_id",
+          "conservator_name",
+          "treatment_date",
+          "technique",
+          "materials_used",
+          "assessment_notes",
+          "condition_before",
+          "condition_after",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "RestorationResponse"
       },
       "ValidationError": {
         "properties": {

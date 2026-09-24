@@ -17,3 +17,15 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-379 - Museum Artifact Preservation System
+
+### Feature Summary
+A full-stack museum preservation system enabling curators to catalog historical artifacts, record conservation treatments, track micro-climate telemetry (temperature/humidity), schedule maintenance inspections, and coordinate inter-museum loans.
+
+### Key Features
+- Artifact Cataloging & Metadata Management
+- Restoration History & Condition Tracking
+- Real-time Environmental Monitoring (Temperature & Humidity)
+- Inspection Scheduling & Maintenance Audits
+- Inter-Museum Loan Lifecycle Management

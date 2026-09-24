@@ -1,41 +1,61 @@
-import os
+from datetime import datetime
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from server.api.v1 import api_v1_router
-from server.database import init_db
-from server.config import settings
+from server.config import ALLOWED_ORIGINS
+from server.database import init_db, seed_data, SessionLocal
+from server.routers import (
+    artifacts,
+    locations,
+    restorations,
+    environmental,
+    inspections,
+    loans
+)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Initialize schema and seed default data
     init_db()
+    db = SessionLocal()
+    try:
+        seed_data(db)
+    finally:
+        db.close()
     yield
 
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    lifespan=lifespan,
+    title="Museum Artifact Preservation System API",
+    version="1.0.0",
+    description="Backend API for cataloging artifacts, recording restorations, monitoring micro-climate environmental telemetry, scheduling inspections, and managing inter-museum loans.",
+    lifespan=lifespan
 )
 
-allowed_origins_raw = os.getenv(
-    "ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000"
-)
-allowed_origins = [
-    origin.strip() for origin in allowed_origins_raw.split(",") if origin.strip()
-]
-
+# CORS Middleware configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(api_v1_router)
+# Include Routers
+app.include_router(artifacts.router)
+app.include_router(locations.router)
+app.include_router(restorations.router)
+app.include_router(environmental.router)
+app.include_router(inspections.router)
+app.include_router(loans.router)
 
 
-@app.get("/health")
+@app.get("/healthz", tags=["Health"])
+@app.get("/api/v1/health", tags=["Health"])
 def health_check():
-    return {"status": "ok", "service": "payment-gateway-service"}
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "service": "Museum Artifact Preservation System API"
+    }
