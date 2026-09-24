@@ -1,0 +1,221 @@
+{
+  "columns": [
+    {
+      "source_name": "Rank",
+      "target_name": "Rank",
+      "name": "Rank",
+      "type": "INTEGER",
+      "target_type": "INTEGER",
+      "mode": "REQUIRED",
+      "description": "Tour rank based on gross revenue",
+      "source_column": "Rank",
+      "transform": "to_integer"
+    },
+    {
+      "source_name": "Peak",
+      "target_name": "Peak",
+      "name": "Peak",
+      "type": "INTEGER",
+      "target_type": "INTEGER",
+      "mode": "NULLABLE",
+      "description": "Peak position at release",
+      "source_column": "Peak",
+      "transform": "strip_footnotes_and_to_int"
+    },
+    {
+      "source_name": "All Time Peak",
+      "target_name": "All_Time_Peak",
+      "name": "All_Time_Peak",
+      "type": "INTEGER",
+      "target_type": "INTEGER",
+      "mode": "NULLABLE",
+      "description": "All-time peak position",
+      "source_column": "All Time Peak",
+      "transform": "strip_footnotes_and_to_int"
+    },
+    {
+      "source_name": "Actual gross",
+      "target_name": "Actual_gross",
+      "name": "Actual_gross",
+      "type": "INTEGER",
+      "target_type": "INTEGER",
+      "mode": "NULLABLE",
+      "description": "Actual gross revenue in USD",
+      "source_column": "Actual gross",
+      "transform": "parse_currency_to_int"
+    },
+    {
+      "source_name": "Adjusted gross (in 2022 dollars)",
+      "target_name": "Adjusted_gross_2022_dollars",
+      "name": "Adjusted_gross_2022_dollars",
+      "type": "INTEGER",
+      "target_type": "INTEGER",
+      "mode": "NULLABLE",
+      "description": "Adjusted gross revenue in 2022 USD",
+      "source_column": "Adjusted gross (in 2022 dollars)",
+      "transform": "parse_currency_to_int"
+    },
+    {
+      "source_name": "Artist",
+      "target_name": "Artist",
+      "name": "Artist",
+      "type": "STRING",
+      "target_type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Touring artist name",
+      "source_column": "Artist",
+      "transform": "trim_string"
+    },
+    {
+      "source_name": "Tour title",
+      "target_name": "Tour_title",
+      "name": "Tour_title",
+      "type": "STRING",
+      "target_type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Official tour title",
+      "source_column": "Tour title",
+      "transform": "trim_string"
+    },
+    {
+      "source_name": "Year(s)",
+      "target_name": "Years",
+      "name": "Years",
+      "type": "STRING",
+      "target_type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Tour year or year range",
+      "source_column": "Year(s)",
+      "transform": "trim_string"
+    },
+    {
+      "source_name": "Shows",
+      "target_name": "Shows",
+      "name": "Shows",
+      "type": "INTEGER",
+      "target_type": "INTEGER",
+      "mode": "NULLABLE",
+      "description": "Total number of shows performed",
+      "source_column": "Shows",
+      "transform": "to_integer"
+    },
+    {
+      "source_name": "Average gross",
+      "target_name": "Average_gross",
+      "name": "Average_gross",
+      "type": "INTEGER",
+      "target_type": "INTEGER",
+      "mode": "NULLABLE",
+      "description": "Average gross revenue per show in USD",
+      "source_column": "Average gross",
+      "transform": "parse_currency_to_int"
+    },
+    {
+      "source_name": "Ref.",
+      "target_name": "Ref",
+      "name": "Ref",
+      "type": "STRING",
+      "target_type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Reference citation",
+      "source_column": "Ref.",
+      "transform": "trim_string"
+    },
+    {
+      "source_name": "_etl_loaded_at",
+      "target_name": "_etl_loaded_at",
+      "name": "_etl_loaded_at",
+      "type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "mode": "NULLABLE",
+      "description": "Timestamp when record was loaded by ETL",
+      "source_column": "_etl_loaded_at",
+      "transform": "current_timestamp"
+    },
+    {
+      "source_name": "_source_file",
+      "target_name": "_source_file",
+      "name": "_source_file",
+      "type": "STRING",
+      "target_type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Source file path for lineage tracking",
+      "source_column": "_source_file",
+      "transform": "source_uri"
+    }
+  ],
+  "source_to_target_mappings": [
+    {
+      "source_column": "Rank",
+      "target_column": "Rank",
+      "target_type": "INTEGER",
+      "transform": "to_integer"
+    },
+    {
+      "source_column": "Peak",
+      "target_column": "Peak",
+      "target_type": "INTEGER",
+      "transform": "strip_footnotes_and_to_int"
+    },
+    {
+      "source_column": "All Time Peak",
+      "target_column": "All_Time_Peak",
+      "target_type": "INTEGER",
+      "transform": "strip_footnotes_and_to_int"
+    },
+    {
+      "source_column": "Actual gross",
+      "target_column": "Actual_gross",
+      "target_type": "INTEGER",
+      "transform": "parse_currency_to_int"
+    },
+    {
+      "source_column": "Adjusted gross (in 2022 dollars)",
+      "target_column": "Adjusted_gross_2022_dollars",
+      "target_type": "INTEGER",
+      "transform": "parse_currency_to_int"
+    },
+    {
+      "source_column": "Artist",
+      "target_column": "Artist",
+      "target_type": "STRING",
+      "transform": "trim_string"
+    },
+    {
+      "source_column": "Tour title",
+      "target_column": "Tour_title",
+      "target_type": "STRING",
+      "transform": "trim_string"
+    },
+    {
+      "source_column": "Year(s)",
+      "target_column": "Years",
+      "target_type": "STRING",
+      "transform": "trim_string"
+    },
+    {
+      "source_column": "Shows",
+      "target_column": "Shows",
+      "target_type": "INTEGER",
+      "transform": "to_integer"
+    },
+    {
+      "source_column": "Average gross",
+      "target_column": "Average_gross",
+      "target_type": "INTEGER",
+      "transform": "parse_currency_to_int"
+    },
+    {
+      "source_column": "Ref.",
+      "target_column": "Ref",
+      "target_type": "STRING",
+      "transform": "trim_string"
+    }
+  ],
+  "sort_by": [
+    {
+      "column": "Rank",
+      "order": "ASC"
+    }
+  ]
+}

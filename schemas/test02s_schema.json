@@ -1,0 +1,80 @@
+[
+  {
+    "name": "Rank",
+    "type": "INTEGER",
+    "mode": "REQUIRED",
+    "description": "Tour rank based on gross revenue"
+  },
+  {
+    "name": "Peak",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Peak position at release"
+  },
+  {
+    "name": "All_Time_Peak",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "All-time peak position"
+  },
+  {
+    "name": "Actual_gross",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Actual gross revenue in USD"
+  },
+  {
+    "name": "Adjusted_gross_2022_dollars",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Adjusted gross revenue in 2022 USD"
+  },
+  {
+    "name": "Artist",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Touring artist name"
+  },
+  {
+    "name": "Tour_title",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Official tour title"
+  },
+  {
+    "name": "Years",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Tour year or year range"
+  },
+  {
+    "name": "Shows",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Total number of shows performed"
+  },
+  {
+    "name": "Average_gross",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Average gross revenue per show in USD"
+  },
+  {
+    "name": "Ref",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Reference citation"
+  },
+  {
+    "name": "_etl_loaded_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Timestamp when record was loaded by ETL"
+  },
+  {
+    "name": "_source_file",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Source file path for lineage tracking"
+  }
+]
