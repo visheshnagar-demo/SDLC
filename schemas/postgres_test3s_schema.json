@@ -1,0 +1,44 @@
+[
+  {
+    "name": "id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Primary record identifier"
+  },
+  {
+    "name": "name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Name attribute"
+  },
+  {
+    "name": "email",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Email attribute"
+  },
+  {
+    "name": "status",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Status attribute"
+  },
+  {
+    "name": "data_val",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Data value"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Record creation timestamp in source"
+  },
+  {
+    "name": "_etl_loaded_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Timestamp when record was loaded by ETL pipeline"
+  }
+]

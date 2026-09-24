@@ -1,0 +1,70 @@
+{
+  "pipeline_id": "postgres_to_bigquery_pipeline",
+  "source_table": "test_data",
+  "target_table": "postgres_test3",
+  "columns": [
+    {
+      "source_name": "id",
+      "source_column": "id",
+      "target_name": "id",
+      "target_column": "id",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_whitespace_and_cast_string"
+    },
+    {
+      "source_name": "name",
+      "source_column": "name",
+      "target_name": "name",
+      "target_column": "name",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_whitespace_and_normalize_null"
+    },
+    {
+      "source_name": "email",
+      "source_column": "email",
+      "target_name": "email",
+      "target_column": "email",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_whitespace_and_normalize_null"
+    },
+    {
+      "source_name": "status",
+      "source_column": "status",
+      "target_name": "status",
+      "target_column": "status",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_whitespace_and_normalize_null"
+    },
+    {
+      "source_name": "data_val",
+      "source_column": "data_val",
+      "target_name": "data_val",
+      "target_column": "data_val",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_whitespace_and_normalize_null"
+    },
+    {
+      "source_name": "created_at",
+      "source_column": "created_at",
+      "target_name": "created_at",
+      "target_column": "created_at",
+      "source_type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "transform": "parse_iso_timestamp"
+    },
+    {
+      "source_name": "_etl_loaded_at",
+      "source_column": "_etl_loaded_at",
+      "target_name": "_etl_loaded_at",
+      "target_column": "_etl_loaded_at",
+      "source_type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "transform": "current_utc_timestamp"
+    }
+  ]
+}
