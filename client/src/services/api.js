@@ -2,90 +2,82 @@ import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-export const apiClient = axios.create({
+const api = axios.create({
   baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Standardized error payload extractions
-    const message =
-      error.response?.data?.detail ||
-      error.message ||
-      "An unexpected network error occurred";
-    return Promise.reject(
-      new Error(
-        typeof message === "object" ? JSON.stringify(message) : message,
-      ),
-    );
-  },
-);
-
-export const createCheckoutSession = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/checkout-session",
-    payload,
-  );
-  return response.data;
+export const getJobs = async (params = {}) => {
+  try {
+    const response = await api.get("/api/v1/jobs", { params });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching jobs:", error);
+    throw error;
+  }
 };
 
-export const payWithDigitalWallet = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/digital-wallet",
-    payload,
-  );
-  return response.data;
+export const getJobById = async (id) => {
+  try {
+    const response = await api.get(`/api/v1/jobs/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching job ${id}:`, error);
+    throw error;
+  }
 };
 
-export const getExchangeRates = async (baseCurrency = "USD") => {
-  const response = await apiClient.get("/api/v1/payments/rates", {
-    params: { base_currency: baseCurrency },
-  });
-  return response.data;
+export const createJob = async (jobData) => {
+  try {
+    const response = await api.post("/api/v1/jobs", jobData);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating job:", error);
+    throw error;
+  }
 };
 
-export const listTransactions = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/payments/transactions", {
-    params,
-  });
-  return response.data;
+export const updateJob = async (id, jobData) => {
+  try {
+    const response = await api.put(`/api/v1/jobs/${id}`, jobData);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating job ${id}:`, error);
+    throw error;
+  }
 };
 
-export const getTransactionDetail = async (transactionId) => {
-  const response = await apiClient.get(
-    `/api/v1/payments/transactions/${transactionId}`,
-  );
-  return response.data;
+export const updateJobStatus = async (id, status) => {
+  try {
+    const response = await api.patch(`/api/v1/jobs/${id}/status`, { status });
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating job status for ${id}:`, error);
+    throw error;
+  }
 };
 
-export const createRefund = async (payload) => {
-  const response = await apiClient.post("/api/v1/refunds", payload);
-  return response.data;
+export const deleteJob = async (id) => {
+  try {
+    const response = await api.delete(`/api/v1/jobs/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error deleting job ${id}:`, error);
+    throw error;
+  }
 };
 
-export const listRefunds = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/refunds", { params });
-  return response.data;
+export const getJobAuditLogs = async (id) => {
+  try {
+    const response = await api.get(`/api/v1/jobs/${id}/audit-logs`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching audit logs for job ${id}:`, error);
+    // Return empty array if audit logs endpoint is not implemented
+    return [];
+  }
 };
 
-export const listAuditLogs = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/audit-logs", { params });
-  return response.data;
-};
-
-export default {
-  apiClient,
-  createCheckoutSession,
-  payWithDigitalWallet,
-  getExchangeRates,
-  listTransactions,
-  getTransactionDetail,
-  createRefund,
-  listRefunds,
-  listAuditLogs,
-};
+export default api;

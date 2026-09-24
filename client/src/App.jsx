@@ -1,38 +1,45 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
 } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import CheckoutPage from "./pages/CheckoutPage";
-import RefundPortalPage from "./pages/RefundPortalPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
+import AppLayout from "./components/layout/AppLayout";
+import JobsDashboardPage from "./pages/JobsDashboardPage";
+import JobDetailPage from "./pages/JobDetailPage";
 
 export function App() {
+  const [userRole, setUserRole] = useState("admin");
+
   return (
     <Router>
-      <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-        <Navbar />
-        <main className="flex-1">
-          <Routes>
-            <Route path="/" element={<Navigate to="/checkout" replace />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/refunds" element={<RefundPortalPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="*" element={<Navigate to="/checkout" replace />} />
-          </Routes>
-        </main>
-        <footer className="bg-slate-900 text-slate-400 border-t border-slate-800 py-6 text-center text-xs">
-          <div className="max-w-7xl mx-auto px-4">
-            <p>
-              © {new Date().getFullYear()} PayGateway Service. PCI-DSS Level 1
-              Merchant Security.
-            </p>
-          </div>
-        </footer>
-      </div>
+      <AppLayout userRole={userRole} setUserRole={setUserRole}>
+        <Routes>
+          <Route path="/" element={<Navigate to="/jobs" replace />} />
+          <Route
+            path="/jobs"
+            element={<JobsDashboardPage userRole={userRole} />}
+          />
+          <Route
+            path="/jobs/:id"
+            element={<JobDetailPage userRole={userRole} />}
+          />
+          <Route
+            path="/departments"
+            element={<JobsDashboardPage userRole={userRole} />}
+          />
+          <Route
+            path="/candidates"
+            element={<JobsDashboardPage userRole={userRole} />}
+          />
+          <Route
+            path="/settings"
+            element={<JobsDashboardPage userRole={userRole} />}
+          />
+          <Route path="*" element={<Navigate to="/jobs" replace />} />
+        </Routes>
+      </AppLayout>
     </Router>
   );
 }
