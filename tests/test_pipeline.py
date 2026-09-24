@@ -3,9 +3,6 @@ import os
 import ast
 import pytest
 
-# Safely import pandas if available in runner environment
-pd = pytest.importorskip("pandas")
-
 from pipeline.cleaner import clean_sales_data
 from pipeline.deduplicator import deduplicate_sales_data
 
@@ -28,6 +25,7 @@ def test_ast_syntax():
 
 def test_clean_sales_data():
     """Test data cleaning and normalization logic."""
+    pd = pytest.importorskip("pandas")
     raw_data = pd.DataFrame([
         {
             "ORDER_ID": " 1001 ",
@@ -65,6 +63,7 @@ def test_clean_sales_data():
 
 def test_deduplicate_sales_data():
     """Test deduplication logic keeping the latest record."""
+    pd = pytest.importorskip("pandas")
     data = pd.DataFrame([
         {
             "order_id": "1001",
@@ -80,3 +79,4 @@ def test_deduplicate_sales_data():
     deduped = deduplicate_sales_data(data)
     assert len(deduped) == 1
     assert deduped.iloc[0]["customer_name"] == "Alice Johnson Updated"
+
