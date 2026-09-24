@@ -1,6 +1,7 @@
 """Automated tests for pipeline test03_pipeline."""
 import ast
 import os
+import json
 import pytest
 
 
@@ -36,7 +37,6 @@ def test_pipeline_spec_configuration():
 
 def test_schema_file_exists_and_valid():
     """Verifies that the BigQuery schema file exists and is valid JSON."""
-    import json
     schema_path = os.path.join("schemas", "test03_schema.json")
     assert os.path.isfile(schema_path), f"Schema file missing: {schema_path}"
     with open(schema_path, "r", encoding="utf-8") as f:
@@ -48,3 +48,45 @@ def test_schema_file_exists_and_valid():
     assert "artist" in field_names
     assert "shows" in field_names
     assert "years" in field_names
+
+
+def test_transformation_ordering_by_rank(tmp_path):
+    """Verifies that the transformation engine cleanses and orders records by rank ascending."""
+    pd = pytest.importorskip("pandas")
+    from pipeline.run_test03_pipeline import PipelineRunner
+
+    runner = PipelineRunner(execution_date="test_run_root")
+    runner.staging_dir = str(tmp_path)
+    runner.staging_file = os.path.join(runner.staging_dir, "data.parquet")
+
+    raw_df = pd.DataFrame([
+        {
+            "Rank": "10",
+            "Artist": "Coldplay",
+            "Shows": "100",
+            "Year(s)": "2022–2024"
+        },
+        {
+            "Rank": "1",
+            "Artist": "Taylor Swift",
+            "Shows": "56",
+            "Year(s)": "2023–2024"
+        },
+        {
+            "Rank": "4",
+            "Artist": "Pink",
+            "Shows": "156",
+            "Year(s)": "2018–2019"
+        }
+    ])
+    raw_df.to_parquet(runner.staging_file, index=False)
+
+    count = runner.transform()
+    assert count == 3
+
+    transformed_df = pd.read_parquet(runner.staging_file)
+    ranks = transformed_df["rank"].tolist()
+    assert ranks == [1, 4, 10], f"Expected ranks [1, 4, 10], got {ranks}"
+    assert transformed_df.iloc[0]["artist"] == "Taylor Swift"
+    assert transformed_df.iloc[0]["shows"] == 56
+    assert "ingested_at" in transformed_df.columns
