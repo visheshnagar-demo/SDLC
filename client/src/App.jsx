@@ -5,36 +5,27 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import CheckoutPage from "./pages/CheckoutPage";
-import RefundPortalPage from "./pages/RefundPortalPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
+import AppNavbar from "./components/layout/AppNavbar";
+import AlertsDashboardPage from "./pages/AlertsDashboardPage";
+import AlertInvestigationPage from "./pages/AlertInvestigationPage";
+import RuleEnginePage from "./pages/RuleEnginePage";
+import AuditLogsPage from "./pages/AuditLogsPage";
 
-export function App() {
+export default function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-        <Navbar />
-        <main className="flex-1">
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-900 antialiased">
+        <AppNavbar />
+        <main className="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8">
           <Routes>
-            <Route path="/" element={<Navigate to="/checkout" replace />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/refunds" element={<RefundPortalPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="*" element={<Navigate to="/checkout" replace />} />
+            <Route path="/" element={<AlertsDashboardPage />} />
+            <Route path="/alerts/:id" element={<AlertInvestigationPage />} />
+            <Route path="/rules" element={<RuleEnginePage />} />
+            <Route path="/audit" element={<AuditLogsPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
-        <footer className="bg-slate-900 text-slate-400 border-t border-slate-800 py-6 text-center text-xs">
-          <div className="max-w-7xl mx-auto px-4">
-            <p>
-              © {new Date().getFullYear()} PayGateway Service. PCI-DSS Level 1
-              Merchant Security.
-            </p>
-          </div>
-        </footer>
       </div>
     </Router>
   );
 }
-
-export default App;
