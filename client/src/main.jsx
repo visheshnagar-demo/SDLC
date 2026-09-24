@@ -13,8 +13,8 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
-  componentDidCatch(_error, _errorInfo) {
-    // Error logged for boundary tracking
+  componentDidCatch() {
+    // Error captured by boundary
   }
 
   render() {
@@ -25,10 +25,17 @@ class ErrorBoundary extends React.Component {
             padding: "2rem",
             textAlign: "center",
             fontFamily: "sans-serif",
+            backgroundColor: "#0f131c",
+            color: "#f8fafc",
+            minHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           <h2>Something went wrong.</h2>
-          <p style={{ color: "#666" }}>
+          <p style={{ color: "#94a3b8" }}>
             {this.state.error?.message ||
               "An unexpected rendering error occurred."}
           </p>
@@ -37,14 +44,15 @@ class ErrorBoundary extends React.Component {
             style={{
               marginTop: "1rem",
               padding: "0.5rem 1rem",
-              backgroundColor: "#4F46E5",
-              color: "#fff",
+              backgroundColor: "#06b6d4",
+              color: "#0b0f17",
               border: "none",
               borderRadius: "0.375rem",
+              fontWeight: 600,
               cursor: "pointer",
             }}
           >
-            Reload Page
+            Reload Application
           </button>
         </div>
       );

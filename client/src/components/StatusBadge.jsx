@@ -1,47 +1,96 @@
 import React from "react";
 
-export const StatusBadge = ({ status }) => {
+export const StatusBadge = ({
+  status = "PENDING",
+  size = "md",
+  pulse = true,
+}) => {
   const normalizedStatus = (status || "").toUpperCase();
 
-  let styles = "bg-slate-100 text-slate-700 border-slate-200";
-  let dotColor = "bg-slate-400";
+  const getStatusConfig = () => {
+    switch (normalizedStatus) {
+      case "HEALTHY":
+      case "UP":
+      case "200":
+        return {
+          bg: "bg-emerald-500/10",
+          text: "text-emerald-400",
+          border: "border-emerald-500/30",
+          dot: "bg-emerald-400",
+          label: "HEALTHY",
+        };
+      case "DEGRADED":
+      case "SLOW":
+        return {
+          bg: "bg-amber-500/10",
+          text: "text-amber-400",
+          border: "border-amber-500/30",
+          dot: "bg-amber-400",
+          label: "DEGRADED",
+        };
+      case "UNHEALTHY":
+      case "DOWN":
+      case "FAILED":
+      case "ERROR":
+        return {
+          bg: "bg-rose-500/10",
+          text: "text-rose-400",
+          border: "border-rose-500/30",
+          dot: "bg-rose-400",
+          label: "UNHEALTHY",
+        };
+      case "ACTIVE":
+        return {
+          bg: "bg-cyan-500/10",
+          text: "text-cyan-400",
+          border: "border-cyan-500/30",
+          dot: "bg-cyan-400",
+          label: "ACTIVE",
+        };
+      case "INACTIVE":
+      case "PAUSED":
+        return {
+          bg: "bg-slate-700/30",
+          text: "text-slate-400",
+          border: "border-slate-600/30",
+          dot: "bg-slate-400",
+          label: "INACTIVE",
+        };
+      case "PENDING":
+      default:
+        return {
+          bg: "bg-sky-500/10",
+          text: "text-sky-400",
+          border: "border-sky-500/30",
+          dot: "bg-sky-400",
+          label: normalizedStatus || "PENDING",
+        };
+    }
+  };
 
-  switch (normalizedStatus) {
-    case "COMPLETED":
-    case "SUCCEEDED":
-    case "SUCCESS":
-      styles = "bg-emerald-50 text-emerald-700 border-emerald-200";
-      dotColor = "bg-emerald-500";
-      break;
-    case "REFUNDED":
-      styles = "bg-purple-50 text-purple-700 border-purple-200";
-      dotColor = "bg-purple-500";
-      break;
-    case "PARTIALLY_REFUNDED":
-    case "PARTIAL_REFUND":
-      styles = "bg-indigo-50 text-indigo-700 border-indigo-200";
-      dotColor = "bg-indigo-500";
-      break;
-    case "FAILED":
-    case "CANCELLED":
-      styles = "bg-rose-50 text-rose-700 border-rose-200";
-      dotColor = "bg-rose-500";
-      break;
-    case "PENDING":
-    case "PROCESSING":
-      styles = "bg-amber-50 text-amber-700 border-amber-200";
-      dotColor = "bg-amber-500";
-      break;
-    default:
-      break;
-  }
+  const config = getStatusConfig();
+  const sizeClasses =
+    size === "sm" ? "px-2 py-0.5 text-xs" : "px-2.5 py-1 text-xs font-semibold";
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${styles}`}
+      data-testid="status-badge"
+      className={`inline-flex items-center gap-1.5 rounded-full border ${config.bg} ${config.text} ${config.border} ${sizeClasses} font-mono uppercase tracking-wide`}
     >
-      <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`}></span>
-      {normalizedStatus || "UNKNOWN"}
+      <span className="relative flex h-2 w-2">
+        {pulse &&
+          (normalizedStatus === "HEALTHY" ||
+            normalizedStatus === "UNHEALTHY" ||
+            normalizedStatus === "DEGRADED") && (
+            <span
+              className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${config.dot}`}
+            />
+          )}
+        <span
+          className={`relative inline-flex rounded-full h-2 w-2 ${config.dot}`}
+        />
+      </span>
+      <span>{config.label}</span>
     </span>
   );
 };
