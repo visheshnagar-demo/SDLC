@@ -42,9 +42,21 @@ class TestObservability(unittest.TestCase):
 
 
 class TestSchemaIntegrity(unittest.TestCase):
+    def _find_file(self, rel_path: str) -> str:
+        candidates = [
+            rel_path,
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), rel_path),
+            os.path.join(os.path.dirname(__file__), "..", rel_path),
+            os.path.join(os.getcwd(), rel_path),
+        ]
+        for p in candidates:
+            if os.path.isfile(p):
+                return os.path.abspath(p)
+        return ""
+
     def test_schema_json_validity(self):
-        schema_file = "schemas/postgres_test2_schema.json"
-        self.assertTrue(os.path.isfile(schema_file), f"Schema file not found: {schema_file}")
+        schema_file = self._find_file("schemas/postgres_test2_schema.json")
+        self.assertTrue(bool(schema_file and os.path.isfile(schema_file)), f"Schema file not found for schemas/postgres_test2_schema.json")
         with open(schema_file, "r", encoding="utf-8") as f:
             schema = json.load(f)
         self.assertTrue(isinstance(schema, list))
@@ -55,8 +67,8 @@ class TestSchemaIntegrity(unittest.TestCase):
         self.assertIn("_etl_source_instance", field_names)
 
     def test_transformation_spec_validity(self):
-        spec_file = "transformation_spec.json"
-        self.assertTrue(os.path.isfile(spec_file), f"Spec file not found: {spec_file}")
+        spec_file = self._find_file("transformation_spec.json")
+        self.assertTrue(bool(spec_file and os.path.isfile(spec_file)), f"Spec file not found for transformation_spec.json")
         with open(spec_file, "r", encoding="utf-8") as f:
             spec = json.load(f)
         self.assertIn("source", spec)
@@ -68,8 +80,8 @@ class TestSchemaIntegrity(unittest.TestCase):
         self.assertIn("data_payload", cols)
 
     def test_env_deploy_json_validity(self):
-        env_file = "env.deploy.json"
-        self.assertTrue(os.path.isfile(env_file), f"Env deploy file not found: {env_file}")
+        env_file = self._find_file("env.deploy.json")
+        self.assertTrue(bool(env_file and os.path.isfile(env_file)), f"Env deploy file not found for env.deploy.json")
         with open(env_file, "r", encoding="utf-8") as f:
             env_config = json.load(f)
         self.assertIn("INSTANCE_CONNECTION_NAME", env_config)
@@ -82,8 +94,8 @@ class TestSchemaIntegrity(unittest.TestCase):
         self.assertEqual(env_config["failure_behavior"], "fail_fast")
 
     def test_openapi_json_validity(self):
-        openapi_file = "openapi.json"
-        self.assertTrue(os.path.isfile(openapi_file), f"OpenAPI file not found: {openapi_file}")
+        openapi_file = self._find_file("openapi.json")
+        self.assertTrue(bool(openapi_file and os.path.isfile(openapi_file)), f"OpenAPI file not found for openapi.json")
         with open(openapi_file, "r", encoding="utf-8") as f:
             spec = json.load(f)
         self.assertIn("openapi", spec)
