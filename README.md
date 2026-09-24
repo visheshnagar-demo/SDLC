@@ -1,88 +1,66 @@
-# Project
+# Cloud SQL PostgreSQL to BigQuery ETL Pipeline (SCRUM-382)
 
-## Server
+## Overview
+Automated batch ETL pipeline extracting raw data from Cloud SQL PostgreSQL (`sdlc-etl-demo-db`), performing data cleaning, standardization, deduplication, and schema validation, and loading the sanitized dataset into Google BigQuery table `analytics.postgres_test2`.
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+## Architecture & Specifications
+- **Source**: Cloud SQL PostgreSQL
+  - **Instance**: `upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db`
+  - **Database**: `postgres`
+  - **Table**: `test_data`
+  - **Authentication**: Cloud SQL Python Connector with Google Cloud IAM Authentication (`559906504681-compute@developer`)
+  - **IP Type**: Private IP (`CLOUD_SQL_IP_TYPE=PRIVATE`)
+- **Target**: Google BigQuery
+  - **Project**: `upbeat-repeater-477110-q6`
+  - **Dataset**: `analytics`
+  - **Table**: `postgres_test2`
+  - **Write Disposition**: `WRITE_APPEND`
+  - **Partitioning**: Day partitioned by `_etl_loaded_at`
+  - **Clustering**: `id`
+- **Deployment**: Standalone Batch Container / Cloud Run Job (Zero-scheduler, Zero-idle)
 
-### Setup
+## Data Transformations
+1. **Column Normalization**: Stripping special characters, lowercasing.
+2. **String Cleaning**: Trimming leading/trailing whitespace, standardizing empty strings to `NULL`.
+3. **Datetime Standardization**: Normalizing date and timestamp columns to UTC ISO 8601.
+4. **Deduplication**: Removing identical duplicate rows across business keys.
+5. **Audit Metadata Injection**: Appending `_etl_loaded_at` (UTC ingestion timestamp) and `_etl_source_instance` (`sdlc-etl-demo-db`).
+6. **Circuit Breaker**: Halts execution if 100% of rows fail validation or if rejection threshold is breached.
 
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+## Repository Layout
+```
+├── config.py
+├── main.py
+├── Dockerfile
+├── requirements.txt
+├── env.deploy.json
+├── transformation_spec.json
+├── pipeline/
+│   ├── __init__.py
+│   ├── db_connector.py
+│   ├── extractor.py
+│   ├── transformer.py
+│   ├── loader.py
+│   ├── observability.py
+│   └── run_postgres_test_data_to_bigquery.py
+├── schemas/
+│   ├── __init__.py
+│   └── postgres_test2_schema.json
+├── sql/
+│   └── ddl/
+│       └── postgres_test2.sql
+├── tests/
+│   ├── __init__.py
+│   ├── test_pipeline.py
+│   └── test_postgres_test_data_to_bigquery_pipeline.py
+└── README.md
 ```
 
-2. Install dependencies:
+## Local Execution & Testing
 ```bash
-cd server
+# Install dependencies
 pip install -r requirements.txt
-cd ..
+
+# Run unit tests
+pytest tests/
 ```
-
-### Running Tests
-```bash
-cd server
-python -m pytest -v
-cd ..
-```
-
-### Starting the Development Server
-```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
-```bash
-# Copy the example environment file
-cp .env.example .env
-```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-

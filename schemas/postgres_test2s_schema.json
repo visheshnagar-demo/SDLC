@@ -1,0 +1,38 @@
+[
+  {
+    "name": "id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Record Identifier"
+  },
+  {
+    "name": "data_payload",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Data payload or raw content"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Record creation timestamp in UTC"
+  },
+  {
+    "name": "updated_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Record update timestamp in UTC"
+  },
+  {
+    "name": "_etl_loaded_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Timestamp when record was ingested into BigQuery"
+  },
+  {
+    "name": "_etl_source_instance",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Source database instance name"
+  }
+]
