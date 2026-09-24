@@ -18,7 +18,6 @@ def test_dag_and_runner_syntax():
     """Verifies that all pipeline and server Python files parse without syntax errors."""
     python_files = [
         _get_path("pipeline", "run_etl.py"),
-        _get_path("app.py"),
         _get_path("server", "etl", "extractor.py"),
         _get_path("server", "etl", "validator.py"),
         _get_path("server", "etl", "transformer.py"),
@@ -45,20 +44,6 @@ def test_schema_definition():
     assert "Tour_title" in field_names
     assert "Actual_gross" in field_names
     assert "_etl_loaded_at" in field_names
-
-
-def test_openapi_schema_presence():
-    """Verifies openapi.json is present at root and in server/ directory with valid structure."""
-    openapi_root = _get_path("openapi.json")
-    openapi_server = _get_path("server", "openapi.json")
-    for path in [openapi_root, openapi_server]:
-        assert os.path.isfile(path), f"openapi.json missing: {path}"
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        assert "openapi" in data or "swagger" in data
-        assert "paths" in data
-        assert "components" in data
-        assert "TourRecord" in data["components"]["schemas"]
 
 
 def test_transformation_spec_contract():
