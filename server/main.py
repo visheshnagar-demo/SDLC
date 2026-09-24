@@ -2,7 +2,7 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from server.api.v1 import api_v1_router
+from server.routers import api_v1_router
 from server.database import init_db
 from server.config import settings
 
@@ -36,6 +36,26 @@ app.add_middleware(
 app.include_router(api_v1_router)
 
 
+@app.get("/")
+def root():
+    return {
+        "service": settings.PROJECT_NAME,
+        "status": "online",
+        "version": "1.0.0",
+        "docs_url": "/docs",
+    }
+
+
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "service": "payment-gateway-service"}
+    return {"status": "ok", "service": "transaction-monitoring-service"}
+
+
+@app.get("/healthz")
+def healthz():
+    return {"status": "ok"}
+
+
+@app.get("/readyz")
+def readyz():
+    return {"status": "ready"}

@@ -5,7 +5,7 @@ from sqlalchemy.pool import StaticPool
 from fastapi.testclient import TestClient
 
 from server.database import Base, get_db, seed_data
-import server.models  # noqa: F401
+import server.models.entities  # noqa: F401
 from server.main import app
 
 # In-memory SQLite for testing with StaticPool
