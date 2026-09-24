@@ -153,6 +153,7 @@ def test_transformer_empty_dataframe():
 # 3. Extractor Tests
 @pytest.mark.skipif(not HAS_PANDAS, reason="pandas is required for extractor tests")
 def test_extractor_extract_mock_engine(mock_env):
+    import pipeline.extractor
     from pipeline.extractor import PostgresExtractor
     config = PipelineConfig.from_env()
     mock_engine = MagicMock()
@@ -165,6 +166,18 @@ def test_extractor_extract_mock_engine(mock_env):
         result_df = extractor.extract()
         assert len(result_df) == 2
         mock_read_sql.assert_called_once()
+
+
+@pytest.mark.skipif(not HAS_PANDAS, reason="pandas is required for extractor tests")
+def test_create_cloud_sql_engine(mock_env):
+    import pipeline.extractor
+    with patch("pipeline.extractor.Connector") as mock_connector_cls, \
+         patch("sqlalchemy.create_engine") as mock_create_engine:
+        from pipeline.extractor import create_cloud_sql_engine
+        config = PipelineConfig.from_env()
+        create_cloud_sql_engine(config)
+        mock_connector_cls.assert_called_once()
+        mock_create_engine.assert_called_once()
 
 
 # 4. Loader Tests
