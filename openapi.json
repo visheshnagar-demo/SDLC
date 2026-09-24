@@ -1295,10 +1295,17 @@
             "description": "Job title"
           },
           "description": {
-            "type": "string",
-            "minLength": 1,
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Description",
-            "description": "Detailed job description"
+            "description": "Detailed job description",
+            "default": "No description provided."
           },
           "department": {
             "type": "string",
@@ -1358,7 +1365,6 @@
         "type": "object",
         "required": [
           "title",
-          "description",
           "department",
           "location"
         ],

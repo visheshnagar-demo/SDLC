@@ -120,7 +120,9 @@ VALID_JOB_STATUSES = {"draft", "published", "closed", "archived"}
 
 class JobBase(BaseModel):
     title: str = Field(..., min_length=1, description="Job title")
-    description: str = Field(..., min_length=1, description="Detailed job description")
+    description: Optional[str] = Field(
+        default="No description provided.", description="Detailed job description"
+    )
     department: str = Field(..., min_length=1, description="Department name")
     location: str = Field(..., min_length=1, description="Location or Remote")
     employment_type: str = Field(
@@ -137,8 +139,8 @@ class JobBase(BaseModel):
     def validate_job_fields(self) -> "JobBase":
         if not self.title or not self.title.strip():
             raise ValueError("Job title cannot be empty")
-        if not self.description or not self.description.strip():
-            raise ValueError("Job description cannot be empty")
+        if not self.description:
+            self.description = "No description provided."
         if self.salary_min is not None and self.salary_min < 0:
             raise ValueError("Minimum salary cannot be negative")
         if self.salary_max is not None and self.salary_max < 0:
@@ -175,8 +177,6 @@ class JobUpdate(BaseModel):
     def validate_job_update(self) -> "JobUpdate":
         if self.title is not None and not self.title.strip():
             raise ValueError("Job title cannot be empty")
-        if self.description is not None and not self.description.strip():
-            raise ValueError("Job description cannot be empty")
         if self.salary_min is not None and self.salary_min < 0:
             raise ValueError("Minimum salary cannot be negative")
         if self.salary_max is not None and self.salary_max < 0:

@@ -67,15 +67,23 @@ graph TD
 - client/src/components/RefundPortal.jsx
 - client/src/components/StatusBadge.jsx
 - client/src/components/WebhookLogViewer.jsx
+- client/src/components/jobs/FilterBar.jsx
+- client/src/components/jobs/JobDetailView.jsx
+- client/src/components/jobs/JobModalForm.jsx
+- client/src/components/jobs/JobTable.jsx
+- client/src/components/layout/AppLayout.jsx
 - client/src/main.jsx
 - client/src/pages/AnalyticsPage.jsx
 - client/src/pages/CheckoutPage.jsx
+- client/src/pages/JobDetailPage.jsx
+- client/src/pages/JobsDashboardPage.jsx
 - client/src/pages/RefundPortalPage.jsx
 - client/src/services/api.js
 - client/src/setup.js
 - client/src/tests/AnalyticsDashboard.test.jsx
 - client/src/tests/CheckoutPage.test.jsx
 - client/src/tests/RefundPortal.test.jsx
+- client/src/tests/jobs.test.jsx
 - client/tailwind.config.js
 - client/vite.config.js
 
