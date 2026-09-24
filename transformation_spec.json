@@ -1,6 +1,100 @@
 {
+  "source": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
   "source_dataset": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+  "target": "upbeat-repeater-477110-q6.analytics.test01",
   "target_table": "upbeat-repeater-477110-q6.analytics.test01",
+  "target_dataset": "analytics",
+  "target_table_name": "test01",
+  "transformations": [
+    {
+      "source_column": "Rank",
+      "target_column": "rank",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transformation": "clean_integer",
+      "nullable": true
+    },
+    {
+      "source_column": "Peak",
+      "target_column": "peak",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transformation": "strip_footnotes_and_to_int",
+      "nullable": true
+    },
+    {
+      "source_column": "All Time Peak",
+      "target_column": "all_time_peak",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transformation": "strip_footnotes_and_to_int",
+      "nullable": true
+    },
+    {
+      "source_column": "Actual\u00a0gross",
+      "target_column": "actual_gross",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transformation": "clean_currency_and_to_int",
+      "nullable": true
+    },
+    {
+      "source_column": "Adjusted\u00a0gross (in 2022 dollars)",
+      "target_column": "adjusted_gross_in_2022_dollars",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transformation": "clean_currency_and_to_int",
+      "nullable": true
+    },
+    {
+      "source_column": "Artist",
+      "target_column": "artist",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_string",
+      "nullable": true
+    },
+    {
+      "source_column": "Tour title",
+      "target_column": "tour_title",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_string",
+      "nullable": true
+    },
+    {
+      "source_column": "Year(s)",
+      "target_column": "years",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_string",
+      "nullable": true
+    },
+    {
+      "source_column": "Shows",
+      "target_column": "shows",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transformation": "clean_integer",
+      "nullable": true
+    },
+    {
+      "source_column": "Average gross",
+      "target_column": "average_gross",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transformation": "clean_currency_and_to_int",
+      "nullable": true
+    },
+    {
+      "source_column": "Ref.",
+      "target_column": "ref",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_string",
+      "nullable": true
+    }
+  ],
   "columns": [
     {
       "source_name": "Rank",

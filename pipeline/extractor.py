@@ -1,12 +1,20 @@
-"""Extractor module for Cloud SQL PostgreSQL using Cloud SQL Python Connector and IAM auth."""
+"""Extractor module for GCS CSV and cloud data sources."""
 
+import io
 import logging
+import os
+import re
 from typing import Optional
 
 try:
     import pandas as pd
 except ImportError:
     pd = None
+
+try:
+    from google.cloud import storage
+except ImportError:
+    storage = None
 
 try:
     import sqlalchemy
@@ -22,6 +30,63 @@ except ImportError:
 from pipeline.config import PipelineConfig
 
 logger = logging.getLogger(__name__)
+
+
+class GCSExtractor:
+    """Extracts raw CSV data from Google Cloud Storage or local file paths."""
+
+    def __init__(self, project_id: Optional[str] = None, storage_client: Optional[object] = None) -> None:
+        self.project_id = project_id or os.getenv("GCP_PROJECT", "upbeat-repeater-477110-q6")
+        self.storage_client = storage_client
+
+    def _get_client(self) -> object:
+        if self.storage_client is not None:
+            return self.storage_client
+        if storage is None:
+            raise ImportError("google-cloud-storage is required to extract from GCS.")
+        self.storage_client = storage.Client(project=self.project_id)
+        return self.storage_client
+
+    def extract(self, source_path: str = "gs://sdlc-workspec-store/etl/data/my_file (1).csv") -> object:
+        """Extract CSV file from GCS or local filesystem into a pandas DataFrame."""
+        if pd is None:
+            raise ImportError("pandas is required for GCSExtractor.extract.")
+
+        if not source_path or not source_path.strip():
+            raise ValueError("source_path cannot be empty.")
+
+        source_path = source_path.strip()
+        logger.info("Extracting data from source: %s", source_path)
+
+        # Check if local file exists
+        if os.path.isfile(source_path):
+            logger.info("Reading from local file: %s", source_path)
+            df = pd.read_csv(source_path)
+            logger.info("Extracted %d rows from local file.", len(df))
+            return df
+
+        if source_path.startswith("gs://"):
+            match = re.match(r"^gs://([^/]+)/(.+)$", source_path)
+            if not match:
+                raise ValueError(f"Invalid GCS URI format: {source_path}")
+
+            bucket_name, blob_name = match.groups()
+            client = self._get_client()
+            bucket = client.bucket(bucket_name)
+            blob = bucket.blob(blob_name)
+
+            if not blob.exists():
+                raise FileNotFoundError(f"GCS object not found at {source_path}")
+
+            content_bytes = blob.download_as_bytes()
+            df = pd.read_csv(io.BytesIO(content_bytes))
+            logger.info("Successfully extracted %d rows from GCS URI: %s", len(df), source_path)
+            return df
+
+        # Fallback to direct read
+        df = pd.read_csv(source_path)
+        logger.info("Extracted %d rows from %s", len(df), source_path)
+        return df
 
 
 def create_cloud_sql_engine(config: PipelineConfig) -> object:
@@ -62,7 +127,7 @@ class PostgresExtractor:
         if pd is None or sqlalchemy is None:
             raise ImportError("pandas and sqlalchemy are required for PostgresExtractor.extract")
 
-        logger.info(f"Extracting data from table '{self.config.source_table}'...")
+        logger.info("Extracting data from table '%s'...", self.config.source_table)
         table_name = self.config.source_table
         if not table_name.isidentifier():
             raise ValueError(f"Invalid source table name: {table_name}")
@@ -71,10 +136,5 @@ class PostgresExtractor:
         with self.engine.connect() as connection:
             df = pd.read_sql(query, con=connection)
 
-        logger.info(f"Successfully extracted {len(df)} rows from '{table_name}'.")
+        logger.info("Successfully extracted %d rows from '%s'.", len(df), table_name)
         return df
-
-
-class GCSExtractor:
-    """Compatibility alias if needed."""
-    pass

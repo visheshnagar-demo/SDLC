@@ -3,7 +3,7 @@
 from datetime import datetime, timezone
 import logging
 import re
-from typing import Any, Optional
+from typing import Any, Dict, Optional, Tuple
 
 try:
     import numpy as np
@@ -39,7 +39,7 @@ def clean_int_value(val: Any) -> Optional[int]:
     # Remove footnote markers like [1], [4][a]
     val_str = re.sub(r"\[.*?\]", "", val_str)
     # Remove currency symbols, commas, and dagger symbols
-    val_str = re.sub(r"[\$,\s\u2020\u2021]", "", val_str)
+    val_str = re.sub(r"[\$,\s\u2020\u2021\u2022]", "", val_str)
     # Extract leading digits or valid integer
     match = re.search(r"^-?\d+", val_str)
     if match:
@@ -65,8 +65,18 @@ def clean_string_value(val: Any) -> Optional[str]:
 class DataTransformer:
     """Transforms raw tour CSV data into validated, typed BigQuery-ready DataFrames."""
 
-    def __init__(self, circuit_breaker: Optional[CircuitBreaker] = None) -> None:
-        self.circuit_breaker = circuit_breaker or CircuitBreaker()
+    def __init__(
+        self,
+        circuit_breaker: Optional[CircuitBreaker] = None,
+        error_threshold_ratio: float = 0.05,
+    ) -> None:
+        self.circuit_breaker = circuit_breaker or CircuitBreaker(max_error_rate=error_threshold_ratio)
+        self.metrics: Dict[str, int] = {
+            "source_row_count": 0,
+            "cleaned_row_count": 0,
+            "quarantined_row_count": 0,
+            "dropped_row_count": 0,
+        }
 
     def transform(
         self,
@@ -77,13 +87,38 @@ class DataTransformer:
         if pd is None:
             raise RuntimeError("pandas is required for DataTransformer.")
 
-        logger.info("Starting transformation on %d raw rows", len(raw_df))
-        self.circuit_breaker.set_total_extracted(len(raw_df))
+        source_count = len(raw_df) if hasattr(raw_df, "__len__") else 0
+        logger.info("Starting transformation on %d raw rows", source_count)
+        self.circuit_breaker.set_total_extracted(source_count)
+        self.metrics["source_row_count"] = source_count
+
+        expected_columns = [
+            "rank",
+            "peak",
+            "all_time_peak",
+            "actual_gross",
+            "adjusted_gross_in_2022_dollars",
+            "artist",
+            "tour_title",
+            "years",
+            "shows",
+            "average_gross",
+            "ref",
+            "_etl_loaded_at",
+            "_source_file",
+        ]
+
+        if hasattr(raw_df, "empty") and raw_df.empty:
+            empty_df = pd.DataFrame(columns=expected_columns)
+            self.metrics["cleaned_row_count"] = 0
+            self.metrics["quarantined_row_count"] = 0
+            self.metrics["dropped_row_count"] = 0
+            return empty_df
 
         # Map normalized column names
         header_map = {}
         for col in raw_df.columns:
-            sanitized = sanitize_column_name(col)
+            sanitized = sanitize_column_name(str(col))
             header_map[col] = sanitized
 
         renamed_df = raw_df.rename(columns=header_map)
@@ -145,7 +180,7 @@ class DataTransformer:
 
         self.circuit_breaker.verify_error_rate()
 
-        result_df = pd.DataFrame(cleaned_records)
+        result_df = pd.DataFrame(cleaned_records, columns=expected_columns)
 
         # Enforce exact BigQuery nullable types
         int_cols = [
@@ -168,6 +203,10 @@ class DataTransformer:
 
         if "_etl_loaded_at" in result_df.columns:
             result_df["_etl_loaded_at"] = pd.to_datetime(result_df["_etl_loaded_at"], utc=True)
+
+        self.metrics["cleaned_row_count"] = len(result_df)
+        self.metrics["quarantined_row_count"] = self.circuit_breaker.rows_quarantined
+        self.metrics["dropped_row_count"] = self.circuit_breaker.rows_quarantined
 
         logger.info(
             "Transformation complete. Cleaned: %d, Quarantined: %d",
