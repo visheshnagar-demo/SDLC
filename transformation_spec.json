@@ -1,41 +1,84 @@
 {
+  "source_dataset": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+  "target_table": "upbeat-repeater-477110-q6.analytics.test01",
   "columns": [
     {
-      "source_name": "id",
-      "target_name": "id",
+      "source_name": "Rank",
+      "target_name": "rank",
+      "target_type": "INTEGER",
+      "transform": "clean_integer"
+    },
+    {
+      "source_name": "Peak",
+      "target_name": "peak",
+      "target_type": "INTEGER",
+      "transform": "strip_footnotes_and_to_int"
+    },
+    {
+      "source_name": "All Time Peak",
+      "target_name": "all_time_peak",
+      "target_type": "INTEGER",
+      "transform": "strip_footnotes_and_to_int"
+    },
+    {
+      "source_name": "Actual\u00a0gross",
+      "target_name": "actual_gross",
+      "target_type": "INTEGER",
+      "transform": "clean_currency_and_to_int"
+    },
+    {
+      "source_name": "Adjusted\u00a0gross (in 2022 dollars)",
+      "target_name": "adjusted_gross_in_2022_dollars",
+      "target_type": "INTEGER",
+      "transform": "clean_currency_and_to_int"
+    },
+    {
+      "source_name": "Artist",
+      "target_name": "artist",
       "target_type": "STRING",
-      "transform": "strip_whitespace_and_validate_not_null"
+      "transform": "trim_string"
     },
     {
-      "source_name": "name",
-      "target_name": "name",
+      "source_name": "Tour title",
+      "target_name": "tour_title",
       "target_type": "STRING",
-      "transform": "strip_whitespace_null_normalize"
+      "transform": "trim_string"
     },
     {
-      "source_name": "age",
-      "target_name": "age",
-      "target_type": "INT64",
-      "transform": "parse_integer_null_normalize"
-    },
-    {
-      "source_name": "email",
-      "target_name": "email",
+      "source_name": "Year(s)",
+      "target_name": "years",
       "target_type": "STRING",
-      "transform": "lowercase_strip_whitespace_null_normalize"
+      "transform": "trim_string"
     },
     {
-      "source_name": "created_at",
-      "target_name": "created_at",
-      "target_type": "TIMESTAMP",
-      "transform": "parse_iso8601_utc_timestamp"
+      "source_name": "Shows",
+      "target_name": "shows",
+      "target_type": "INTEGER",
+      "transform": "clean_integer"
+    },
+    {
+      "source_name": "Average gross",
+      "target_name": "average_gross",
+      "target_type": "INTEGER",
+      "transform": "clean_currency_and_to_int"
+    },
+    {
+      "source_name": "Ref.",
+      "target_name": "ref",
+      "target_type": "STRING",
+      "transform": "trim_string"
     }
   ],
   "audit_columns": [
     {
-      "name": "_extracted_at",
+      "name": "_etl_loaded_at",
       "type": "TIMESTAMP",
       "value": "CURRENT_TIMESTAMP"
+    },
+    {
+      "name": "_source_file",
+      "type": "STRING",
+      "value": "gs://sdlc-workspec-store/etl/data/my_file (1).csv"
     }
   ]
 }
