@@ -4,15 +4,25 @@ import ast
 import json
 import pytest
 
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+def _get_path(*parts):
+    """Resolve file path relative to ROOT_DIR or current directory."""
+    path = os.path.join(*parts)
+    if os.path.exists(path):
+        return path
+    root_path = os.path.join(ROOT_DIR, *parts)
+    return root_path
+
 def test_dag_and_runner_syntax():
     """Verifies that all pipeline and server Python files parse without syntax errors."""
     python_files = [
-        os.path.join("pipeline", "run_etl.py"),
-        os.path.join("app.py"),
-        os.path.join("server", "etl", "extractor.py"),
-        os.path.join("server", "etl", "validator.py"),
-        os.path.join("server", "etl", "transformer.py"),
-        os.path.join("server", "etl", "loader.py"),
+        _get_path("pipeline", "run_etl.py"),
+        _get_path("app.py"),
+        _get_path("server", "etl", "extractor.py"),
+        _get_path("server", "etl", "validator.py"),
+        _get_path("server", "etl", "transformer.py"),
+        _get_path("server", "etl", "loader.py"),
     ]
     for filepath in python_files:
         assert os.path.isfile(filepath), f"File missing: {filepath}"
@@ -24,7 +34,7 @@ def test_dag_and_runner_syntax():
 
 def test_schema_definition():
     """Verifies BigQuery schema file contains mandatory fields and valid types."""
-    schema_path = os.path.join("schemas", "test02_schema.json")
+    schema_path = _get_path("schemas", "test02_schema.json")
     assert os.path.isfile(schema_path), f"Schema file missing: {schema_path}"
     with open(schema_path, "r", encoding="utf-8") as f:
         schema = json.load(f)
@@ -39,7 +49,9 @@ def test_schema_definition():
 
 def test_openapi_schema_presence():
     """Verifies openapi.json is present at root and in server/ directory with valid structure."""
-    for path in ["openapi.json", os.path.join("server", "openapi.json")]:
+    openapi_root = _get_path("openapi.json")
+    openapi_server = _get_path("server", "openapi.json")
+    for path in [openapi_root, openapi_server]:
         assert os.path.isfile(path), f"openapi.json missing: {path}"
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -51,7 +63,7 @@ def test_openapi_schema_presence():
 
 def test_transformation_spec_contract():
     """Verifies transformation specification contains required top-level contract keys."""
-    spec_path = "transformation_spec.json"
+    spec_path = _get_path("transformation_spec.json")
     assert os.path.isfile(spec_path), f"Transformation spec missing: {spec_path}"
     with open(spec_path, "r", encoding="utf-8") as f:
         spec = json.load(f)
@@ -76,7 +88,7 @@ def test_transformation_spec_contract():
 
 def test_deploy_env_configuration():
     """Verifies env.deploy.json contains required deployment configuration keys."""
-    env_path = "env.deploy.json"
+    env_path = _get_path("env.deploy.json")
     assert os.path.isfile(env_path), f"env.deploy.json missing: {env_path}"
     with open(env_path, "r", encoding="utf-8") as f:
         env_deploy = json.load(f)
