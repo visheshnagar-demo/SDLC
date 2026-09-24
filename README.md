@@ -1,88 +1,65 @@
-# Project
+# GCS to BigQuery ETL Pipeline (`analytics.test03`)
 
-## Server
+Automated batch ETL pipeline extracting CSV data from Google Cloud Storage, standardizing and cleansing columns, sorting deterministically by `rank` ascending, and loading into Google BigQuery (`upbeat-repeater-477110-q6.analytics.test03`).
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+## Architecture & Specifications
+- **Source**: `gs://sdlc-workspec-store/etl/data/my_file (1).csv` (CSV format)
+- **Target Data Warehouse**: Google BigQuery
+  - Project: `upbeat-repeater-477110-q6`
+  - Dataset: `analytics`
+  - Table: `test03`
+  - Write Disposition: `WRITE_TRUNCATE` (idempotent overwrite)
+- **Transformations**:
+  - Header normalization to `snake_case`
+  - Type-safe integer parsing for `rank` and `shows`
+  - Whitespace stripping and null normalization for string fields
+  - Deterministic sort by `rank` in ascending order (nulls sorted last)
+  - UTC ingestion timestamp appended (`ingested_at`)
 
-### Setup
-
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+## Project Structure
+```
+├── Dockerfile
+├── README.md
+├── env.deploy.json
+├── env.deploy.yaml
+├── requirements.txt
+├── transformation_spec.json
+├── dags/
+│   └── test03_pipeline_dag.py
+├── pipeline/
+│   ├── run_test03_pipeline.py
+│   └── test03_pipeline_README.md
+├── schemas/
+│   └── test03_schema.json
+├── sql/
+│   └── ddl/
+│       └── test03.sql
+└── tests/
+    └── test_test03_pipeline_pipeline.py
 ```
 
-2. Install dependencies:
+## Local Execution
+
+### 1. Install Dependencies
 ```bash
-cd server
 pip install -r requirements.txt
-cd ..
 ```
 
-### Running Tests
+### 2. Configure Environment Variables
 ```bash
-cd server
-python -m pytest -v
-cd ..
+export GCP_PROJECT_ID="upbeat-repeater-477110-q6"
+export BIGQUERY_DATASET="analytics"
+export BIGQUERY_TABLE="test03"
+export GCS_SOURCE_BUCKET="sdlc-workspec-store"
+export GCS_SOURCE_PREFIX="etl/data/my_file (1).csv"
 ```
 
-### Starting the Development Server
+### 3. Run Pipeline
 ```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+python -m pipeline.run_test03_pipeline
 ```
 
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
+### 4. Run Tests
 ```bash
-# Copy the example environment file
-cp .env.example .env
+pytest tests/
 ```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-

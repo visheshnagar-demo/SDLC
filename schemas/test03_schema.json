@@ -1,0 +1,74 @@
+[
+  {
+    "name": "rank",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Numeric tour rank"
+  },
+  {
+    "name": "peak",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Peak chart position"
+  },
+  {
+    "name": "all_time_peak",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "All time peak position"
+  },
+  {
+    "name": "actual_gross",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Actual gross revenue"
+  },
+  {
+    "name": "adjusted_gross_in_2022_dollars",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Adjusted gross in 2022 dollars"
+  },
+  {
+    "name": "artist",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Artist name"
+  },
+  {
+    "name": "tour_title",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Tour title"
+  },
+  {
+    "name": "years",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Tour active year(s)"
+  },
+  {
+    "name": "shows",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Total number of shows"
+  },
+  {
+    "name": "average_gross",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Average gross per show"
+  },
+  {
+    "name": "ref",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Reference footnotes"
+  },
+  {
+    "name": "ingested_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "UTC timestamp of ingestion"
+  }
+]

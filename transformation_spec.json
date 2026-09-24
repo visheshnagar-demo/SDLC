@@ -1,0 +1,102 @@
+{
+  "source_table": "my_file (1).csv",
+  "target_table": "test03",
+  "columns": [
+    {
+      "source_name": "Rank",
+      "target_name": "rank",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transformation": "to_integer",
+      "nullable": true
+    },
+    {
+      "source_name": "Peak",
+      "target_name": "peak",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "nullable": true
+    },
+    {
+      "source_name": "All Time Peak",
+      "target_name": "all_time_peak",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "nullable": true
+    },
+    {
+      "source_name": "Actual gross",
+      "target_name": "actual_gross",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "nullable": true
+    },
+    {
+      "source_name": "Adjusted gross (in 2022 dollars)",
+      "target_name": "adjusted_gross_in_2022_dollars",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "nullable": true
+    },
+    {
+      "source_name": "Artist",
+      "target_name": "artist",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "nullable": true
+    },
+    {
+      "source_name": "Tour title",
+      "target_name": "tour_title",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "nullable": true
+    },
+    {
+      "source_name": "Year(s)",
+      "target_name": "years",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "nullable": true
+    },
+    {
+      "source_name": "Shows",
+      "target_name": "shows",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transformation": "to_integer",
+      "nullable": true
+    },
+    {
+      "source_name": "Average gross",
+      "target_name": "average_gross",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "nullable": true
+    },
+    {
+      "source_name": "Ref.",
+      "target_name": "ref",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "nullable": true
+    },
+    {
+      "source_name": "ingested_at",
+      "target_name": "ingested_at",
+      "source_type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "transformation": "CURRENT_TIMESTAMP",
+      "nullable": true
+    }
+  ]
+}
