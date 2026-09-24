@@ -2,6 +2,51 @@
   "pipeline_id": "postgres_to_bigquery_pipeline",
   "source_table": "test_data",
   "target_table": "postgres_test3",
+  "source": {
+    "type": "postgresql",
+    "name": "Cloud SQL PostgreSQL",
+    "table": "test_data",
+    "table_name": "test_data",
+    "database": "postgres",
+    "db_name": "postgres",
+    "instance_connection_name": "upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db"
+  },
+  "target": {
+    "type": "bigquery",
+    "name": "Google BigQuery",
+    "project_id": "upbeat-repeater-477110-q6",
+    "project": "upbeat-repeater-477110-q6",
+    "dataset": "analytics",
+    "table": "postgres_test3",
+    "table_name": "postgres_test3"
+  },
+  "transformations": [
+    {
+      "step": "whitespace_trimming",
+      "type": "cleaning",
+      "description": "Strip leading and trailing whitespace from string columns",
+      "columns": ["id", "name", "email", "status", "data_val"]
+    },
+    {
+      "step": "null_standardization",
+      "type": "cleaning",
+      "description": "Normalize empty string and string null representations ('NULL', 'None', 'NaN', 'N/A') to None/null",
+      "columns": ["id", "name", "email", "status", "data_val"]
+    },
+    {
+      "step": "deduplication",
+      "type": "deduplication",
+      "description": "Deduplicate records based on primary key identifier",
+      "primary_key": "id"
+    },
+    {
+      "step": "audit_metadata",
+      "type": "enrichment",
+      "description": "Append metadata audit timestamp _etl_loaded_at in UTC ISO format",
+      "column": "_etl_loaded_at",
+      "target_type": "TIMESTAMP"
+    }
+  ],
   "columns": [
     {
       "source_name": "id",
