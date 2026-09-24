@@ -2,11 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family:
-    "Inter",
-    system-ui,
-    -apple-system,
-    sans-serif;
+@layer base {
+  body {
+    @apply bg-[#0b1326] text-[#dae2fd] min-h-screen antialiased;
+  }
 }

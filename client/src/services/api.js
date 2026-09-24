@@ -7,85 +7,103 @@ export const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Standardized error payload extractions
-    const message =
-      error.response?.data?.detail ||
-      error.message ||
-      "An unexpected network error occurred";
-    return Promise.reject(
-      new Error(
-        typeof message === "object" ? JSON.stringify(message) : message,
-      ),
-    );
-  },
-);
+export const getReleases = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/releases", { params });
+  return response.data;
+};
 
-export const createCheckoutSession = async (payload) => {
+export const getRelease = async (releaseId) => {
+  const response = await apiClient.get(`/api/v1/releases/${releaseId}`);
+  return response.data;
+};
+
+export const createRelease = async (data) => {
+  const response = await apiClient.post("/api/v1/releases", data);
+  return response.data;
+};
+
+export const updateRelease = async (releaseId, data) => {
+  const response = await apiClient.put(`/api/v1/releases/${releaseId}`, data);
+  return response.data;
+};
+
+export const deleteRelease = async (releaseId) => {
+  const response = await apiClient.delete(`/api/v1/releases/${releaseId}`);
+  return response.data;
+};
+
+export const getReleaseItems = async (releaseId) => {
+  const response = await apiClient.get(`/api/v1/releases/${releaseId}/items`);
+  return response.data;
+};
+
+export const addReleaseItem = async (releaseId, itemData) => {
   const response = await apiClient.post(
-    "/api/v1/payments/checkout-session",
-    payload,
+    `/api/v1/releases/${releaseId}/items`,
+    itemData,
   );
   return response.data;
 };
 
-export const payWithDigitalWallet = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/digital-wallet",
-    payload,
+export const updateReleaseItem = async (releaseId, itemId, itemData) => {
+  const response = await apiClient.put(
+    `/api/v1/releases/${releaseId}/items/${itemId}`,
+    itemData,
   );
   return response.data;
 };
 
-export const getExchangeRates = async (baseCurrency = "USD") => {
-  const response = await apiClient.get("/api/v1/payments/rates", {
-    params: { base_currency: baseCurrency },
-  });
+export const deleteReleaseItem = async (releaseId, itemId) => {
+  const response = await apiClient.delete(
+    `/api/v1/releases/${releaseId}/items/${itemId}`,
+  );
   return response.data;
 };
 
-export const listTransactions = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/payments/transactions", {
-    params,
-  });
-  return response.data;
-};
-
-export const getTransactionDetail = async (transactionId) => {
+export const getReleaseReadiness = async (releaseId) => {
   const response = await apiClient.get(
-    `/api/v1/payments/transactions/${transactionId}`,
+    `/api/v1/releases/${releaseId}/readiness`,
   );
   return response.data;
 };
 
-export const createRefund = async (payload) => {
-  const response = await apiClient.post("/api/v1/refunds", payload);
+export const getDeployments = async (releaseId) => {
+  const response = await apiClient.get(
+    `/api/v1/releases/${releaseId}/deployments`,
+  );
   return response.data;
 };
 
-export const listRefunds = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/refunds", { params });
+export const createDeployment = async (releaseId, deploymentData) => {
+  const response = await apiClient.post(
+    `/api/v1/releases/${releaseId}/deployments`,
+    deploymentData,
+  );
   return response.data;
 };
 
-export const listAuditLogs = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/audit-logs", { params });
+export const getAuditLogs = async (releaseId) => {
+  const response = await apiClient.get(
+    `/api/v1/releases/${releaseId}/audit-logs`,
+  );
   return response.data;
 };
 
 export default {
   apiClient,
-  createCheckoutSession,
-  payWithDigitalWallet,
-  getExchangeRates,
-  listTransactions,
-  getTransactionDetail,
-  createRefund,
-  listRefunds,
-  listAuditLogs,
+  getReleases,
+  getRelease,
+  createRelease,
+  updateRelease,
+  deleteRelease,
+  getReleaseItems,
+  addReleaseItem,
+  updateReleaseItem,
+  deleteReleaseItem,
+  getReleaseReadiness,
+  getDeployments,
+  createDeployment,
+  getAuditLogs,
 };
