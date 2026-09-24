@@ -1,4 +1,77 @@
 {
+  "source": {
+    "type": "gcs",
+    "path": "gs://sdlc-workspec-store/etl/data/raw_sales_data.csv",
+    "format": "csv"
+  },
+  "target": {
+    "type": "bigquery",
+    "project_id": "upbeat-repeater-477110-q6",
+    "dataset": "analytics",
+    "table": "harshada-test3"
+  },
+  "transformations": [
+    {
+      "source_name": "order_id",
+      "target_name": "order_id",
+      "target_type": "STRING",
+      "transform": "cast_string_trim"
+    },
+    {
+      "source_name": "customer_id",
+      "target_name": "customer_id",
+      "target_type": "STRING",
+      "transform": "cast_string_trim"
+    },
+    {
+      "source_name": "customer_name",
+      "target_name": "customer_name",
+      "target_type": "STRING",
+      "transform": "cast_string_trim"
+    },
+    {
+      "source_name": "customer_email",
+      "target_name": "customer_email",
+      "target_type": "STRING",
+      "transform": "cast_string_trim"
+    },
+    {
+      "source_name": "product_category",
+      "target_name": "product_category",
+      "target_type": "STRING",
+      "transform": "cast_string_trim"
+    },
+    {
+      "source_name": "amount",
+      "target_name": "amount",
+      "target_type": "FLOAT64",
+      "transform": "cast_float"
+    },
+    {
+      "source_name": "currency",
+      "target_name": "currency",
+      "target_type": "STRING",
+      "transform": "cast_string_trim"
+    },
+    {
+      "source_name": "order_status",
+      "target_name": "order_status",
+      "target_type": "STRING",
+      "transform": "cast_string_trim"
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "target_type": "TIMESTAMP",
+      "transform": "parse_timestamp"
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "order_date",
+      "target_type": "DATE",
+      "transform": "extract_date"
+    }
+  ],
   "columns": [
     {
       "source_name": "order_id",
