@@ -10,82 +10,118 @@ export const apiClient = axios.create({
   timeout: 10000,
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Standardized error payload extractions
-    const message =
-      error.response?.data?.detail ||
-      error.message ||
-      "An unexpected network error occurred";
-    return Promise.reject(
-      new Error(
-        typeof message === "object" ? JSON.stringify(message) : message,
-      ),
-    );
-  },
-);
-
-export const createCheckoutSession = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/checkout-session",
-    payload,
-  );
+// Artifacts API
+export const getArtifacts = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/artifacts", { params });
   return response.data;
 };
 
-export const payWithDigitalWallet = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/digital-wallet",
-    payload,
-  );
+export const getArtifactById = async (id) => {
+  const response = await apiClient.get(`/api/v1/artifacts/${id}`);
   return response.data;
 };
 
-export const getExchangeRates = async (baseCurrency = "USD") => {
-  const response = await apiClient.get("/api/v1/payments/rates", {
-    params: { base_currency: baseCurrency },
-  });
+export const createArtifact = async (data) => {
+  const response = await apiClient.post("/api/v1/artifacts", data);
   return response.data;
 };
 
-export const listTransactions = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/payments/transactions", {
+export const updateArtifact = async (id, data) => {
+  const response = await apiClient.put(`/api/v1/artifacts/${id}`, data);
+  return response.data;
+};
+
+export const deleteArtifact = async (id) => {
+  const response = await apiClient.delete(`/api/v1/artifacts/${id}`);
+  return response.data;
+};
+
+// Locations API
+export const getLocations = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/locations", { params });
+  return response.data;
+};
+
+export const createLocation = async (data) => {
+  const response = await apiClient.post("/api/v1/locations", data);
+  return response.data;
+};
+
+// Restorations API
+export const getRestorations = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/restorations", { params });
+  return response.data;
+};
+
+export const createRestoration = async (data) => {
+  const response = await apiClient.post("/api/v1/restorations", data);
+  return response.data;
+};
+
+// Environmental Telemetry API
+export const getEnvironmentalReadings = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/environmental-readings", {
     params,
   });
   return response.data;
 };
 
-export const getTransactionDetail = async (transactionId) => {
-  const response = await apiClient.get(
-    `/api/v1/payments/transactions/${transactionId}`,
+export const createEnvironmentalReading = async (data) => {
+  const response = await apiClient.post("/api/v1/environmental-readings", data);
+  return response.data;
+};
+
+// Inspections API
+export const getInspections = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/inspections", { params });
+  return response.data;
+};
+
+export const createInspection = async (data) => {
+  const response = await apiClient.post("/api/v1/inspections", data);
+  return response.data;
+};
+
+export const completeInspection = async (id, data) => {
+  const response = await apiClient.put(
+    `/api/v1/inspections/${id}/complete`,
+    data,
   );
   return response.data;
 };
 
-export const createRefund = async (payload) => {
-  const response = await apiClient.post("/api/v1/refunds", payload);
+// Loans API
+export const getLoans = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/loans", { params });
   return response.data;
 };
 
-export const listRefunds = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/refunds", { params });
+export const createLoan = async (data) => {
+  const response = await apiClient.post("/api/v1/loans", data);
   return response.data;
 };
 
-export const listAuditLogs = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/audit-logs", { params });
+export const updateLoanStatus = async (id, data) => {
+  const response = await apiClient.put(`/api/v1/loans/${id}/status`, data);
   return response.data;
 };
 
 export default {
-  apiClient,
-  createCheckoutSession,
-  payWithDigitalWallet,
-  getExchangeRates,
-  listTransactions,
-  getTransactionDetail,
-  createRefund,
-  listRefunds,
-  listAuditLogs,
+  getArtifacts,
+  getArtifactById,
+  createArtifact,
+  updateArtifact,
+  deleteArtifact,
+  getLocations,
+  createLocation,
+  getRestorations,
+  createRestoration,
+  getEnvironmentalReadings,
+  createEnvironmentalReading,
+  getInspections,
+  createInspection,
+  completeInspection,
+  getLoans,
+  createLoan,
+  updateLoanStatus,
 };
