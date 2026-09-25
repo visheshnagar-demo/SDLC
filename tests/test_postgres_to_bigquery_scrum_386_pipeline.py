@@ -2,6 +2,7 @@
 import ast
 import json
 import os
+from pathlib import Path
 import unittest
 from unittest.mock import patch
 import pytest
@@ -11,11 +12,13 @@ try:
 except ImportError:
     pd = None
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 def test_dag_syntax():
     """Verifies that the Airflow DAG has valid Python AST syntax."""
-    dag_path = os.path.join("dags", "postgres_to_bigquery_scrum_386_dag.py")
-    assert os.path.isfile(dag_path), f"DAG file missing: {dag_path}"
+    dag_path = BASE_DIR / "dags" / "postgres_to_bigquery_scrum_386_dag.py"
+    assert dag_path.is_file(), f"DAG file missing: {dag_path}"
     with open(dag_path, "r", encoding="utf-8") as f:
         code = f.read()
     tree = ast.parse(code)
@@ -24,8 +27,8 @@ def test_dag_syntax():
 
 def test_standalone_script_syntax():
     """Verifies that the standalone pipeline script has valid syntax."""
-    script_path = os.path.join("pipeline", "run_postgres_to_bigquery_scrum_386.py")
-    assert os.path.isfile(script_path), f"Script file missing: {script_path}"
+    script_path = BASE_DIR / "pipeline" / "run_postgres_to_bigquery_scrum_386.py"
+    assert script_path.is_file(), f"Script file missing: {script_path}"
     with open(script_path, "r", encoding="utf-8") as f:
         code = f.read()
     tree = ast.parse(code)
@@ -44,8 +47,8 @@ def test_pipeline_spec_configuration():
 
 def test_static_contract_transformation_spec():
     """Verifies that transformation_spec.json contains required metadata keys."""
-    spec_path = "transformation_spec.json"
-    assert os.path.isfile(spec_path), f"Missing file: {spec_path}"
+    spec_path = BASE_DIR / "transformation_spec.json"
+    assert spec_path.is_file(), f"Missing file: {spec_path}"
     with open(spec_path, "r", encoding="utf-8") as f:
         spec = json.load(f)
     assert "source" in spec, "transformation_spec.json missing 'source'"
@@ -56,8 +59,8 @@ def test_static_contract_transformation_spec():
 
 def test_openapi_spec():
     """Verifies that openapi.json is valid and contains API definitions."""
-    openapi_path = "openapi.json"
-    assert os.path.isfile(openapi_path), f"Missing file: {openapi_path}"
+    openapi_path = BASE_DIR / "openapi.json"
+    assert openapi_path.is_file(), f"Missing file: {openapi_path}"
     with open(openapi_path, "r", encoding="utf-8") as f:
         spec = json.load(f)
     assert "openapi" in spec
@@ -68,8 +71,8 @@ def test_openapi_spec():
 
 def test_static_contract_env_deploy_json():
     """Verifies that env.deploy.json contains required keys including failure_behavior."""
-    env_path = "env.deploy.json"
-    assert os.path.isfile(env_path), f"Missing file: {env_path}"
+    env_path = BASE_DIR / "env.deploy.json"
+    assert env_path.is_file(), f"Missing file: {env_path}"
     with open(env_path, "r", encoding="utf-8") as f:
         env_data = json.load(f)
     assert "failure_behavior" in env_data or "FAILURE_BEHAVIOR" in env_data
