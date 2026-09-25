@@ -54,6 +54,18 @@ def test_static_contract_transformation_spec():
     assert len(spec["transformations"]) > 0, "transformations list is empty"
 
 
+def test_openapi_spec():
+    """Verifies that openapi.json is valid and contains API definitions."""
+    openapi_path = "openapi.json"
+    assert os.path.isfile(openapi_path), f"Missing file: {openapi_path}"
+    with open(openapi_path, "r", encoding="utf-8") as f:
+        spec = json.load(f)
+    assert "openapi" in spec
+    assert "info" in spec
+    assert "paths" in spec
+    assert "components" in spec
+
+
 def test_static_contract_env_deploy_json():
     """Verifies that env.deploy.json contains required keys including failure_behavior."""
     env_path = "env.deploy.json"
