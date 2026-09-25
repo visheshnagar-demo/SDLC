@@ -1,16 +1,18 @@
+import os
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 
-from server.database import Base, get_db, seed_data
-import server.models  # noqa: F401
+os.environ["TESTING"] = "true"
+
+from server import models
+from server.database import Base, get_db
 from server.main import app
 
-# In-memory SQLite for testing with StaticPool
+# Create in-memory SQLite engine with StaticPool for test suite
 TEST_DATABASE_URL = "sqlite:///:memory:"
-
 test_engine = create_engine(
     TEST_DATABASE_URL,
     connect_args={"check_same_thread": False},
@@ -20,13 +22,8 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup_database():
+def setup_test_database():
     Base.metadata.create_all(bind=test_engine)
-    db = TestingSessionLocal()
-    try:
-        seed_data(db)
-    finally:
-        db.close()
     yield
     Base.metadata.drop_all(bind=test_engine)
 
@@ -37,6 +34,7 @@ def db_session():
     try:
         yield db
     finally:
+        db.rollback()
         db.close()
 
 
