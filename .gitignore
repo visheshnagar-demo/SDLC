@@ -16,6 +16,9 @@ secrets/
 !env.deploy.json
 !env.deploy.yaml
 !transformation_spec.json
+!openapi.json
+!server/openapi.json
+!**/openapi.json
 !schemas/*.json
 !dbt_project.yml
 !profiles.yml.example

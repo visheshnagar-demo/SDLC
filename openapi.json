@@ -1,0 +1,111 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Cloud SQL PostgreSQL to BigQuery ETL API",
+    "description": "API and schema specifications for SCRUM-386 ETL pipeline extracting from PostgreSQL to BigQuery.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/etl/run": {
+      "post": {
+        "summary": "Trigger ETL Pipeline Run",
+        "description": "Executes the batch ETL pipeline from Cloud SQL PostgreSQL to BigQuery",
+        "responses": {
+          "200": {
+            "description": "ETL Run Successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ETLMetrics"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ETL Run Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/etl/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Check health status of the ETL service",
+        "responses": {
+          "200": {
+            "description": "Healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "healthy"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ETLMetrics": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "SUCCESS"
+          },
+          "extracted_count": {
+            "type": "integer",
+            "example": 500
+          },
+          "cleaned_count": {
+            "type": "integer",
+            "example": 500
+          },
+          "loaded_count": {
+            "type": "integer",
+            "example": 500
+          },
+          "dropped_count": {
+            "type": "integer",
+            "example": 0
+          }
+        },
+        "required": [
+          "status",
+          "extracted_count",
+          "cleaned_count",
+          "loaded_count"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      }
+    }
+  }
+}

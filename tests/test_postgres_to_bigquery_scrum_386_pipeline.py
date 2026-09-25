@@ -59,8 +59,15 @@ def test_static_contract_transformation_spec():
 
 def test_openapi_spec():
     """Verifies that openapi.json is valid and contains API definitions."""
-    openapi_path = BASE_DIR / "openapi.json"
-    assert openapi_path.is_file(), f"Missing file: {openapi_path}"
+    candidates = [
+        Path(__file__).resolve().parent.parent / "openapi.json",
+        Path.cwd() / "openapi.json",
+        Path("openapi.json"),
+        Path(__file__).resolve().parent / "openapi.json",
+        Path(__file__).resolve().parent.parent / "server" / "openapi.json",
+    ]
+    assert any(p.exists() for p in candidates), "Missing openapi.json in searched paths"
+    openapi_path = next(p for p in candidates if p.exists())
     with open(openapi_path, "r", encoding="utf-8") as f:
         spec = json.load(f)
     assert "openapi" in spec
