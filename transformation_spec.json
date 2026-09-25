@@ -1,0 +1,187 @@
+{
+  "pipeline_id": "test04_etl",
+  "source_table": "my_file (1).csv",
+  "target_table": "test04",
+  "source_columns": [
+    "Rank",
+    "Peak",
+    "All Time Peak",
+    "Actual\u00a0gross",
+    "Adjusted\u00a0gross (in 2022 dollars)",
+    "Artist",
+    "Tour title",
+    "Year(s)",
+    "Shows",
+    "Average gross",
+    "Ref."
+  ],
+  "columns": [
+    {
+      "name": "rank",
+      "source_name": "Rank",
+      "target_name": "rank",
+      "source_column": "Rank",
+      "target_column": "rank",
+      "target_type": "INTEGER",
+      "transformation": "to_integer"
+    },
+    {
+      "name": "peak",
+      "source_name": "Peak",
+      "target_name": "peak",
+      "source_column": "Peak",
+      "target_column": "peak",
+      "target_type": "STRING",
+      "transformation": "to_string"
+    },
+    {
+      "name": "all_time_peak",
+      "source_name": "All Time Peak",
+      "target_name": "all_time_peak",
+      "source_column": "All Time Peak",
+      "target_column": "all_time_peak",
+      "target_type": "STRING",
+      "transformation": "to_string"
+    },
+    {
+      "name": "actual_gross",
+      "source_name": "Actual\u00a0gross",
+      "target_name": "actual_gross",
+      "source_column": "Actual\u00a0gross",
+      "target_column": "actual_gross",
+      "target_type": "STRING",
+      "transformation": "to_string"
+    },
+    {
+      "name": "adjusted_gross_2022",
+      "source_name": "Adjusted\u00a0gross (in 2022 dollars)",
+      "target_name": "adjusted_gross_2022",
+      "source_column": "Adjusted\u00a0gross (in 2022 dollars)",
+      "target_column": "adjusted_gross_2022",
+      "target_type": "STRING",
+      "transformation": "to_string"
+    },
+    {
+      "name": "artist",
+      "source_name": "Artist",
+      "target_name": "artist",
+      "source_column": "Artist",
+      "target_column": "artist",
+      "target_type": "STRING",
+      "transformation": "to_string"
+    },
+    {
+      "name": "tour_title",
+      "source_name": "Tour title",
+      "target_name": "tour_title",
+      "source_column": "Tour title",
+      "target_column": "tour_title",
+      "target_type": "STRING",
+      "transformation": "to_string"
+    },
+    {
+      "name": "years",
+      "source_name": "Year(s)",
+      "target_name": "years",
+      "source_column": "Year(s)",
+      "target_column": "years",
+      "target_type": "STRING",
+      "transformation": "to_string"
+    },
+    {
+      "name": "shows",
+      "source_name": "Shows",
+      "target_name": "shows",
+      "source_column": "Shows",
+      "target_column": "shows",
+      "target_type": "INTEGER",
+      "transformation": "to_integer"
+    },
+    {
+      "name": "average_gross",
+      "source_name": "Average gross",
+      "target_name": "average_gross",
+      "source_column": "Average gross",
+      "target_column": "average_gross",
+      "target_type": "STRING",
+      "transformation": "to_string"
+    },
+    {
+      "name": "ref",
+      "source_name": "Ref.",
+      "target_name": "ref",
+      "source_column": "Ref.",
+      "target_column": "ref",
+      "target_type": "STRING",
+      "transformation": "to_string"
+    }
+  ],
+  "column_mappings": [
+    {
+      "source_column": "Rank",
+      "target_column": "rank",
+      "target_type": "INTEGER",
+      "transformation": "to_integer"
+    },
+    {
+      "source_column": "Peak",
+      "target_column": "peak",
+      "target_type": "STRING",
+      "transformation": "to_string"
+    },
+    {
+      "source_column": "All Time Peak",
+      "target_column": "all_time_peak",
+      "target_type": "STRING",
+      "transformation": "to_string"
+    },
+    {
+      "source_column": "Actual\u00a0gross",
+      "target_column": "actual_gross",
+      "target_type": "STRING",
+      "transformation": "to_string"
+    },
+    {
+      "source_column": "Adjusted\u00a0gross (in 2022 dollars)",
+      "target_column": "adjusted_gross_2022",
+      "target_type": "STRING",
+      "transformation": "to_string"
+    },
+    {
+      "source_column": "Artist",
+      "target_column": "artist",
+      "target_type": "STRING",
+      "transformation": "to_string"
+    },
+    {
+      "source_column": "Tour title",
+      "target_column": "tour_title",
+      "target_type": "STRING",
+      "transformation": "to_string"
+    },
+    {
+      "source_column": "Year(s)",
+      "target_column": "years",
+      "target_type": "STRING",
+      "transformation": "to_string"
+    },
+    {
+      "source_column": "Shows",
+      "target_column": "shows",
+      "target_type": "INTEGER",
+      "transformation": "to_integer"
+    },
+    {
+      "source_column": "Average gross",
+      "target_column": "average_gross",
+      "target_type": "STRING",
+      "transformation": "to_string"
+    },
+    {
+      "source_column": "Ref.",
+      "target_column": "ref",
+      "target_type": "STRING",
+      "transformation": "to_string"
+    }
+  ]
+}

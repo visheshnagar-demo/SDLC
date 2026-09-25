@@ -1,88 +1,30 @@
-# Project
+# test04 ETL Pipeline
 
-## Server
+Serverless batch ETL pipeline that ingests concert tour data from Google Cloud Storage, applies schema normalization and rank sorting (`ORDER BY rank ASC`), and loads the results into Google Cloud BigQuery.
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+## Target BigQuery Location
+- **Project**: `upbeat-repeater-477110-q6`
+- **Dataset**: `analytics`
+- **Table**: `test04`
 
-### Setup
+## Source GCS Location
+- **Bucket**: `sdlc-workspec-store`
+- **File**: `etl/data/my_file (1).csv`
 
-1. Create and activate virtual environment:
+## Architecture & Components
+- **Extractor** (`pipeline/extractor.py`): Ingests CSV data from GCS bucket.
+- **Transformer** (`pipeline/transformer.py`): Normalizes column headers, casts types, sorts by `rank` ASC, and injects `ingestion_timestamp`.
+- **Loader** (`pipeline/loader.py`): Reconciles schema against `schemas/test04_schema.json` and writes into BigQuery using `WRITE_TRUNCATE`.
+- **Runner** (`pipeline/run_test04_etl.py`): Standalone batch execution script.
+- **Entrypoint** (`main.py`): Cloud Run Job entrypoint.
+
+## Local Execution
 ```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
-```
-
-2. Install dependencies:
-```bash
-cd server
 pip install -r requirements.txt
-cd ..
+python main.py
 ```
 
-### Running Tests
+## Running Tests
 ```bash
-cd server
-python -m pytest -v
-cd ..
+pytest tests/ -v
 ```
-
-### Starting the Development Server
-```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
-```bash
-# Copy the example environment file
-cp .env.example .env
-```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-
