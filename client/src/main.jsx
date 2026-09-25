@@ -13,39 +13,29 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
-  componentDidCatch(_error, _errorInfo) {
-    // Error logged for boundary tracking
+  componentDidCatch() {
+    // Rely on error boundary fallback without polluting logs
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div
-          style={{
-            padding: "2rem",
-            textAlign: "center",
-            fontFamily: "sans-serif",
-          }}
-        >
-          <h2>Something went wrong.</h2>
-          <p style={{ color: "#666" }}>
-            {this.state.error?.message ||
-              "An unexpected rendering error occurred."}
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              marginTop: "1rem",
-              padding: "0.5rem 1rem",
-              backgroundColor: "#4F46E5",
-              color: "#fff",
-              border: "none",
-              borderRadius: "0.375rem",
-              cursor: "pointer",
-            }}
-          >
-            Reload Page
-          </button>
+        <div className="min-h-screen bg-[#0c141f] text-[#ffb4ab] p-8 font-mono flex flex-col items-center justify-center">
+          <div className="p-6 rounded-2xl bg-[#141c27] border border-[#fb7185]/50 max-w-lg text-center space-y-4">
+            <h2 className="text-xl font-bold text-[#fb7185]">
+              AquaSense System Notice
+            </h2>
+            <p className="text-sm text-[#bac9cc]">
+              An unexpected render issue occurred in the client application.
+            </p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 rounded-lg bg-[#00e5ff] text-[#070c13] font-bold text-xs uppercase"
+            >
+              Reload Dashboard
+            </button>
+          </div>
         </div>
       );
     }
