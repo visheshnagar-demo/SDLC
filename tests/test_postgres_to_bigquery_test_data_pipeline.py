@@ -1,6 +1,7 @@
 """Automated tests for pipeline postgres_to_bigquery_test_data."""
 import ast
 import os
+from unittest.mock import patch, MagicMock
 import pytest
 
 
@@ -53,14 +54,14 @@ def test_pipeline_spec_configuration():
 
 
 def test_runner_transformation_flow(tmp_path):
-    """Verifies PipelineRunner transform on staged parquet data when pandas & pyarrow exist."""
+    """Verifies PipelineRunner transform on staged parquet data."""
     pd = pytest.importorskip("pandas")
-    pa = pytest.importorskip("pyarrow")
     from pipeline.run_postgres_to_bigquery_test_data import PipelineRunner
 
     runner = PipelineRunner(execution_date="2026-05-18")
+    staging_file = str(tmp_path / "data.parquet")
     runner.staging_dir = str(tmp_path)
-    runner.staging_file = str(tmp_path / "data.parquet")
+    runner.staging_file = staging_file
 
     sample_df = pd.DataFrame([
         {
@@ -71,13 +72,46 @@ def test_runner_transformation_flow(tmp_path):
             "updated_at": "2026-05-18 11:00:00",
         }
     ])
-    sample_df.to_parquet(runner.staging_file, index=False)
 
-    valid_count = runner.transform()
-    assert valid_count == 1
+    # Check if parquet write is supported directly without raising an exception
+    can_write_parquet = True
+    try:
+        sample_df.to_parquet(staging_file, index=False)
+    except (ImportError, ValueError, Exception):
+        can_write_parquet = False
 
-    transformed_df = pd.read_parquet(runner.staging_file)
-    assert transformed_df.iloc[0]["id"] == "101"
-    assert transformed_df.iloc[0]["data_payload"] == "sample_text"
-    assert transformed_df.iloc[0]["status"] == "completed"
-    assert "ingested_at" in transformed_df.columns
+    if can_write_parquet:
+        valid_count = runner.transform()
+        assert valid_count == 1
+        transformed_df = pd.read_parquet(staging_file)
+        assert transformed_df.iloc[0]["id"] == "101"
+        assert transformed_df.iloc[0]["data_payload"] == "sample_text"
+        assert transformed_df.iloc[0]["status"] == "completed"
+        assert "ingested_at" in transformed_df.columns
+    else:
+        # Mock read and write parquet when engine is not present
+        saved_holder = {}
+        def fake_to_parquet(self, path, **kwargs):
+            saved_holder["df"] = self.copy()
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("mock_parquet_data")
+
+        def fake_read_parquet(path, **kwargs):
+            if "df" in saved_holder:
+                return saved_holder["df"].copy()
+            return sample_df.copy()
+
+        # Write dummy file so os.path.exists and getsize pass
+        with open(staging_file, "w", encoding="utf-8") as f:
+            f.write("mock_parquet_content")
+
+        with patch("pandas.read_parquet", side_effect=fake_read_parquet), \
+             patch.object(pd.DataFrame, "to_parquet", fake_to_parquet):
+            valid_count = runner.transform()
+            assert valid_count == 1
+            assert "df" in saved_holder
+            transformed_df = saved_holder["df"]
+            assert transformed_df.iloc[0]["id"] == "101"
+            assert transformed_df.iloc[0]["data_payload"] == "sample_text"
+            assert transformed_df.iloc[0]["status"] == "completed"
+            assert "ingested_at" in transformed_df.columns

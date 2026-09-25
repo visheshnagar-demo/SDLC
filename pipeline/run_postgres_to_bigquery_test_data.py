@@ -227,8 +227,8 @@ class PipelineRunner:
         )
         schema_file = None
         for cand in [
-            os.path.join("schemas", f"postgres_test3_schema.json"),
-            os.path.join("schemas", f"postgres_to_bigquery_test_data_schema.json"),
+            os.path.join("schemas", "postgres_test3_schema.json"),
+            os.path.join("schemas", "postgres_to_bigquery_test_data_schema.json"),
             os.path.join("schemas", "target_table_schema.json"),
         ]:
             if os.path.isfile(cand):

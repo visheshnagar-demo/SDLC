@@ -1,32 +1,108 @@
 {
+  "pipeline_id": "postgres_to_bigquery_test_data",
+  "source": {
+    "type": "postgresql",
+    "table": "test_data",
+    "schema": "public",
+    "instance_connection_name": "upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db",
+    "database": "postgres"
+  },
+  "target": {
+    "type": "bigquery",
+    "project": "upbeat-repeater-477110-q6",
+    "dataset": "analytics",
+    "table": "postgres_test3"
+  },
+  "transformations": [
+    {
+      "source_column": "id",
+      "target_column": "id",
+      "source_name": "id",
+      "target_name": "id",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "transform": "trim_whitespace",
+      "description": "Trim leading and trailing whitespace"
+    },
+    {
+      "source_column": "data_payload",
+      "target_column": "data_payload",
+      "source_name": "data_payload",
+      "target_name": "data_payload",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "transform": "trim_whitespace",
+      "description": "Trim leading and trailing whitespace and normalize null values"
+    },
+    {
+      "source_column": "status",
+      "target_column": "status",
+      "source_name": "status",
+      "target_name": "status",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transformation": "trim_whitespace",
+      "transform": "trim_whitespace",
+      "description": "Trim leading and trailing whitespace"
+    },
+    {
+      "source_column": "created_at",
+      "target_column": "created_at",
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "source_type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "transformation": "parse_timestamp",
+      "transform": "parse_timestamp",
+      "description": "Parse ISO 8601 UTC timestamp"
+    },
+    {
+      "source_column": "updated_at",
+      "target_column": "updated_at",
+      "source_name": "updated_at",
+      "target_name": "updated_at",
+      "source_type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "transformation": "parse_timestamp",
+      "transform": "parse_timestamp",
+      "description": "Parse ISO 8601 UTC timestamp"
+    }
+  ],
   "columns": [
     {
       "source_name": "id",
       "target_name": "id",
+      "source_type": "STRING",
       "target_type": "STRING",
       "transform": "trim_whitespace"
     },
     {
       "source_name": "data_payload",
       "target_name": "data_payload",
+      "source_type": "STRING",
       "target_type": "STRING",
       "transform": "trim_whitespace"
     },
     {
       "source_name": "status",
       "target_name": "status",
+      "source_type": "STRING",
       "target_type": "STRING",
       "transform": "trim_whitespace"
     },
     {
       "source_name": "created_at",
       "target_name": "created_at",
+      "source_type": "TIMESTAMP",
       "target_type": "TIMESTAMP",
       "transform": "parse_timestamp"
     },
     {
       "source_name": "updated_at",
       "target_name": "updated_at",
+      "source_type": "TIMESTAMP",
       "target_type": "TIMESTAMP",
       "transform": "parse_timestamp"
     }
