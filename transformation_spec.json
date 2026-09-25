@@ -1,6 +1,49 @@
 {
+  "source": {
+    "type": "postgresql",
+    "instance_connection_name": "upbeat-repeater-477110-q6:us-central1:sdlc-etldemo-db",
+    "database": "postgres",
+    "schema": "public",
+    "table": "kttest_data",
+    "auth_type": "IAM"
+  },
   "source_table": "kttest_data",
+  "target": {
+    "type": "bigquery",
+    "project_id": "upbeat-repeater-477110-q6",
+    "dataset": "analytics",
+    "table": "postgres_test2",
+    "location": "us-central1",
+    "write_disposition": "WRITE_APPEND",
+    "write_mode": "append"
+  },
   "target_table": "analytics.postgres_test2",
+  "transformations": [
+    {
+      "name": "clean_whitespace",
+      "type": "trim_whitespace",
+      "description": "Trim leading and trailing whitespace from string columns",
+      "columns": ["name", "email"]
+    },
+    {
+      "name": "normalize_nulls",
+      "type": "null_normalization",
+      "description": "Convert empty strings and null representations to null",
+      "columns": ["name", "email"]
+    },
+    {
+      "name": "deduplicate_records",
+      "type": "deduplication",
+      "description": "Remove exact duplicate rows across all columns",
+      "strategy": "drop_exact_duplicates"
+    },
+    {
+      "name": "coerce_data_types",
+      "type": "type_coercion",
+      "description": "Coerce numeric and timestamp columns to target schema types",
+      "columns": ["id", "created_at", "updated_at"]
+    }
+  ],
   "columns": [
     {
       "source_name": "id",

@@ -3,6 +3,7 @@ import ast
 import os
 from unittest.mock import MagicMock, patch
 import pytest
+import pandas as pd
 from src.config import PipelineConfig
 
 
@@ -30,14 +31,12 @@ def sample_config():
 
 
 def test_loader_initialization(sample_config):
-    pd = pytest.importorskip("pandas")
     from src.loader import BigQueryLoader
     loader = BigQueryLoader(sample_config)
     assert loader.config == sample_config
 
 
 def test_loader_ensure_dataset_exists(sample_config):
-    pd = pytest.importorskip("pandas")
     from src.loader import BigQueryLoader
     with patch("google.cloud.bigquery.Client") as mock_bq_client_cls:
         mock_client = MagicMock()
@@ -49,7 +48,6 @@ def test_loader_ensure_dataset_exists(sample_config):
 
 
 def test_loader_ensure_dataset_creates_if_not_found(sample_config):
-    pd = pytest.importorskip("pandas")
     from google.cloud.exceptions import NotFound
     from src.loader import BigQueryLoader
     with patch("google.cloud.bigquery.Client") as mock_bq_client_cls:
@@ -63,7 +61,6 @@ def test_loader_ensure_dataset_creates_if_not_found(sample_config):
 
 
 def test_loader_load_dataframe_success(sample_config):
-    pd = pytest.importorskip("pandas")
     from src.loader import BigQueryLoader
     with patch("google.cloud.bigquery.Client") as mock_bq_client_cls:
         mock_client = MagicMock()
@@ -81,7 +78,6 @@ def test_loader_load_dataframe_success(sample_config):
 
 
 def test_loader_load_empty_dataframe(sample_config):
-    pd = pytest.importorskip("pandas")
     from src.loader import BigQueryLoader
     with patch("google.cloud.bigquery.Client") as mock_bq_client_cls:
         mock_client = MagicMock()

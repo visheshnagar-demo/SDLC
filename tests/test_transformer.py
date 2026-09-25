@@ -2,6 +2,8 @@
 import ast
 import os
 import pytest
+import pandas as pd
+from src.transformer import DataSanitizer
 
 
 def test_transformer_module_syntax():
@@ -15,9 +17,6 @@ def test_transformer_module_syntax():
 
 def test_clean_whitespace_and_nulls():
     """Verifies whitespace trimming and null normalization."""
-    pd = pytest.importorskip("pandas")
-    from src.transformer import DataSanitizer
-
     data = {
         "id": [1, 2, 3, 4],
         "name": ["  Alice  ", "Bob", "  Charlie  ", "   "],
@@ -38,9 +37,6 @@ def test_clean_whitespace_and_nulls():
 
 def test_clean_deduplication():
     """Verifies duplicate removal."""
-    pd = pytest.importorskip("pandas")
-    from src.transformer import DataSanitizer
-
     data = {
         "id": [1, 1, 2, 3],
         "name": ["Alice", "Alice", "Bob", "Charlie"],
@@ -58,9 +54,6 @@ def test_clean_deduplication():
 
 def test_clean_empty_dataframe():
     """Verifies handling of empty input DataFrame."""
-    pd = pytest.importorskip("pandas")
-    from src.transformer import DataSanitizer
-
     df = pd.DataFrame()
     cleaned_df, metrics = DataSanitizer.clean(df)
 
@@ -71,9 +64,6 @@ def test_clean_empty_dataframe():
 
 def test_clean_circuit_breaker():
     """Verifies circuit breaker raises RuntimeError when all rows are dropped."""
-    pd = pytest.importorskip("pandas")
-    from src.transformer import DataSanitizer
-
     data = {
         "col1": [None, None],
         "col2": ["", "  "],

@@ -3,6 +3,7 @@ import ast
 import os
 from unittest.mock import MagicMock, patch
 import pytest
+import pandas as pd
 
 
 def test_orchestrator_module_syntax():
@@ -15,7 +16,6 @@ def test_orchestrator_module_syntax():
 
 
 def test_run_pipeline_success():
-    pd = pytest.importorskip("pandas")
     from src.orchestrator import run_pipeline
 
     with patch("src.orchestrator.BigQueryLoader") as mock_loader_cls, \
@@ -47,7 +47,6 @@ def test_run_pipeline_success():
 
 
 def test_run_pipeline_empty_source():
-    pd = pytest.importorskip("pandas")
     from src.orchestrator import run_pipeline
 
     with patch("src.orchestrator.CloudSqlExtractor") as mock_extractor_cls:

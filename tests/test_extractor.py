@@ -3,6 +3,7 @@ import ast
 import os
 from unittest.mock import MagicMock, patch
 import pytest
+import pandas as pd
 from src.config import PipelineConfig
 
 
@@ -30,14 +31,12 @@ def sample_config():
 
 
 def test_extractor_initialization(sample_config):
-    pd = pytest.importorskip("pandas")
     from src.extractor import CloudSqlExtractor
     extractor = CloudSqlExtractor(sample_config)
     assert extractor.config == sample_config
 
 
 def test_extractor_extract_success(sample_config):
-    pd = pytest.importorskip("pandas")
     from src.extractor import CloudSqlExtractor
     with patch("pandas.read_sql") as mock_read_sql, patch("sqlalchemy.create_engine") as mock_create_engine:
         mock_df = pd.DataFrame({"id": [1, 2], "name": ["Alice", "Bob"]})
@@ -55,7 +54,6 @@ def test_extractor_extract_success(sample_config):
 
 
 def test_extractor_extract_failure(sample_config):
-    pd = pytest.importorskip("pandas")
     from src.extractor import CloudSqlExtractor
     with patch("pandas.read_sql", side_effect=Exception("Database connection timeout")), patch("sqlalchemy.create_engine") as mock_create_engine:
         mock_engine = MagicMock()
