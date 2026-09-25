@@ -2,6 +2,199 @@
   "pipeline_id": "test04_etl",
   "source_table": "my_file (1).csv",
   "target_table": "test04",
+  "source": {
+    "type": "gcs",
+    "bucket": "sdlc-workspec-store",
+    "prefix": "etl/data/my_file (1).csv",
+    "uri": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "format": "csv",
+    "columns": [
+      "Rank",
+      "Peak",
+      "All Time Peak",
+      "Actual\u00a0gross",
+      "Adjusted\u00a0gross (in 2022 dollars)",
+      "Artist",
+      "Tour title",
+      "Year(s)",
+      "Shows",
+      "Average gross",
+      "Ref."
+    ]
+  },
+  "target": {
+    "type": "bigquery",
+    "project": "upbeat-repeater-477110-q6",
+    "dataset": "analytics",
+    "table": "test04",
+    "write_mode": "overwrite",
+    "schema_file": "schemas/test04_schema.json",
+    "columns": [
+      {
+        "name": "rank",
+        "type": "INTEGER",
+        "mode": "NULLABLE",
+        "description": "Tour rank by gross"
+      },
+      {
+        "name": "peak",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Peak position"
+      },
+      {
+        "name": "all_time_peak",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "All-time peak position"
+      },
+      {
+        "name": "actual_gross",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Actual gross revenue"
+      },
+      {
+        "name": "adjusted_gross_2022",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Adjusted gross revenue in 2022 dollars"
+      },
+      {
+        "name": "artist",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Artist or performing group"
+      },
+      {
+        "name": "tour_title",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Tour title name"
+      },
+      {
+        "name": "years",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Year or years of tour"
+      },
+      {
+        "name": "shows",
+        "type": "INTEGER",
+        "mode": "NULLABLE",
+        "description": "Number of shows"
+      },
+      {
+        "name": "average_gross",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Average gross revenue per show"
+      },
+      {
+        "name": "ref",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Reference citation"
+      },
+      {
+        "name": "ingestion_timestamp",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE",
+        "description": "Timestamp when the record was ingested"
+      }
+    ]
+  },
+  "transformations": [
+    {
+      "source_column": "Rank",
+      "target_column": "rank",
+      "target_type": "INTEGER",
+      "transformation": "to_integer",
+      "description": "Convert rank to integer"
+    },
+    {
+      "source_column": "Peak",
+      "target_column": "peak",
+      "target_type": "STRING",
+      "transformation": "to_string",
+      "description": "Peak position as string"
+    },
+    {
+      "source_column": "All Time Peak",
+      "target_column": "all_time_peak",
+      "target_type": "STRING",
+      "transformation": "to_string",
+      "description": "All time peak position"
+    },
+    {
+      "source_column": "Actual\u00a0gross",
+      "target_column": "actual_gross",
+      "target_type": "STRING",
+      "transformation": "to_string",
+      "description": "Actual gross revenue"
+    },
+    {
+      "source_column": "Adjusted\u00a0gross (in 2022 dollars)",
+      "target_column": "adjusted_gross_2022",
+      "target_type": "STRING",
+      "transformation": "to_string",
+      "description": "Adjusted gross revenue in 2022 dollars"
+    },
+    {
+      "source_column": "Artist",
+      "target_column": "artist",
+      "target_type": "STRING",
+      "transformation": "to_string",
+      "description": "Artist name"
+    },
+    {
+      "source_column": "Tour title",
+      "target_column": "tour_title",
+      "target_type": "STRING",
+      "transformation": "to_string",
+      "description": "Tour title"
+    },
+    {
+      "source_column": "Year(s)",
+      "target_column": "years",
+      "target_type": "STRING",
+      "transformation": "to_string",
+      "description": "Tour years"
+    },
+    {
+      "source_column": "Shows",
+      "target_column": "shows",
+      "target_type": "INTEGER",
+      "transformation": "to_integer",
+      "description": "Number of shows"
+    },
+    {
+      "source_column": "Average gross",
+      "target_column": "average_gross",
+      "target_type": "STRING",
+      "transformation": "to_string",
+      "description": "Average gross revenue"
+    },
+    {
+      "source_column": "Ref.",
+      "target_column": "ref",
+      "target_type": "STRING",
+      "transformation": "to_string",
+      "description": "Reference citation"
+    },
+    {
+      "type": "sort",
+      "column": "rank",
+      "order": "asc",
+      "description": "Sort records in ascending order by rank"
+    },
+    {
+      "type": "add_audit_column",
+      "column": "ingestion_timestamp",
+      "value": "current_timestamp()",
+      "description": "Add ingestion timestamp"
+    }
+  ],
   "source_columns": [
     "Rank",
     "Peak",
