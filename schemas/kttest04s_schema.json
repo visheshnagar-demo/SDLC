@@ -1,0 +1,74 @@
+[
+  {
+    "name": "rank",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Tour ranking by gross revenue"
+  },
+  {
+    "name": "peak",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Peak chart or box office position"
+  },
+  {
+    "name": "all_time_peak",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "All-time peak ranking position"
+  },
+  {
+    "name": "actual_gross",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Actual gross revenue in USD"
+  },
+  {
+    "name": "adjusted_gross_2022_dollars",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Adjusted gross revenue in 2022 USD"
+  },
+  {
+    "name": "artist",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Touring artist or band name"
+  },
+  {
+    "name": "tour_title",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Title of the concert tour"
+  },
+  {
+    "name": "years",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Years the tour was active"
+  },
+  {
+    "name": "shows",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Total number of shows performed"
+  },
+  {
+    "name": "average_gross",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Average gross revenue per show in USD"
+  },
+  {
+    "name": "ref",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Reference citations"
+  },
+  {
+    "name": "_ingested_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Timestamp when record was ingested into BigQuery"
+  }
+]

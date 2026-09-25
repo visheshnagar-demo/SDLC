@@ -1,88 +1,69 @@
-# Project
+# ETL Pipeline: `kttest04` (GCS to BigQuery)
 
-## Server
+Production-grade batch ETL pipeline ingesting concert tour CSV data from Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/my_file (1).csv`), performing type-safe cleansing and schema transformation, sorting records ascending by `rank`, and idempotently loading into BigQuery table `upbeat-repeater-477110-q6.analytics.kttest04`.
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+## Architecture & Data Flow
 
-### Setup
-
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+```text
+Google Cloud Storage (CSV)
+         │
+         ▼
+[GCSSourceExtractor] (Streaming extract, existence check, retry backoff)
+         │
+         ▼
+[RankSortTransformer] (Header normalization, currency/annotation cleansing, Order by rank ASC)
+         │
+         ▼
+[BigQueryTargetLoader] (Dataset check, schema reconciliation, WRITE_TRUNCATE batch load)
+         │
+         ▼
+Google BigQuery Table (upbeat-repeater-477110-q6.analytics.kttest04)
 ```
 
-2. Install dependencies:
+## Target Schema (`kttest04`)
+
+| Field Name | Type | Mode | Description |
+| :--- | :--- | :--- | :--- |
+| `rank` | `INTEGER` | `NULLABLE` | Tour ranking by gross revenue |
+| `peak` | `INTEGER` | `NULLABLE` | Peak chart or box office position |
+| `all_time_peak` | `INTEGER` | `NULLABLE` | All-time peak ranking position |
+| `actual_gross` | `INTEGER` | `NULLABLE` | Actual gross revenue in USD |
+| `adjusted_gross_2022_dollars` | `INTEGER` | `NULLABLE` | Adjusted gross revenue in 2022 USD |
+| `artist` | `STRING` | `NULLABLE` | Touring artist or band name |
+| `tour_title` | `STRING` | `NULLABLE` | Title of the concert tour |
+| `years` | `STRING` | `NULLABLE` | Years the tour was active |
+| `shows` | `INTEGER` | `NULLABLE` | Total number of shows performed |
+| `average_gross` | `INTEGER` | `NULLABLE` | Average gross revenue per show in USD |
+| `ref` | `STRING` | `NULLABLE` | Reference citations |
+| `_ingested_at` | `TIMESTAMP` | `NULLABLE` | Timestamp when record was ingested into BigQuery |
+
+## Environment Variables
+
+| Variable | Default Value | Description |
+| :--- | :--- | :--- |
+| `GCS_SOURCE_URI` | `gs://sdlc-workspec-store/etl/data/my_file (1).csv` | GCS source URI |
+| `GCP_PROJECT_ID` | `upbeat-repeater-477110-q6` | Target GCP project |
+| `BQ_DATASET_ID` | `analytics` | BigQuery dataset name |
+| `BQ_TABLE_ID` | `kttest04` | BigQuery target table name |
+| `WRITE_DISPOSITION` | `WRITE_TRUNCATE` | BigQuery write disposition |
+
+## Local Execution & Testing
+
+### 1. Install Dependencies
 ```bash
-cd server
 pip install -r requirements.txt
-cd ..
 ```
 
-### Running Tests
+### 2. Run Test Suite
 ```bash
-cd server
-python -m pytest -v
-cd ..
+pytest tests/ -v
 ```
 
-### Starting the Development Server
+### 3. Run Pipeline Locally / CLI
 ```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+python -m server.pipeline \
+  --source-gcs-uri "gs://sdlc-workspec-store/etl/data/my_file (1).csv" \
+  --project-id "upbeat-repeater-477110-q6" \
+  --dataset-id "analytics" \
+  --table-name "kttest04"
 ```
-
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
-```bash
-# Copy the example environment file
-cp .env.example .env
-```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-
