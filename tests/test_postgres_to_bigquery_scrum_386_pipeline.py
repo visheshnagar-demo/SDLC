@@ -1,5 +1,6 @@
 """Automated tests for pipeline postgres_to_bigquery_scrum_386 and server ETL module."""
 import ast
+import json
 import os
 import unittest
 from unittest.mock import patch
@@ -39,6 +40,32 @@ def test_pipeline_spec_configuration():
     assert source_type in ["postgresql", "mysql", "s3", "gcs", "rest_api", "sftp", "kafka"]
     assert target_type in ["bigquery", "snowflake", "postgresql", "mysql", "gcs", "s3"]
     assert write_mode in ["append", "overwrite", "merge", "upsert"]
+
+
+def test_static_contract_transformation_spec():
+    """Verifies that transformation_spec.json contains required metadata keys."""
+    spec_path = "transformation_spec.json"
+    assert os.path.isfile(spec_path), f"Missing file: {spec_path}"
+    with open(spec_path, "r", encoding="utf-8") as f:
+        spec = json.load(f)
+    assert "source" in spec, "transformation_spec.json missing 'source'"
+    assert "target" in spec, "transformation_spec.json missing 'target'"
+    assert "transformations" in spec, "transformation_spec.json missing 'transformations'"
+    assert len(spec["transformations"]) > 0, "transformations list is empty"
+
+
+def test_static_contract_env_deploy_json():
+    """Verifies that env.deploy.json contains required keys including failure_behavior."""
+    env_path = "env.deploy.json"
+    assert os.path.isfile(env_path), f"Missing file: {env_path}"
+    with open(env_path, "r", encoding="utf-8") as f:
+        env_data = json.load(f)
+    assert "failure_behavior" in env_data or "FAILURE_BEHAVIOR" in env_data
+    assert "INSTANCE_CONNECTION_NAME" in env_data
+    assert "POSTGRES_USER" in env_data
+    assert "CLOUD_SQL_IP_TYPE" in env_data
+    assert env_data["CLOUD_SQL_IP_TYPE"] == "PRIVATE"
+    assert "POSTGRES_PASSWORD" not in env_data
 
 
 @pytest.mark.skipif(pd is None, reason="pandas not installed in environment")

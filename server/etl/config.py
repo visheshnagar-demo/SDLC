@@ -21,6 +21,7 @@ class ETLConfig:
     bq_table: str
     bq_location: str
     write_disposition: str
+    failure_behavior: str = "fail_fast"
 
     @classmethod
     def from_env(cls) -> "ETLConfig":
@@ -59,6 +60,7 @@ class ETLConfig:
         bq_table = os.getenv("BIGQUERY_TABLE") or os.getenv("BQ_TABLE") or "postgres_test4"
         bq_location = os.getenv("BQ_LOCATION") or "us-central1"
         write_disposition = (os.getenv("WRITE_DISPOSITION") or "WRITE_APPEND").upper()
+        failure_behavior = os.getenv("FAILURE_BEHAVIOR") or os.getenv("failure_behavior") or "fail_fast"
 
         return cls(
             gcp_project_id=gcp_project_id,
@@ -73,4 +75,5 @@ class ETLConfig:
             bq_table=bq_table,
             bq_location=bq_location,
             write_disposition=write_disposition,
+            failure_behavior=failure_behavior,
         )
