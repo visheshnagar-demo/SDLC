@@ -1,4 +1,108 @@
 {
+  "source": {
+    "type": "gcs",
+    "uri": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
+    "format": "csv"
+  },
+  "target": {
+    "type": "bigquery",
+    "project_id": "upbeat-repeater-477110-q6",
+    "dataset_id": "analytics",
+    "table_id": "kttest04",
+    "table_name": "kttest04",
+    "write_disposition": "WRITE_TRUNCATE"
+  },
+  "transformations": [
+    {
+      "source_name": "Rank",
+      "target_name": "rank",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transform": "clean_integer",
+      "description": "Tour ranking by gross revenue"
+    },
+    {
+      "source_name": "Peak",
+      "target_name": "peak",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transform": "clean_integer",
+      "description": "Peak chart or box office position"
+    },
+    {
+      "source_name": "All Time Peak",
+      "target_name": "all_time_peak",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transform": "clean_integer",
+      "description": "All-time peak ranking position"
+    },
+    {
+      "source_name": "Actual\u00a0gross",
+      "target_name": "actual_gross",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transform": "clean_currency",
+      "description": "Actual gross revenue in USD"
+    },
+    {
+      "source_name": "Adjusted\u00a0gross (in 2022 dollars)",
+      "target_name": "adjusted_gross_2022_dollars",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transform": "clean_currency",
+      "description": "Adjusted gross revenue in 2022 USD"
+    },
+    {
+      "source_name": "Artist",
+      "target_name": "artist",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_whitespace",
+      "description": "Touring artist or band name"
+    },
+    {
+      "source_name": "Tour title",
+      "target_name": "tour_title",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_whitespace",
+      "description": "Title of the concert tour"
+    },
+    {
+      "source_name": "Year(s)",
+      "target_name": "years",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_whitespace",
+      "description": "Years the tour was active"
+    },
+    {
+      "source_name": "Shows",
+      "target_name": "shows",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transform": "clean_integer",
+      "description": "Total number of shows performed"
+    },
+    {
+      "source_name": "Average gross",
+      "target_name": "average_gross",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transform": "clean_currency",
+      "description": "Average gross revenue per show in USD"
+    },
+    {
+      "source_name": "Ref.",
+      "target_name": "ref",
+      "source_type": "STRING",
+      "target_type": "STRING",
+      "transform": "strip_whitespace",
+      "description": "Reference citations"
+    }
+  ],
   "source_path": "gs://sdlc-workspec-store/etl/data/my_file (1).csv",
   "target_table": "kttest04",
   "columns": [
