@@ -1,79 +1,82 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { CreditCard, RefreshCw, BarChart3, ShieldCheck } from "lucide-react";
+import { Activity, Bell, Calendar, HeartPulse, Droplets } from "lucide-react";
 
-export const Navbar = () => {
+export default function Navbar({ activeAlertCount = 0 }) {
+  const navItems = [
+    { to: "/", label: "Live Telemetry", icon: Activity },
+    {
+      to: "/alerts",
+      label: "Thresholds & Alerts",
+      icon: Bell,
+      badge: activeAlertCount,
+    },
+    { to: "/feeding", label: "Feeding Schedules", icon: Calendar },
+    { to: "/health-equipment", label: "Health & Equipment", icon: HeartPulse },
+  ];
+
   return (
-    <header className="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-50 shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-inner">
-            <CreditCard className="w-5 h-5" />
+    <header className="border-b border-[#1e2e45] bg-[#0c141f]/95 backdrop-blur sticky top-0 z-40 px-6 py-4 flex items-center justify-between">
+      <div className="flex items-center gap-6">
+        <NavLink
+          to="/"
+          className="flex items-center gap-2.5 text-[#00e5ff] font-mono text-xl font-bold tracking-wider hover:opacity-90 transition-opacity"
+        >
+          <Droplets className="w-6 h-6 text-[#00e5ff]" />
+          <span>AquaSense</span>
+        </NavLink>
+        <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono bg-[#064e3b] text-[#34d399] border border-[#059669]/40">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#34d399] animate-pulse" />
+          LIVE SYNC
+        </span>
+      </div>
+
+      <nav className="flex items-center gap-1 sm:gap-2">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                `flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
+                  isActive
+                    ? "bg-[#1e2e45] text-[#00e5ff] shadow-sm border border-[#00e5ff]/30"
+                    : "text-[#bac9cc] hover:text-[#dbe3f3] hover:bg-[#141c27]"
+                }`
+              }
+            >
+              <Icon className="w-4 h-4" />
+              <span className="hidden md:inline">{item.label}</span>
+              {item.badge > 0 && (
+                <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-[#4c0519] text-[#fb7185] border border-[#fb7185]/40 animate-pulse">
+                  {item.badge}
+                </span>
+              )}
+            </NavLink>
+          );
+        })}
+      </nav>
+
+      <div className="hidden lg:flex items-center gap-4">
+        {activeAlertCount > 0 ? (
+          <span className="px-3 py-1 rounded bg-[#4c0519] text-[#fb7185] font-mono text-xs font-bold border border-[#fb7185]/40">
+            {activeAlertCount} Active Alert{activeAlertCount > 1 ? "s" : ""}
+          </span>
+        ) : (
+          <span className="px-3 py-1 rounded bg-[#064e3b]/80 text-[#34d399] font-mono text-xs font-medium border border-[#34d399]/30">
+            All Systems Safe
+          </span>
+        )}
+        <div className="flex items-center gap-2 text-sm text-[#bac9cc] border-l border-[#1e2e45] pl-4">
+          <div className="w-7 h-7 rounded-full bg-[#1e2e45] flex items-center justify-center text-xs font-bold text-[#00e5ff]">
+            ER
           </div>
-          <div>
-            <span className="font-bold text-lg tracking-tight text-white block leading-none">
-              PayGateway{" "}
-              <span className="text-indigo-400 font-normal text-xs ml-1">
-                v1.0
-              </span>
-            </span>
-            <span className="text-[10px] text-slate-400 font-medium tracking-wider uppercase">
-              Secure Merchant Portal
-            </span>
-          </div>
-        </div>
-
-        <nav className="flex items-center space-x-1 sm:space-x-2">
-          <NavLink
-            to="/checkout"
-            className={({ isActive }) =>
-              `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                isActive
-                  ? "bg-indigo-600/30 text-indigo-300 border border-indigo-500/50"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`
-            }
-          >
-            <CreditCard className="w-4 h-4" />
-            <span>Checkout</span>
-          </NavLink>
-
-          <NavLink
-            to="/refunds"
-            className={({ isActive }) =>
-              `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                isActive
-                  ? "bg-indigo-600/30 text-indigo-300 border border-indigo-500/50"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`
-            }
-          >
-            <RefreshCw className="w-4 h-4" />
-            <span>Refunds</span>
-          </NavLink>
-
-          <NavLink
-            to="/analytics"
-            className={({ isActive }) =>
-              `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                isActive
-                  ? "bg-indigo-600/30 text-indigo-300 border border-indigo-500/50"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`
-            }
-          >
-            <BarChart3 className="w-4 h-4" />
-            <span>Analytics</span>
-          </NavLink>
-        </nav>
-
-        <div className="hidden md:flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2.5 py-1 rounded-full font-medium">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          <span>PCI-DSS Compliant</span>
+          <span className="font-medium text-xs text-[#dbe3f3]">
+            Dr. Elena Rostova
+          </span>
         </div>
       </div>
     </header>
   );
-};
-
-export default Navbar;
+}
