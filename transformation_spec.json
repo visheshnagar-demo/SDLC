@@ -1,0 +1,41 @@
+{
+  "source_table": "kttest_data",
+  "target_table": "analytics.postgres_test2",
+  "columns": [
+    {
+      "source_name": "id",
+      "target_name": "id",
+      "source_type": "INTEGER",
+      "target_type": "INTEGER",
+      "transform": "identity"
+    },
+    {
+      "source_name": "name",
+      "target_name": "name",
+      "source_type": "VARCHAR",
+      "target_type": "STRING",
+      "transform": "trim_whitespace"
+    },
+    {
+      "source_name": "email",
+      "target_name": "email",
+      "source_type": "VARCHAR",
+      "target_type": "STRING",
+      "transform": "trim_whitespace"
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "source_type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "transform": "to_timestamp"
+    },
+    {
+      "source_name": "updated_at",
+      "target_name": "updated_at",
+      "source_type": "TIMESTAMP",
+      "target_type": "TIMESTAMP",
+      "transform": "to_timestamp"
+    }
+  ]
+}
