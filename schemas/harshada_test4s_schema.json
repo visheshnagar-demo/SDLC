@@ -1,0 +1,56 @@
+[
+  {
+    "name": "order_id",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Target field order_id"
+  },
+  {
+    "name": "customer_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Target field customer_id"
+  },
+  {
+    "name": "customer_name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Target field customer_name"
+  },
+  {
+    "name": "customer_email",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Target field customer_email"
+  },
+  {
+    "name": "product_category",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Target field product_category"
+  },
+  {
+    "name": "amount",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Target field amount"
+  },
+  {
+    "name": "currency",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Target field currency"
+  },
+  {
+    "name": "order_status",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Target field order_status"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Target field created_at"
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "name": "order_id",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Unique sales order identifier"
+  },
+  {
+    "name": "customer_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Customer unique ID"
+  },
+  {
+    "name": "customer_name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Customer full name"
+  },
+  {
+    "name": "customer_email",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Customer email address"
+  },
+  {
+    "name": "product_category",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Product category"
+  },
+  {
+    "name": "amount",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Order total amount"
+  },
+  {
+    "name": "currency",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "3-letter currency code"
+  },
+  {
+    "name": "order_status",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Order status e.g. COMPLETED, PENDING, CANCELLED"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "ISO 8601 UTC timestamp"
+  },
+  {
+    "name": "ingested_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Timestamp when record was ingested into target"
+  }
+]

@@ -1,0 +1,64 @@
+{
+  "columns": [
+    {
+      "source_name": "order_id",
+      "target_name": "order_id",
+      "target_type": "INTEGER",
+      "transform": "to_integer"
+    },
+    {
+      "source_name": "customer_id",
+      "target_name": "customer_id",
+      "target_type": "STRING",
+      "transform": "strip"
+    },
+    {
+      "source_name": "customer_name",
+      "target_name": "customer_name",
+      "target_type": "STRING",
+      "transform": "strip"
+    },
+    {
+      "source_name": "customer_email",
+      "target_name": "customer_email",
+      "target_type": "STRING",
+      "transform": "strip"
+    },
+    {
+      "source_name": "product_category",
+      "target_name": "product_category",
+      "target_type": "STRING",
+      "transform": "strip"
+    },
+    {
+      "source_name": "amount",
+      "target_name": "amount",
+      "target_type": "FLOAT",
+      "transform": "to_float"
+    },
+    {
+      "source_name": "currency",
+      "target_name": "currency",
+      "target_type": "STRING",
+      "transform": "strip"
+    },
+    {
+      "source_name": "order_status",
+      "target_name": "order_status",
+      "target_type": "STRING",
+      "transform": "strip"
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "target_type": "TIMESTAMP",
+      "transform": "to_timestamp"
+    }
+  ],
+  "deduplication": {
+    "key_columns": [
+      "order_id"
+    ],
+    "keep": "last"
+  }
+}

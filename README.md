@@ -1,88 +1,117 @@
-# Project
+# Sales Order ETL Pipeline (SCRUM-390)
 
-## Server
+A serverless, containerized Cloud Run Job ETL data pipeline that extracts sales order CSV records from Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/raw_sales_data.csv`), cleans and deduplicates the records, and loads them into a partitioned BigQuery table (`analytics.harshada-test4`).
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+---
 
-### Setup
+## 1. Architecture Overview
 
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+- **Compute**: Google Cloud Run Job (Batch container, Python 3.11, Zero-idle)
+- **Source**: Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/raw_sales_data.csv`)
+- **Target Data Warehouse**: Google BigQuery (`upbeat-repeater-477110-q6.analytics.harshada-test4`)
+- **Partitioning**: DAY partition on `created_at` timestamp.
+- **Clustering**: `customer_id`, `order_status`.
+- **Security & IAM**: Workload Identity / Service Account tokens via ADC.
+
+```
+[GCS Raw CSV Stream]
+       │
+       ▼
+[Cloud Run Job Ingestion (extract_sales_data_from_gcs)]
+       │
+       ▼
+[Data Cleaning & Deduplication (transform_and_deduplicate)]
+  - Schema normalization (snake_case)
+  - Type-safe casting (Int64, Float, ISO 8601 UTC Timestamps)
+  - Primary-key deduplication on order_id (keep last)
+  - Ingested audit timestamp generation
+       │
+       ▼
+[Partitioned BigQuery Bulk Load (load_to_bigquery)]
+  - Automatic dataset verification
+  - Schema reconciliation & PyArrow serialization
+  - Day-partitioned table insertion
 ```
 
-2. Install dependencies:
-```bash
-cd server
-pip install -r requirements.txt
-cd ..
+---
+
+## 2. Directory Structure
+
+```
+├── dags/
+│   └── gcs_sales_to_bigquery_dag.py        # Optional Airflow orchestration reference
+├── pipeline/
+│   └── run_gcs_sales_to_bigquery.py        # Standalone connector ETL runner
+├── schemas/
+│   ├── harshada-test4_schema.json          # Target BigQuery schema JSON
+│   └── harshada_test4_schema.json
+├── sql/
+│   └── ddl/
+│       ├── harshada-test4.sql              # Target DDL with PARTITION & CLUSTER
+│       └── harshada_test4.sql
+├── server/
+│   ├── Dockerfile                          # Cloud Run Job Dockerfile
+│   ├── requirements.txt                    # Server runtime dependencies
+│   ├── main.py                             # Main CLI entrypoint
+│   ├── etl/
+│   │   ├── __init__.py
+│   │   ├── config.py                       # Environment & pipeline configuration
+│   │   ├── ingest.py                       # GCS extraction module
+│   │   ├── transform.py                    # Cleaning & deduplication engine
+│   │   └── loader.py                       # BigQuery partitioned loader
+│   └── tests/
+│       ├── __init__.py
+│       └── test_etl.py                     # Unit & integration test suite
+├── transformation_spec.json                # Source-to-target field mapping spec
+├── env.deploy.json                         # Deployment environment parameters
+├── Dockerfile                              # Root container definition
+├── requirements.txt                        # Top-level dependencies
+└── README.md
 ```
 
-### Running Tests
+---
+
+## 3. Environment Configuration
+
+| Variable | Description | Default |
+|---|---|---|
+| `GCS_BUCKET_NAME` / `GCS_SOURCE_BUCKET` | Source GCS Bucket | `sdlc-workspec-store` |
+| `GCS_SOURCE_BLOB` / `GCS_SOURCE_PREFIX` | Source Blob Path | `etl/data/raw_sales_data.csv` |
+| `GCP_PROJECT_ID` | Google Cloud Project ID | `upbeat-repeater-477110-q6` |
+| `BQ_DATASET_ID` / `BIGQUERY_DATASET` | BigQuery Target Dataset | `analytics` |
+| `BQ_TABLE_ID` / `BIGQUERY_TABLE` | BigQuery Target Table | `harshada-test4` |
+| `WRITE_MODE` | Write disposition | `append` |
+| `LOG_LEVEL` | Logging verbosity | `INFO` |
+
+---
+
+## 4. Local Execution & Testing
+
+### Running Tests Locally
 ```bash
-cd server
-python -m pytest -v
-cd ..
+pytest tests/ server/tests/
 ```
 
-### Starting the Development Server
+### Running ETL Locally
 ```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+python server/main.py
+```
+Or standalone:
+```bash
+python -m pipeline.run_gcs_sales_to_bigquery
 ```
 
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
+---
 
-## Full-Stack Local Development
+## 5. Deployment as Cloud Run Job
 
-To run both backend and frontend together locally:
+1. **Build Container Image**:
+   ```bash
+   docker build -t gcr.io/upbeat-repeater-477110-q6/sales-etl-job:latest .
+   docker push gcr.io/upbeat-repeater-477110-q6/sales-etl-job:latest
+   ```
 
-### 1. Environment Setup
-```bash
-# Copy the example environment file
-cp .env.example .env
-```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-
+2. **Execute Job**:
+   ```bash
+   gcloud run jobs execute sales-etl-job --region=us-central1
+   ```
