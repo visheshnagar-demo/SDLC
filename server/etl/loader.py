@@ -5,15 +5,20 @@ import json
 import logging
 import os
 import sys
-from typing import Optional
-import pandas as pd
+from typing import Optional, Any
+
+try:
+    import pandas as pd
+except (ImportError, Exception):
+    pd = None
+
 from server.etl.config import Settings, get_settings
 
 logger = logging.getLogger("server.etl.loader")
 
 
 def load_data_to_bigquery(
-    df: pd.DataFrame,
+    df: Any,
     settings: Optional[Settings] = None,
 ) -> int:
     """Loads transformed records into target BigQuery table."""
@@ -23,6 +28,9 @@ def load_data_to_bigquery(
     if df is None or len(df) == 0:
         logger.warning("No records to load into BigQuery. Skipping load.")
         return 0
+
+    if pd is None:
+        raise RuntimeError("pandas is required for BigQuery loading")
 
     from google.cloud import bigquery
     from google.api_core.exceptions import NotFound

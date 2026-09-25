@@ -5,18 +5,28 @@ and type coercion for BigQuery loading.
 import logging
 import re
 from datetime import datetime, timezone
-from typing import Optional
-import numpy as np
-import pandas as pd
+from typing import Optional, Any
+
+try:
+    import numpy as np
+except (ImportError, Exception):
+    np = None
+
+try:
+    import pandas as pd
+except (ImportError, Exception):
+    pd = None
 
 logger = logging.getLogger("server.etl.transformer")
 
 NULL_SENTINEL_VALUES = {"", "nan", "NAN", "null", "NULL", "None", "none", "N/A", "n/a", "NA"}
 
 
-def clean_string_value(val):
+def clean_string_value(val: Any) -> Optional[str]:
     """Safely trims whitespace and normalizes empty / sentinel strings to None."""
-    if val is None or pd.isna(val):
+    if val is None:
+        return None
+    if pd is not None and pd.isna(val):
         return None
     s = str(val).strip()
     if s in NULL_SENTINEL_VALUES:
@@ -24,7 +34,7 @@ def clean_string_value(val):
     return s
 
 
-def transform_and_clean_data(df: pd.DataFrame) -> pd.DataFrame:
+def transform_and_clean_data(df: Any) -> Any:
     """Cleans and standardizes raw DataFrame records before loading into BigQuery.
 
     Transformations:
@@ -37,6 +47,9 @@ def transform_and_clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     if df is None:
         raise ValueError("Input DataFrame is None")
+
+    if pd is None:
+        raise RuntimeError("pandas is required for DataFrame transformation")
 
     raw_count = len(df)
     if raw_count == 0:

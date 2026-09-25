@@ -3,8 +3,13 @@ Extracts source records using Cloud SQL Python Connector with IAM Auth.
 Zero-mock policy: never generates synthetic data, fails fast on connection errors.
 """
 import logging
-from typing import Optional
-import pandas as pd
+from typing import Optional, Any
+
+try:
+    import pandas as pd
+except (ImportError, Exception):
+    pd = None
+
 from server.etl.config import Settings, get_settings
 
 logger = logging.getLogger("server.etl.extractor")
@@ -62,10 +67,13 @@ def get_postgres_engine(settings: Optional[Settings] = None):
     )
 
 
-def extract_postgres_data(settings: Optional[Settings] = None) -> pd.DataFrame:
+def extract_postgres_data(settings: Optional[Settings] = None) -> Any:
     """Extracts raw records from Cloud SQL PostgreSQL source table into a pandas DataFrame."""
     if settings is None:
         settings = get_settings()
+
+    if pd is None:
+        raise RuntimeError("pandas is required for PostgreSQL data extraction")
 
     logger.info("Initiating PostgreSQL extraction for table '%s'...", settings.source_table)
     engine, connector = get_postgres_engine(settings)
