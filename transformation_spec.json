@@ -1,4 +1,75 @@
 {
+  "pipeline_id": "gcs_sales_to_bigquery",
+  "source": {
+    "type": "gcs",
+    "bucket": "sdlc-workspec-store",
+    "path": "etl/data/raw_sales_data.csv",
+    "format": "csv"
+  },
+  "target": {
+    "type": "bigquery",
+    "project": "upbeat-repeater-477110-q6",
+    "dataset": "analytics",
+    "table": "harshada-test4",
+    "write_mode": "append",
+    "partition_field": "created_at"
+  },
+  "transformations": [
+    {
+      "source_name": "order_id",
+      "target_name": "order_id",
+      "target_type": "INTEGER",
+      "transform": "to_integer"
+    },
+    {
+      "source_name": "customer_id",
+      "target_name": "customer_id",
+      "target_type": "STRING",
+      "transform": "strip"
+    },
+    {
+      "source_name": "customer_name",
+      "target_name": "customer_name",
+      "target_type": "STRING",
+      "transform": "strip"
+    },
+    {
+      "source_name": "customer_email",
+      "target_name": "customer_email",
+      "target_type": "STRING",
+      "transform": "strip"
+    },
+    {
+      "source_name": "product_category",
+      "target_name": "product_category",
+      "target_type": "STRING",
+      "transform": "strip"
+    },
+    {
+      "source_name": "amount",
+      "target_name": "amount",
+      "target_type": "FLOAT",
+      "transform": "to_float"
+    },
+    {
+      "source_name": "currency",
+      "target_name": "currency",
+      "target_type": "STRING",
+      "transform": "strip"
+    },
+    {
+      "source_name": "order_status",
+      "target_name": "order_status",
+      "target_type": "STRING",
+      "transform": "strip"
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "target_type": "TIMESTAMP",
+      "transform": "to_timestamp"
+    }
+  ],
   "columns": [
     {
       "source_name": "order_id",

@@ -73,12 +73,29 @@ def test_transformation_spec_validity():
     assert os.path.isfile(spec_path), f"Missing {spec_path}"
     with open(spec_path, "r", encoding="utf-8") as f:
         spec = json.load(f)
+    assert "source" in spec
+    assert "target" in spec
+    assert "transformations" in spec
     assert "columns" in spec
     assert "deduplication" in spec
     assert spec["deduplication"]["key_columns"] == ["order_id"]
     source_cols = [c["source_name"] for c in spec["columns"]]
     assert "order_id" in source_cols
     assert "created_at" in source_cols
+
+
+def test_env_deploy_json_validity():
+    """Verifies env.deploy.json configuration for Cloud Run Job."""
+    env_path = "env.deploy.json"
+    assert os.path.isfile(env_path), f"Missing {env_path}"
+    with open(env_path, "r", encoding="utf-8") as f:
+        deploy_env = json.load(f)
+    assert "cpu" in deploy_env
+    assert "memory" in deploy_env
+    assert "failure_behavior" in deploy_env
+    assert deploy_env["cpu"] == "1"
+    assert deploy_env["memory"] == "2Gi"
+    assert deploy_env["failure_behavior"] == "abort_on_error"
 
 
 def test_pipeline_runner_transform_and_deduplicate(tmp_path):
