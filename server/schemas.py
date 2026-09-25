@@ -1,113 +1,242 @@
-from typing import Any, Optional
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Optional, List
 from datetime import datetime
+from pydantic import BaseModel, ConfigDict, Field
 
 
-class CartItem(BaseModel):
+# -------------------- Tanks --------------------
+class TankBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    location: str = Field(..., min_length=1, max_length=100)
+    capacity_liters: float = Field(..., gt=0)
+    water_type: str = Field(..., min_length=1, max_length=50)
+
+
+class TankCreate(TankBase):
+    pass
+
+
+class TankUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    location: Optional[str] = Field(None, min_length=1, max_length=100)
+    capacity_liters: Optional[float] = Field(None, gt=0)
+    water_type: Optional[str] = Field(None, min_length=1, max_length=50)
+
+
+class TankResponse(TankBase):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# -------------------- Telemetry --------------------
+class TelemetryReadingBase(BaseModel):
+    tank_id: str
+    ph_level: float = Field(..., ge=0.0, le=14.0)
+    dissolved_oxygen: float = Field(..., ge=0.0)
+    temperature_c: float
+    ammonia_ppm: float = Field(..., ge=0.0)
+    recorded_at: Optional[datetime] = None
+
+
+class TelemetryReadingCreate(TelemetryReadingBase):
+    pass
+
+
+class TelemetryReadingResponse(BaseModel):
+    id: str
+    tank_id: str
+    ph_level: float
+    dissolved_oxygen: float
+    temperature_c: float
+    ammonia_ppm: float
+    recorded_at: datetime
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LatestTelemetryResponse(BaseModel):
+    tank_id: str
+    reading: Optional[TelemetryReadingResponse] = None
+    ph_status: str = "SAFE"  # "SAFE", "WARNING", "CRITICAL"
+    oxygen_status: str = "SAFE"
+    temperature_status: str = "SAFE"
+    ammonia_status: str = "SAFE"
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# -------------------- Thresholds --------------------
+class AlertThresholdBase(BaseModel):
+    tank_id: str
+    parameter_name: str = Field(..., min_length=1, max_length=50)
+    min_threshold: float
+    max_threshold: float
+    is_active: bool = True
+
+
+class AlertThresholdCreate(AlertThresholdBase):
+    pass
+
+
+class AlertThresholdResponse(AlertThresholdBase):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# -------------------- Alerts --------------------
+class AlertBase(BaseModel):
+    tank_id: str
+    parameter_name: str
+    recorded_value: float
+    threshold_violated: str
+    severity: str
+    status: str = "ACTIVE"
+    message: str
+
+
+class AlertCreate(AlertBase):
+    triggered_at: Optional[datetime] = None
+
+
+class AlertStatusUpdate(BaseModel):
+    status: str = Field(..., pattern="^(ACTIVE|ACKNOWLEDGED|RESOLVED)$")
+
+
+class AlertResponse(AlertBase):
+    id: str
+    triggered_at: datetime
+    acknowledged_at: Optional[datetime] = None
+    resolved_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# -------------------- Feeding --------------------
+class FeedingScheduleBase(BaseModel):
+    tank_id: str
+    food_type: str = Field(..., min_length=1, max_length=100)
+    portion_grams: float = Field(..., gt=0)
+    frequency: str = Field(..., min_length=1, max_length=50)
+    scheduled_time: str = Field(..., min_length=1, max_length=10)
+    is_active: bool = True
+
+
+class FeedingScheduleCreate(FeedingScheduleBase):
+    pass
+
+
+class FeedingScheduleResponse(FeedingScheduleBase):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class FeedingLogBase(BaseModel):
+    tank_id: str
+    schedule_id: Optional[str] = None
+    food_type: str = Field(..., min_length=1, max_length=100)
+    portion_grams: float = Field(..., gt=0)
+    fed_by: str = Field(..., min_length=1, max_length=100)
+    fed_at: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
+class FeedingLogCreate(FeedingLogBase):
+    pass
+
+
+class FeedingLogResponse(FeedingLogBase):
+    id: str
+    fed_at: datetime
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# -------------------- Fish Health Records --------------------
+class FishHealthRecordBase(BaseModel):
+    tank_id: str
+    species: str = Field(..., min_length=1, max_length=100)
+    population_count: int = Field(..., ge=0)
+    health_status: str = Field(..., min_length=1, max_length=50)
+    symptoms: Optional[str] = None
+    treatment_notes: Optional[str] = None
+    is_quarantined: bool = False
+    recorded_by: str = Field(..., min_length=1, max_length=100)
+    recorded_at: Optional[datetime] = None
+
+
+class FishHealthRecordCreate(FishHealthRecordBase):
+    pass
+
+
+class FishHealthRecordResponse(FishHealthRecordBase):
+    id: str
+    recorded_at: datetime
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# -------------------- Equipment --------------------
+class EquipmentBase(BaseModel):
+    tank_id: str
+    name: str = Field(..., min_length=1, max_length=100)
+    equipment_type: str = Field(..., min_length=1, max_length=50)
+    model_number: Optional[str] = None
+    maintenance_interval_days: int = Field(..., gt=0)
+    last_serviced_at: Optional[datetime] = None
+
+
+class EquipmentCreate(EquipmentBase):
+    pass
+
+
+class EquipmentResponse(BaseModel):
+    id: str
+    tank_id: str
     name: str
-    quantity: int = 1
-    unit_price: float
-
-
-class CheckoutSessionRequest(BaseModel):
-    amount: float = Field(gt=0, description="Amount in base currency")
-    currency: str = Field(default="USD", description="Settlement/target currency")
-    customer_email: str
-    items: Optional[list[CartItem]] = Field(default_factory=list)
-
-
-class CheckoutSessionResponse(BaseModel):
-    session_id: str
-    payment_intent_id: str
-    client_secret: str
-    base_amount: float
-    base_currency: str
-    target_amount: float
-    target_currency: str
-    exchange_rate: float
-
-
-class DigitalWalletPaymentRequest(BaseModel):
-    wallet_type: str = Field(description="apple_pay or google_pay")
-    payment_token: str
-    currency: str = "USD"
-    amount: float = Field(gt=0)
-    customer_email: Optional[str] = "customer@example.com"
-
-
-class DigitalWalletPaymentResponse(BaseModel):
-    transaction_id: str
-    payment_intent_id: str
-    wallet_type: str
-    amount: float
-    currency: str
+    equipment_type: str
+    model_number: Optional[str] = None
+    maintenance_interval_days: int
+    last_serviced_at: datetime
+    next_due_at: datetime
     status: str
+    created_at: datetime
+    updated_at: datetime
 
-
-class ExchangeRatesResponse(BaseModel):
-    base_currency: str
-    rates: dict[str, float]
-    timestamp: str
-
-
-class RefundRequest(BaseModel):
-    transaction_id: str
-    amount: float = Field(gt=0)
-    reason: str
-    memo: Optional[str] = None
-
-
-class RefundSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+
+class EquipmentMaintenanceLogBase(BaseModel):
+    service_date: Optional[datetime] = None
+    action_taken: str = Field(..., min_length=1, max_length=100)
+    technician_notes: Optional[str] = None
+    performed_by: str = Field(..., min_length=1, max_length=100)
+
+
+class EquipmentMaintenanceLogCreate(EquipmentMaintenanceLogBase):
+    pass
+
+
+class EquipmentMaintenanceLogResponse(EquipmentMaintenanceLogBase):
     id: str
-    transaction_id: str
-    refund_amount: float
-    currency: str
-    reason: str
-    memo: Optional[str] = None
-    status: str
-    created_at: Optional[datetime] = None
+    equipment_id: str
+    service_date: datetime
+    created_at: datetime
 
-
-class TransactionSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    currency: str
-    status: str
-    created_at: Optional[datetime] = None
 
-
-class TransactionDetail(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    base_currency: str
-    target_currency: str
-    converted_amount: float
-    exchange_rate: float
-    status: str
-    refunded_amount: float
-    remaining_refundable_balance: float
-    refunds: list[RefundSummary] = Field(default_factory=list)
-    created_at: Optional[datetime] = None
-
-
-class AuditLogEntry(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    transaction_id: Optional[str] = None
-    event_type: str
-    ip_address: str
-    masked_payload: dict[str, Any]
-    created_at: Optional[datetime] = None
+MaintenanceLogResponse = EquipmentMaintenanceLogResponse

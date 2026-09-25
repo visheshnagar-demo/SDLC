@@ -1,143 +1,210 @@
 import uuid
-import datetime
+from datetime import datetime, timezone
 from sqlalchemy import (
     Column,
     String,
     Float,
+    Integer,
     Boolean,
     DateTime,
-    ForeignKey,
     Text,
+    ForeignKey,
 )
 from sqlalchemy.orm import relationship
 from server.database import Base
 
 
-def generate_uuid() -> str:
+def get_utc_now():
+    return datetime.now(timezone.utc)
+
+
+def generate_uuid():
     return str(uuid.uuid4())
 
 
-def get_utc_now() -> datetime.datetime:
-    return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+class Tank(Base):
+    __tablename__ = "tanks"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    name = Column(String(100), nullable=False)
+    location = Column(String(100), nullable=False)
+    capacity_liters = Column(Float, nullable=False)
+    water_type = Column(String(50), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=get_utc_now, nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), default=get_utc_now, onupdate=get_utc_now, nullable=False
+    )
+
+    telemetry_readings = relationship(
+        "TelemetryReading", back_populates="tank", cascade="all, delete-orphan"
+    )
+    thresholds = relationship(
+        "AlertThreshold", back_populates="tank", cascade="all, delete-orphan"
+    )
+    alerts = relationship(
+        "Alert", back_populates="tank", cascade="all, delete-orphan"
+    )
+    feeding_schedules = relationship(
+        "FeedingSchedule", back_populates="tank", cascade="all, delete-orphan"
+    )
+    feeding_logs = relationship(
+        "FeedingLog", back_populates="tank", cascade="all, delete-orphan"
+    )
+    fish_health_records = relationship(
+        "FishHealthRecord", back_populates="tank", cascade="all, delete-orphan"
+    )
+    equipment = relationship(
+        "Equipment", back_populates="tank", cascade="all, delete-orphan"
+    )
 
 
-class User(Base):
-    __tablename__ = "users"
+class TelemetryReading(Base):
+    __tablename__ = "telemetry_readings"
 
-    id = Column(String, primary_key=True, default=generate_uuid)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    role = Column(String, default="user", nullable=False)
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    tank_id = Column(String(36), ForeignKey("tanks.id", ondelete="CASCADE"), nullable=False, index=True)
+    ph_level = Column(Float, nullable=False)
+    dissolved_oxygen = Column(Float, nullable=False)
+    temperature_c = Column(Float, nullable=False)
+    ammonia_ppm = Column(Float, nullable=False)
+    recorded_at = Column(DateTime(timezone=True), default=get_utc_now, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=get_utc_now, nullable=False)
+
+    tank = relationship("Tank", back_populates="telemetry_readings")
+
+
+class AlertThreshold(Base):
+    __tablename__ = "alert_thresholds"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    tank_id = Column(String(36), ForeignKey("tanks.id", ondelete="CASCADE"), nullable=False, index=True)
+    parameter_name = Column(String(50), nullable=False)
+    min_threshold = Column(Float, nullable=False)
+    max_threshold = Column(Float, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
-    is_verified = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=get_utc_now, nullable=False)
     updated_at = Column(
-        DateTime,
-        default=get_utc_now,
-        onupdate=get_utc_now,
-        nullable=False,
+        DateTime(timezone=True), default=get_utc_now, onupdate=get_utc_now, nullable=False
     )
 
-    transactions = relationship("Transaction", back_populates="user")
-    refunds = relationship("Refund", back_populates="actor")
+    tank = relationship("Tank", back_populates="thresholds")
 
 
-class CheckoutSession(Base):
-    __tablename__ = "checkout_sessions"
+class Alert(Base):
+    __tablename__ = "alerts"
 
-    id = Column(String, primary_key=True, default=lambda: f"cs_{uuid.uuid4().hex[:16]}")
-    session_id = Column(String, unique=True, index=True, nullable=False)
-    payment_intent_id = Column(String, index=True, nullable=False)
-    client_secret = Column(String, nullable=False)
-    customer_email = Column(String, index=True, nullable=False)
-    amount = Column(Float, nullable=False)
-    currency = Column(String, nullable=False)
-    target_amount = Column(Float, nullable=False)
-    target_currency = Column(String, nullable=False)
-    exchange_rate = Column(Float, default=1.0, nullable=False)
-    items_json = Column(Text, default="[]", nullable=False)
-    status = Column(String, default="PENDING", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
-
-
-class Transaction(Base):
-    __tablename__ = "transactions"
-
-    id = Column(String, primary_key=True, default=lambda: f"tx_{uuid.uuid4().hex[:12]}")
-    payment_intent_id = Column(String, index=True, nullable=False)
-    user_id = Column(String, ForeignKey("users.id"), nullable=True)
-    customer_email = Column(String, index=True, nullable=False)
-    payment_method = Column(String, default="card", nullable=False)
-    amount = Column(Float, nullable=False)
-    base_currency = Column(String, default="USD", nullable=False)
-    target_currency = Column(String, default="USD", nullable=False)
-    converted_amount = Column(Float, nullable=False)
-    exchange_rate = Column(Float, default=1.0, nullable=False)
-    status = Column(String, default="COMPLETED", nullable=False)
-    refunded_amount = Column(Float, default=0.0, nullable=False)
-    remaining_refundable_balance = Column(Float, nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    tank_id = Column(String(36), ForeignKey("tanks.id", ondelete="CASCADE"), nullable=False, index=True)
+    parameter_name = Column(String(50), nullable=False)
+    recorded_value = Column(Float, nullable=False)
+    threshold_violated = Column(String(20), nullable=False)  # 'MIN' or 'MAX'
+    severity = Column(String(20), nullable=False)  # 'WARNING' or 'CRITICAL'
+    status = Column(String(20), default="ACTIVE", nullable=False)  # 'ACTIVE', 'ACKNOWLEDGED', 'RESOLVED'
+    message = Column(Text, nullable=False)
+    triggered_at = Column(DateTime(timezone=True), default=get_utc_now, nullable=False)
+    acknowledged_at = Column(DateTime(timezone=True), nullable=True)
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=get_utc_now, nullable=False)
     updated_at = Column(
-        DateTime,
-        default=get_utc_now,
-        onupdate=get_utc_now,
-        nullable=False,
+        DateTime(timezone=True), default=get_utc_now, onupdate=get_utc_now, nullable=False
     )
 
-    user = relationship("User", back_populates="transactions")
-    refunds = relationship(
-        "Refund", back_populates="transaction", cascade="all, delete-orphan"
+    tank = relationship("Tank", back_populates="alerts")
+
+
+class FeedingSchedule(Base):
+    __tablename__ = "feeding_schedules"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    tank_id = Column(String(36), ForeignKey("tanks.id", ondelete="CASCADE"), nullable=False, index=True)
+    food_type = Column(String(100), nullable=False)
+    portion_grams = Column(Float, nullable=False)
+    frequency = Column(String(50), nullable=False)  # e.g., 'Daily', 'Twice Daily', 'Weekly'
+    scheduled_time = Column(String(10), nullable=False)  # e.g. '08:00'
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=get_utc_now, nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), default=get_utc_now, onupdate=get_utc_now, nullable=False
     )
-    audit_logs = relationship("AuditLog", back_populates="transaction")
+
+    tank = relationship("Tank", back_populates="feeding_schedules")
+    logs = relationship("FeedingLog", back_populates="schedule")
 
 
-class Refund(Base):
-    __tablename__ = "refunds"
+class FeedingLog(Base):
+    __tablename__ = "feeding_logs"
 
-    id = Column(
-        String, primary_key=True, default=lambda: f"ref_{uuid.uuid4().hex[:12]}"
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    tank_id = Column(String(36), ForeignKey("tanks.id", ondelete="CASCADE"), nullable=False, index=True)
+    schedule_id = Column(
+        String(36), ForeignKey("feeding_schedules.id", ondelete="SET NULL"), nullable=True, index=True
     )
-    transaction_id = Column(String, ForeignKey("transactions.id"), nullable=False)
-    actor_id = Column(String, ForeignKey("users.id"), nullable=True)
-    refund_amount = Column(Float, nullable=False)
-    currency = Column(String, default="USD", nullable=False)
-    reason = Column(String, nullable=False)
-    memo = Column(String, nullable=True)
-    status = Column(String, default="COMPLETED", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    food_type = Column(String(100), nullable=False)
+    portion_grams = Column(Float, nullable=False)
+    fed_by = Column(String(100), nullable=False)
+    fed_at = Column(DateTime(timezone=True), default=get_utc_now, nullable=False)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=get_utc_now, nullable=False)
 
-    transaction = relationship("Transaction", back_populates="refunds")
-    actor = relationship("User", back_populates="refunds")
+    tank = relationship("Tank", back_populates="feeding_logs")
+    schedule = relationship("FeedingSchedule", back_populates="logs")
 
 
-class AuditLog(Base):
-    __tablename__ = "audit_logs"
+class FishHealthRecord(Base):
+    __tablename__ = "fish_health_records"
 
-    id = Column(
-        String, primary_key=True, default=lambda: f"log_{uuid.uuid4().hex[:12]}"
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    tank_id = Column(String(36), ForeignKey("tanks.id", ondelete="CASCADE"), nullable=False, index=True)
+    species = Column(String(100), nullable=False)
+    population_count = Column(Integer, nullable=False)
+    health_status = Column(String(50), nullable=False)  # e.g. 'Healthy', 'Observing', 'Symptomatic', 'Treated'
+    symptoms = Column(Text, nullable=True)
+    treatment_notes = Column(Text, nullable=True)
+    is_quarantined = Column(Boolean, default=False, nullable=False)
+    recorded_by = Column(String(100), nullable=False)
+    recorded_at = Column(DateTime(timezone=True), default=get_utc_now, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=get_utc_now, nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), default=get_utc_now, onupdate=get_utc_now, nullable=False
     )
-    transaction_id = Column(String, ForeignKey("transactions.id"), nullable=True)
-    event_type = Column(String, index=True, nullable=False)
-    ip_address = Column(String, default="127.0.0.1", nullable=False)
-    masked_payload = Column(Text, default="{}", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
 
-    transaction = relationship("Transaction", back_populates="audit_logs")
+    tank = relationship("Tank", back_populates="fish_health_records")
 
 
-class ExchangeRateCache(Base):
-    __tablename__ = "exchange_rate_caches"
+class Equipment(Base):
+    __tablename__ = "equipment"
 
-    id = Column(String, primary_key=True, default=generate_uuid)
-    base_currency = Column(String, index=True, nullable=False)
-    rates_json = Column(Text, nullable=False)
-    fetched_at = Column(DateTime, default=get_utc_now, nullable=False)
-    expires_at = Column(DateTime, nullable=False)
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    tank_id = Column(String(36), ForeignKey("tanks.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(100), nullable=False)
+    equipment_type = Column(String(50), nullable=False)  # 'Filter', 'Pump', 'Aerator', 'Heater', 'Lighting'
+    model_number = Column(String(100), nullable=True)
+    maintenance_interval_days = Column(Integer, nullable=False)
+    last_serviced_at = Column(DateTime(timezone=True), default=get_utc_now, nullable=False)
+    next_due_at = Column(DateTime(timezone=True), nullable=False)
+    status = Column(String(30), default="OPERATIONAL", nullable=False)  # 'OPERATIONAL', 'MAINTENANCE_DUE', 'OVERDUE', 'FAILED'
+    created_at = Column(DateTime(timezone=True), default=get_utc_now, nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), default=get_utc_now, onupdate=get_utc_now, nullable=False
+    )
+
+    tank = relationship("Tank", back_populates="equipment")
+    maintenance_logs = relationship(
+        "EquipmentMaintenanceLog", back_populates="equipment", cascade="all, delete-orphan"
+    )
 
 
-class WebhookEvent(Base):
-    __tablename__ = "webhook_events"
+class EquipmentMaintenanceLog(Base):
+    __tablename__ = "equipment_maintenance_logs"
 
-    id = Column(String, primary_key=True)
-    event_type = Column(String, nullable=False)
-    processed_at = Column(DateTime, default=get_utc_now, nullable=False)
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    equipment_id = Column(
+        String(36), ForeignKey("equipment.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    service_date = Column(DateTime(timezone=True), default=get_utc_now, nullable=False)
+    action_taken = Column(String(100), nullable=False)
+    technician_notes = Column(Text, nullable=True)
+    performed_by = Column(String(100), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=get_utc_now, nullable=False)
+
+    equipment = relationship("Equipment", back_populates="maintenance_logs")

@@ -17,3 +17,15 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-388 - Smart Aquarium Monitoring Platform
+
+### Feature Summary
+A smart aquarium monitoring web platform for caretakers and facility managers to monitor water quality telemetry in real-time, configure and receive threshold breach alerts, manage feeding schedules, track fish health and disease logs, and maintain equipment service lifecycles.
+
+### Key Features
+- Real-time water quality telemetry monitoring (pH, dissolved oxygen, temperature, water clarity)
+- Automated threshold alerts and notification dispatch for parameter breaches
+- Feeding schedule configuration, tracking, and feeding history logs
+- Fish population health logs, disease symptoms, treatment records, and quarantine tracking
+- Aquarium equipment maintenance tracking, servicing schedules, and overdue alert triggers

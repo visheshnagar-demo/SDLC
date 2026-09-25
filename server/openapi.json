@@ -1,199 +1,19 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Payment Gateway Service",
-    "version": "0.1.0"
+    "title": "Smart Aquarium Monitoring Platform API",
+    "description": "Centralized telemetry ingestion, real-time alert thresholds, feeding schedules, fish health logs, and equipment maintenance.",
+    "version": "1.0.0"
   },
   "paths": {
-    "/api/v1/payments/checkout-session": {
-      "post": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Create Session",
-        "operationId": "create_session_api_v1_payments_checkout_session_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CheckoutSessionRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CheckoutSessionResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/digital-wallet": {
-      "post": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Pay Digital Wallet",
-        "operationId": "pay_digital_wallet_api_v1_payments_digital_wallet_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DigitalWalletPaymentRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DigitalWalletPaymentResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/rates": {
+    "/api/v1/tanks": {
       "get": {
         "tags": [
-          "payments"
+          "Tanks"
         ],
-        "summary": "Get Rates",
-        "operationId": "get_rates_api_v1_payments_rates_get",
+        "summary": "List Tanks",
+        "operationId": "list_tanks_api_v1_tanks_get",
         "parameters": [
-          {
-            "name": "base_currency",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "Base currency code",
-              "default": "USD",
-              "title": "Base Currency"
-            },
-            "description": "Base currency code"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExchangeRatesResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "List Transactions",
-        "operationId": "list_transactions_api_v1_payments_transactions_get",
-        "parameters": [
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Search transaction ID or email",
-              "title": "Search"
-            },
-            "description": "Search transaction ID or email"
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction status",
-              "title": "Status"
-            },
-            "description": "Filter by transaction status"
-          },
-          {
-            "name": "currency",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by currency",
-              "title": "Currency"
-            },
-            "description": "Filter by currency"
-          },
           {
             "name": "skip",
             "in": "query",
@@ -213,7 +33,7 @@
               "type": "integer",
               "maximum": 100,
               "minimum": 1,
-              "default": 50,
+              "default": 20,
               "title": "Limit"
             }
           }
@@ -226,9 +46,48 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TransactionSummary"
+                    "$ref": "#/components/schemas/TankResponse"
                   },
-                  "title": "Response List Transactions Api V1 Payments Transactions Get"
+                  "title": "Response List Tanks Api V1 Tanks Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tanks"
+        ],
+        "summary": "Create Tank",
+        "operationId": "create_tank_api_v1_tanks_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TankCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TankResponse"
                 }
               }
             }
@@ -246,21 +105,21 @@
         }
       }
     },
-    "/api/v1/payments/transactions/{transaction_id}": {
+    "/api/v1/tanks/{id}": {
       "get": {
         "tags": [
-          "payments"
+          "Tanks"
         ],
-        "summary": "Get Transaction",
-        "operationId": "get_transaction_api_v1_payments_transactions__transaction_id__get",
+        "summary": "Get Tank",
+        "operationId": "get_tank_api_v1_tanks__id__get",
         "parameters": [
           {
-            "name": "transaction_id",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Transaction Id"
+              "title": "Id"
             }
           }
         ],
@@ -270,7 +129,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TransactionDetail"
+                  "$ref": "#/components/schemas/TankResponse"
                 }
               }
             }
@@ -286,21 +145,30 @@
             }
           }
         }
-      }
-    },
-    "/api/v1/refunds": {
-      "post": {
+      },
+      "patch": {
         "tags": [
-          "refunds"
+          "Tanks"
         ],
-        "summary": "Create Refund Endpoint",
-        "operationId": "create_refund_endpoint_api_v1_refunds_post",
+        "summary": "Update Tank",
+        "operationId": "update_tank_api_v1_tanks__id__patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RefundRequest"
+                "$ref": "#/components/schemas/TankUpdate"
               }
             }
           }
@@ -311,7 +179,81 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RefundSummary"
+                  "$ref": "#/components/schemas/TankResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tanks"
+        ],
+        "summary": "Delete Tank",
+        "operationId": "delete_tank_api_v1_tanks__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/telemetry": {
+      "post": {
+        "tags": [
+          "Telemetry"
+        ],
+        "summary": "Ingest Telemetry",
+        "operationId": "ingest_telemetry_api_v1_telemetry_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TelemetryReadingCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryReadingResponse"
                 }
               }
             }
@@ -330,13 +272,13 @@
       },
       "get": {
         "tags": [
-          "refunds"
+          "Telemetry"
         ],
-        "summary": "List Refunds Endpoint",
-        "operationId": "list_refunds_endpoint_api_v1_refunds_get",
+        "summary": "Get Telemetry",
+        "operationId": "get_telemetry_api_v1_telemetry_get",
         "parameters": [
           {
-            "name": "transaction_id",
+            "name": "tank_id",
             "in": "query",
             "required": false,
             "schema": {
@@ -348,10 +290,42 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
+              "title": "Tank Id"
+            }
+          },
+          {
+            "name": "start_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Time"
+            }
+          },
+          {
+            "name": "end_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Time"
+            }
           },
           {
             "name": "skip",
@@ -372,7 +346,7 @@
               "type": "integer",
               "maximum": 100,
               "minimum": 1,
-              "default": 50,
+              "default": 20,
               "title": "Limit"
             }
           }
@@ -385,9 +359,9 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/RefundSummary"
+                    "$ref": "#/components/schemas/TelemetryReadingResponse"
                   },
-                  "title": "Response List Refunds Endpoint Api V1 Refunds Get"
+                  "title": "Response Get Telemetry Api V1 Telemetry Get"
                 }
               }
             }
@@ -405,63 +379,58 @@
         }
       }
     },
-    "/api/v1/webhooks/stripe": {
-      "post": {
-        "tags": [
-          "webhooks"
-        ],
-        "summary": "Handle Stripe Webhook",
-        "operationId": "handle_stripe_webhook_api_v1_webhooks_stripe_post",
-        "parameters": [
-          {
-            "name": "stripe-signature",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Stripe-Signature"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/audit-logs": {
+    "/api/v1/telemetry/latest": {
       "get": {
         "tags": [
-          "audit-logs"
+          "Telemetry"
         ],
-        "summary": "List Audit Logs",
-        "operationId": "list_audit_logs_api_v1_audit_logs_get",
+        "summary": "Get Latest Telemetry",
+        "operationId": "get_latest_telemetry_api_v1_telemetry_latest_get",
         "parameters": [
           {
-            "name": "transaction_id",
+            "name": "tank_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tank Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LatestTelemetryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/thresholds": {
+      "get": {
+        "tags": [
+          "Alerts & Thresholds"
+        ],
+        "summary": "Get Thresholds",
+        "operationId": "get_thresholds_api_v1_thresholds_get",
+        "parameters": [
+          {
+            "name": "tank_id",
             "in": "query",
             "required": false,
             "schema": {
@@ -473,13 +442,103 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
+              "title": "Tank Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlertThresholdResponse"
+                  },
+                  "title": "Response Get Thresholds Api V1 Thresholds Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Alerts & Thresholds"
+        ],
+        "summary": "Set Threshold",
+        "operationId": "set_threshold_api_v1_thresholds_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertThresholdCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertThresholdResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts": {
+      "get": {
+        "tags": [
+          "Alerts & Thresholds"
+        ],
+        "summary": "Get Alerts",
+        "operationId": "get_alerts_api_v1_alerts_get",
+        "parameters": [
+          {
+            "name": "tank_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tank Id"
+            }
           },
           {
-            "name": "event_type",
+            "name": "status",
             "in": "query",
             "required": false,
             "schema": {
@@ -491,10 +550,24 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by event type",
-              "title": "Event Type"
-            },
-            "description": "Filter by event type"
+              "title": "Status"
+            }
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Severity"
+            }
           },
           {
             "name": "skip",
@@ -515,7 +588,7 @@
               "type": "integer",
               "maximum": 100,
               "minimum": 1,
-              "default": 50,
+              "default": 20,
               "title": "Limit"
             }
           }
@@ -528,9 +601,771 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AuditLogEntry"
+                    "$ref": "#/components/schemas/AlertResponse"
                   },
-                  "title": "Response List Audit Logs Api V1 Audit Logs Get"
+                  "title": "Response Get Alerts Api V1 Alerts Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/{id}/status": {
+      "patch": {
+        "tags": [
+          "Alerts & Thresholds"
+        ],
+        "summary": "Update Alert Status",
+        "operationId": "update_alert_status_api_v1_alerts__id__status_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertStatusUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feeding/schedules": {
+      "get": {
+        "tags": [
+          "Feeding"
+        ],
+        "summary": "Get Feeding Schedules",
+        "operationId": "get_feeding_schedules_api_v1_feeding_schedules_get",
+        "parameters": [
+          {
+            "name": "tank_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tank Id"
+            }
+          },
+          {
+            "name": "is_active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Is Active"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeedingScheduleResponse"
+                  },
+                  "title": "Response Get Feeding Schedules Api V1 Feeding Schedules Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Feeding"
+        ],
+        "summary": "Create Feeding Schedule",
+        "operationId": "create_feeding_schedule_api_v1_feeding_schedules_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedingScheduleCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedingScheduleResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feeding/schedules/{id}": {
+      "delete": {
+        "tags": [
+          "Feeding"
+        ],
+        "summary": "Delete Feeding Schedule",
+        "operationId": "delete_feeding_schedule_api_v1_feeding_schedules__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feeding/logs": {
+      "get": {
+        "tags": [
+          "Feeding"
+        ],
+        "summary": "Get Feeding Logs",
+        "operationId": "get_feeding_logs_api_v1_feeding_logs_get",
+        "parameters": [
+          {
+            "name": "tank_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tank Id"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeedingLogResponse"
+                  },
+                  "title": "Response Get Feeding Logs Api V1 Feeding Logs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Feeding"
+        ],
+        "summary": "Record Feeding Log",
+        "operationId": "record_feeding_log_api_v1_feeding_logs_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedingLogCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedingLogResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health-records": {
+      "get": {
+        "tags": [
+          "Fish Health"
+        ],
+        "summary": "Get Health Records",
+        "operationId": "get_health_records_api_v1_health_records_get",
+        "parameters": [
+          {
+            "name": "tank_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tank Id"
+            }
+          },
+          {
+            "name": "is_quarantined",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Is Quarantined"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FishHealthRecordResponse"
+                  },
+                  "title": "Response Get Health Records Api V1 Health Records Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Fish Health"
+        ],
+        "summary": "Create Health Record",
+        "operationId": "create_health_record_api_v1_health_records_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FishHealthRecordCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FishHealthRecordResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health-records/{id}": {
+      "get": {
+        "tags": [
+          "Fish Health"
+        ],
+        "summary": "Get Health Record",
+        "operationId": "get_health_record_api_v1_health_records__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FishHealthRecordResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Fish Health"
+        ],
+        "summary": "Delete Health Record",
+        "operationId": "delete_health_record_api_v1_health_records__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/equipment": {
+      "get": {
+        "tags": [
+          "Equipment"
+        ],
+        "summary": "Get Equipment",
+        "operationId": "get_equipment_api_v1_equipment_get",
+        "parameters": [
+          {
+            "name": "tank_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tank Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EquipmentResponse"
+                  },
+                  "title": "Response Get Equipment Api V1 Equipment Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Equipment"
+        ],
+        "summary": "Create Equipment",
+        "operationId": "create_equipment_api_v1_equipment_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/equipment/{id}": {
+      "get": {
+        "tags": [
+          "Equipment"
+        ],
+        "summary": "Get Equipment Detail",
+        "operationId": "get_equipment_detail_api_v1_equipment__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/equipment/{id}/maintenance-logs": {
+      "post": {
+        "tags": [
+          "Equipment"
+        ],
+        "summary": "Log Maintenance",
+        "operationId": "log_maintenance_api_v1_equipment__id__maintenance_logs_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentMaintenanceLogCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentMaintenanceLogResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Equipment"
+        ],
+        "summary": "Get Equipment Maintenance Logs",
+        "operationId": "get_equipment_maintenance_logs_api_v1_equipment__id__maintenance_logs_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EquipmentMaintenanceLogResponse"
+                  },
+                  "title": "Response Get Equipment Maintenance Logs Api V1 Equipment  Id  Maintenance Logs Get"
                 }
               }
             }
@@ -550,6 +1385,9 @@
     },
     "/health": {
       "get": {
+        "tags": [
+          "System"
+        ],
         "summary": "Health Check",
         "operationId": "health_check_health_get",
         "responses": {
@@ -567,37 +1405,47 @@
   },
   "components": {
     "schemas": {
-      "AuditLogEntry": {
+      "AlertResponse": {
         "properties": {
+          "tank_id": {
+            "type": "string",
+            "title": "Tank Id"
+          },
+          "parameter_name": {
+            "type": "string",
+            "title": "Parameter Name"
+          },
+          "recorded_value": {
+            "type": "number",
+            "title": "Recorded Value"
+          },
+          "threshold_violated": {
+            "type": "string",
+            "title": "Threshold Violated"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "ACTIVE"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "transaction_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Transaction Id"
-          },
-          "event_type": {
+          "triggered_at": {
             "type": "string",
-            "title": "Event Type"
+            "format": "date-time",
+            "title": "Triggered At"
           },
-          "ip_address": {
-            "type": "string",
-            "title": "Ip Address"
-          },
-          "masked_payload": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Masked Payload"
-          },
-          "created_at": {
+          "acknowledged_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -607,151 +1455,166 @@
                 "type": "null"
               }
             ],
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "event_type",
-          "ip_address",
-          "masked_payload"
-        ],
-        "title": "AuditLogEntry"
-      },
-      "CartItem": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
+            "title": "Acknowledged At"
           },
-          "quantity": {
-            "type": "integer",
-            "title": "Quantity",
-            "default": 1
-          },
-          "unit_price": {
-            "type": "number",
-            "title": "Unit Price"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "unit_price"
-        ],
-        "title": "CartItem"
-      },
-      "CheckoutSessionRequest": {
-        "properties": {
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount",
-            "description": "Amount in base currency"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "description": "Settlement/target currency",
-            "default": "USD"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "items": {
+          "resolved_at": {
             "anyOf": [
               {
-                "items": {
-                  "$ref": "#/components/schemas/CartItem"
-                },
-                "type": "array"
+                "type": "string",
+                "format": "date-time"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Items"
+            "title": "Resolved At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
-          "amount",
-          "customer_email"
+          "tank_id",
+          "parameter_name",
+          "recorded_value",
+          "threshold_violated",
+          "severity",
+          "message",
+          "id",
+          "triggered_at",
+          "created_at",
+          "updated_at"
         ],
-        "title": "CheckoutSessionRequest"
+        "title": "AlertResponse"
       },
-      "CheckoutSessionResponse": {
+      "AlertStatusUpdate": {
         "properties": {
-          "session_id": {
+          "status": {
             "type": "string",
-            "title": "Session Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "client_secret": {
-            "type": "string",
-            "title": "Client Secret"
-          },
-          "base_amount": {
-            "type": "number",
-            "title": "Base Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_amount": {
-            "type": "number",
-            "title": "Target Amount"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
+            "pattern": "^(ACTIVE|ACKNOWLEDGED|RESOLVED)$",
+            "title": "Status"
           }
         },
         "type": "object",
         "required": [
-          "session_id",
-          "payment_intent_id",
-          "client_secret",
-          "base_amount",
-          "base_currency",
-          "target_amount",
-          "target_currency",
-          "exchange_rate"
+          "status"
         ],
-        "title": "CheckoutSessionResponse"
+        "title": "AlertStatusUpdate"
       },
-      "DigitalWalletPaymentRequest": {
+      "AlertThresholdCreate": {
         "properties": {
-          "wallet_type": {
+          "tank_id": {
             "type": "string",
-            "title": "Wallet Type",
-            "description": "apple_pay or google_pay"
+            "title": "Tank Id"
           },
-          "payment_token": {
+          "parameter_name": {
             "type": "string",
-            "title": "Payment Token"
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Parameter Name"
           },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "default": "USD"
-          },
-          "amount": {
+          "min_threshold": {
             "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
+            "title": "Min Threshold"
           },
-          "customer_email": {
+          "max_threshold": {
+            "type": "number",
+            "title": "Max Threshold"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "tank_id",
+          "parameter_name",
+          "min_threshold",
+          "max_threshold"
+        ],
+        "title": "AlertThresholdCreate"
+      },
+      "AlertThresholdResponse": {
+        "properties": {
+          "tank_id": {
+            "type": "string",
+            "title": "Tank Id"
+          },
+          "parameter_name": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Parameter Name"
+          },
+          "min_threshold": {
+            "type": "number",
+            "title": "Min Threshold"
+          },
+          "max_threshold": {
+            "type": "number",
+            "title": "Max Threshold"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tank_id",
+          "parameter_name",
+          "min_threshold",
+          "max_threshold",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "AlertThresholdResponse"
+      },
+      "EquipmentCreate": {
+        "properties": {
+          "tank_id": {
+            "type": "string",
+            "title": "Tank Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "equipment_type": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Equipment Type"
+          },
+          "model_number": {
             "anyOf": [
               {
                 "type": "string"
@@ -760,81 +1623,622 @@
                 "type": "null"
               }
             ],
-            "title": "Customer Email",
-            "default": "customer@example.com"
+            "title": "Model Number"
+          },
+          "maintenance_interval_days": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Maintenance Interval Days"
+          },
+          "last_serviced_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Serviced At"
           }
         },
         "type": "object",
         "required": [
-          "wallet_type",
-          "payment_token",
-          "amount"
+          "tank_id",
+          "name",
+          "equipment_type",
+          "maintenance_interval_days"
         ],
-        "title": "DigitalWalletPaymentRequest"
+        "title": "EquipmentCreate"
       },
-      "DigitalWalletPaymentResponse": {
+      "EquipmentMaintenanceLogCreate": {
         "properties": {
-          "transaction_id": {
-            "type": "string",
-            "title": "Transaction Id"
+          "service_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Date"
           },
-          "payment_intent_id": {
+          "action_taken": {
             "type": "string",
-            "title": "Payment Intent Id"
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Action Taken"
           },
-          "wallet_type": {
+          "technician_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Technician Notes"
+          },
+          "performed_by": {
             "type": "string",
-            "title": "Wallet Type"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "currency": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Performed By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action_taken",
+          "performed_by"
+        ],
+        "title": "EquipmentMaintenanceLogCreate"
+      },
+      "EquipmentMaintenanceLogResponse": {
+        "properties": {
+          "service_date": {
             "type": "string",
-            "title": "Currency"
+            "format": "date-time",
+            "title": "Service Date"
+          },
+          "action_taken": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Action Taken"
+          },
+          "technician_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Technician Notes"
+          },
+          "performed_by": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Performed By"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "equipment_id": {
+            "type": "string",
+            "title": "Equipment Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "service_date",
+          "action_taken",
+          "performed_by",
+          "id",
+          "equipment_id",
+          "created_at"
+        ],
+        "title": "EquipmentMaintenanceLogResponse"
+      },
+      "EquipmentResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "tank_id": {
+            "type": "string",
+            "title": "Tank Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "equipment_type": {
+            "type": "string",
+            "title": "Equipment Type"
+          },
+          "model_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Number"
+          },
+          "maintenance_interval_days": {
+            "type": "integer",
+            "title": "Maintenance Interval Days"
+          },
+          "last_serviced_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Serviced At"
+          },
+          "next_due_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Next Due At"
           },
           "status": {
             "type": "string",
             "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
-          "transaction_id",
-          "payment_intent_id",
-          "wallet_type",
-          "amount",
-          "currency",
-          "status"
+          "id",
+          "tank_id",
+          "name",
+          "equipment_type",
+          "maintenance_interval_days",
+          "last_serviced_at",
+          "next_due_at",
+          "status",
+          "created_at",
+          "updated_at"
         ],
-        "title": "DigitalWalletPaymentResponse"
+        "title": "EquipmentResponse"
       },
-      "ExchangeRatesResponse": {
+      "FeedingLogCreate": {
         "properties": {
-          "base_currency": {
+          "tank_id": {
             "type": "string",
-            "title": "Base Currency"
+            "title": "Tank Id"
           },
-          "rates": {
-            "additionalProperties": {
-              "type": "number"
-            },
-            "type": "object",
-            "title": "Rates"
+          "schedule_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schedule Id"
           },
-          "timestamp": {
+          "food_type": {
             "type": "string",
-            "title": "Timestamp"
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Food Type"
+          },
+          "portion_grams": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Portion Grams"
+          },
+          "fed_by": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Fed By"
+          },
+          "fed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fed At"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
           }
         },
         "type": "object",
         "required": [
-          "base_currency",
-          "rates",
-          "timestamp"
+          "tank_id",
+          "food_type",
+          "portion_grams",
+          "fed_by"
         ],
-        "title": "ExchangeRatesResponse"
+        "title": "FeedingLogCreate"
+      },
+      "FeedingLogResponse": {
+        "properties": {
+          "tank_id": {
+            "type": "string",
+            "title": "Tank Id"
+          },
+          "schedule_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schedule Id"
+          },
+          "food_type": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Food Type"
+          },
+          "portion_grams": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Portion Grams"
+          },
+          "fed_by": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Fed By"
+          },
+          "fed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fed At"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tank_id",
+          "food_type",
+          "portion_grams",
+          "fed_by",
+          "fed_at",
+          "id",
+          "created_at"
+        ],
+        "title": "FeedingLogResponse"
+      },
+      "FeedingScheduleCreate": {
+        "properties": {
+          "tank_id": {
+            "type": "string",
+            "title": "Tank Id"
+          },
+          "food_type": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Food Type"
+          },
+          "portion_grams": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Portion Grams"
+          },
+          "frequency": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Frequency"
+          },
+          "scheduled_time": {
+            "type": "string",
+            "maxLength": 10,
+            "minLength": 1,
+            "title": "Scheduled Time"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "tank_id",
+          "food_type",
+          "portion_grams",
+          "frequency",
+          "scheduled_time"
+        ],
+        "title": "FeedingScheduleCreate"
+      },
+      "FeedingScheduleResponse": {
+        "properties": {
+          "tank_id": {
+            "type": "string",
+            "title": "Tank Id"
+          },
+          "food_type": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Food Type"
+          },
+          "portion_grams": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Portion Grams"
+          },
+          "frequency": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Frequency"
+          },
+          "scheduled_time": {
+            "type": "string",
+            "maxLength": 10,
+            "minLength": 1,
+            "title": "Scheduled Time"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tank_id",
+          "food_type",
+          "portion_grams",
+          "frequency",
+          "scheduled_time",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "FeedingScheduleResponse"
+      },
+      "FishHealthRecordCreate": {
+        "properties": {
+          "tank_id": {
+            "type": "string",
+            "title": "Tank Id"
+          },
+          "species": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Species"
+          },
+          "population_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Population Count"
+          },
+          "health_status": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Health Status"
+          },
+          "symptoms": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symptoms"
+          },
+          "treatment_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Treatment Notes"
+          },
+          "is_quarantined": {
+            "type": "boolean",
+            "title": "Is Quarantined",
+            "default": false
+          },
+          "recorded_by": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Recorded By"
+          },
+          "recorded_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recorded At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tank_id",
+          "species",
+          "population_count",
+          "health_status",
+          "recorded_by"
+        ],
+        "title": "FishHealthRecordCreate"
+      },
+      "FishHealthRecordResponse": {
+        "properties": {
+          "tank_id": {
+            "type": "string",
+            "title": "Tank Id"
+          },
+          "species": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Species"
+          },
+          "population_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Population Count"
+          },
+          "health_status": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Health Status"
+          },
+          "symptoms": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symptoms"
+          },
+          "treatment_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Treatment Notes"
+          },
+          "is_quarantined": {
+            "type": "boolean",
+            "title": "Is Quarantined",
+            "default": false
+          },
+          "recorded_by": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Recorded By"
+          },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Recorded At"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tank_id",
+          "species",
+          "population_count",
+          "health_status",
+          "recorded_by",
+          "recorded_at",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "FishHealthRecordResponse"
       },
       "HTTPValidationError": {
         "properties": {
@@ -849,79 +2253,220 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "RefundRequest": {
+      "LatestTelemetryResponse": {
         "properties": {
-          "transaction_id": {
+          "tank_id": {
             "type": "string",
-            "title": "Transaction Id"
+            "title": "Tank Id"
           },
-          "amount": {
+          "reading": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TelemetryReadingResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ph_status": {
+            "type": "string",
+            "title": "Ph Status",
+            "default": "SAFE"
+          },
+          "oxygen_status": {
+            "type": "string",
+            "title": "Oxygen Status",
+            "default": "SAFE"
+          },
+          "temperature_status": {
+            "type": "string",
+            "title": "Temperature Status",
+            "default": "SAFE"
+          },
+          "ammonia_status": {
+            "type": "string",
+            "title": "Ammonia Status",
+            "default": "SAFE"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tank_id"
+        ],
+        "title": "LatestTelemetryResponse"
+      },
+      "TankCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "location": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Location"
+          },
+          "capacity_liters": {
             "type": "number",
             "exclusiveMinimum": 0.0,
-            "title": "Amount"
+            "title": "Capacity Liters"
           },
-          "reason": {
+          "water_type": {
             "type": "string",
-            "title": "Reason"
-          },
-          "memo": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Memo"
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Water Type"
           }
         },
         "type": "object",
         "required": [
-          "transaction_id",
-          "amount",
-          "reason"
+          "name",
+          "location",
+          "capacity_liters",
+          "water_type"
         ],
-        "title": "RefundRequest"
+        "title": "TankCreate"
       },
-      "RefundSummary": {
+      "TankResponse": {
         "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "location": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Location"
+          },
+          "capacity_liters": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Capacity Liters"
+          },
+          "water_type": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Water Type"
+          },
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "transaction_id": {
+          "created_at": {
             "type": "string",
-            "title": "Transaction Id"
+            "format": "date-time",
+            "title": "Created At"
           },
-          "refund_amount": {
-            "type": "number",
-            "title": "Refund Amount"
-          },
-          "currency": {
+          "updated_at": {
             "type": "string",
-            "title": "Currency"
-          },
-          "reason": {
-            "type": "string",
-            "title": "Reason"
-          },
-          "memo": {
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "location",
+          "capacity_liters",
+          "water_type",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TankResponse"
+      },
+      "TankUpdate": {
+        "properties": {
+          "name": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Memo"
+            "title": "Name"
           },
-          "status": {
+          "location": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "capacity_liters": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity Liters"
+          },
+          "water_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Water Type"
+          }
+        },
+        "type": "object",
+        "title": "TankUpdate"
+      },
+      "TelemetryReadingCreate": {
+        "properties": {
+          "tank_id": {
             "type": "string",
-            "title": "Status"
+            "title": "Tank Id"
           },
-          "created_at": {
+          "ph_level": {
+            "type": "number",
+            "maximum": 14.0,
+            "minimum": 0.0,
+            "title": "Ph Level"
+          },
+          "dissolved_oxygen": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Dissolved Oxygen"
+          },
+          "temperature_c": {
+            "type": "number",
+            "title": "Temperature C"
+          },
+          "ammonia_ppm": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Ammonia Ppm"
+          },
+          "recorded_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -931,161 +2476,68 @@
                 "type": "null"
               }
             ],
-            "title": "Created At"
+            "title": "Recorded At"
           }
         },
         "type": "object",
         "required": [
-          "id",
-          "transaction_id",
-          "refund_amount",
-          "currency",
-          "reason",
-          "status"
+          "tank_id",
+          "ph_level",
+          "dissolved_oxygen",
+          "temperature_c",
+          "ammonia_ppm"
         ],
-        "title": "RefundSummary"
+        "title": "TelemetryReadingCreate"
       },
-      "TransactionDetail": {
+      "TelemetryReadingResponse": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "payment_intent_id": {
+          "tank_id": {
             "type": "string",
-            "title": "Payment Intent Id"
+            "title": "Tank Id"
           },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "payment_method": {
-            "type": "string",
-            "title": "Payment Method"
-          },
-          "amount": {
+          "ph_level": {
             "type": "number",
-            "title": "Amount"
+            "title": "Ph Level"
           },
-          "base_currency": {
+          "dissolved_oxygen": {
+            "type": "number",
+            "title": "Dissolved Oxygen"
+          },
+          "temperature_c": {
+            "type": "number",
+            "title": "Temperature C"
+          },
+          "ammonia_ppm": {
+            "type": "number",
+            "title": "Ammonia Ppm"
+          },
+          "recorded_at": {
             "type": "string",
-            "title": "Base Currency"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "converted_amount": {
-            "type": "number",
-            "title": "Converted Amount"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "refunded_amount": {
-            "type": "number",
-            "title": "Refunded Amount"
-          },
-          "remaining_refundable_balance": {
-            "type": "number",
-            "title": "Remaining Refundable Balance"
-          },
-          "refunds": {
-            "items": {
-              "$ref": "#/components/schemas/RefundSummary"
-            },
-            "type": "array",
-            "title": "Refunds"
+            "format": "date-time",
+            "title": "Recorded At"
           },
           "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "base_currency",
-          "target_currency",
-          "converted_amount",
-          "exchange_rate",
-          "status",
-          "refunded_amount",
-          "remaining_refundable_balance"
+          "tank_id",
+          "ph_level",
+          "dissolved_oxygen",
+          "temperature_c",
+          "ammonia_ppm",
+          "recorded_at",
+          "created_at"
         ],
-        "title": "TransactionDetail"
-      },
-      "TransactionSummary": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "payment_method": {
-            "type": "string",
-            "title": "Payment Method"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "currency",
-          "status"
-        ],
-        "title": "TransactionSummary"
+        "title": "TelemetryReadingResponse"
       },
       "ValidationError": {
         "properties": {
