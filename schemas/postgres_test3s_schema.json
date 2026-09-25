@@ -1,0 +1,32 @@
+[
+  {
+    "name": "id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Target field id"
+  },
+  {
+    "name": "data_payload",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Target field data_payload"
+  },
+  {
+    "name": "status",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Target field status"
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Target field created_at"
+  },
+  {
+    "name": "updated_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Target field updated_at"
+  }
+]

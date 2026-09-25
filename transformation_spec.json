@@ -1,0 +1,34 @@
+{
+  "columns": [
+    {
+      "source_name": "id",
+      "target_name": "id",
+      "target_type": "STRING",
+      "transform": "trim_whitespace"
+    },
+    {
+      "source_name": "data_payload",
+      "target_name": "data_payload",
+      "target_type": "STRING",
+      "transform": "trim_whitespace"
+    },
+    {
+      "source_name": "status",
+      "target_name": "status",
+      "target_type": "STRING",
+      "transform": "trim_whitespace"
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "target_type": "TIMESTAMP",
+      "transform": "parse_timestamp"
+    },
+    {
+      "source_name": "updated_at",
+      "target_name": "updated_at",
+      "target_type": "TIMESTAMP",
+      "transform": "parse_timestamp"
+    }
+  ]
+}
