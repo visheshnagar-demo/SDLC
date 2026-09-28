@@ -1,4 +1,48 @@
-# Project
+# AI/ML Concepts Learning Platform
+
+An interactive educational platform designed for students and developers to learn artificial intelligence and machine learning concepts through structured pathways, rich tutorials, copyable Python/NumPy/PyTorch code snippets, interactive quizzes, and persistent progress tracking.
+
+## Tech Stack
+- **Backend:** Python 3.11, FastAPI, SQLAlchemy 2.x, SQLite (dev/test) / PostgreSQL (prod), Pydantic v2
+- **Frontend:** React 18, Vite, Tailwind CSS, Lucide React
+
+### 1. Prerequisites
+- Python 3.11+
+- Virtualenv or `uv`
+
+### 2. Installation
+```bash
+cd server
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### 3. Running the Backend Server
+```bash
+uvicorn server.main:app --host 0.0.0.0 --port 8000 --reload
+```
+API Documentation will be available at:
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
+### 4. Running Backend Tests
+```bash
+pytest server/tests -v
+```
+
+## Seed Credentials
+- **Learner User:** `test@example.com` / `testpassword`
+- **Admin User:** `admin@example.com` / `adminpassword`
+
+## Full-Stack Local Development
+1. Start the backend server on `http://localhost:8000`
+2. Start the frontend client on `http://localhost:5173`
+   ```bash
+   cd client
+   npm install
+   npm run dev
+   ```
 
 ## Server
 

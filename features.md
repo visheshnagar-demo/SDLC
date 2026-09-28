@@ -17,3 +17,15 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-398 - AI/ML Concepts Learning Platform
+
+### Feature Summary
+An interactive learning website that enables learners to explore AI/ML concepts, study step-by-step tutorials with copyable code snippets, test their understanding via quizzes, and track completion progress.
+
+### Key Features
+- Curated Learning Paths & Topic Categorization
+- Interactive Concept Tutorials & Code Snippets
+- Knowledge Check & Interactive Quizzes
+- User Progress Tracking & Bookmarking
+- Search & Filter Functionality
