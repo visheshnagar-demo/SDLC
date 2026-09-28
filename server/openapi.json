@@ -1,22 +1,139 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Payment Gateway Service",
+    "title": "AI/ML Concepts Learning Platform",
     "version": "0.1.0"
   },
   "paths": {
-    "/api/v1/payments/checkout-session": {
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/livez": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_livez_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_healthz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "root"
+        ],
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
       "post": {
         "tags": [
-          "payments"
+          "auth"
         ],
-        "summary": "Create Session",
-        "operationId": "create_session_api_v1_payments_checkout_session_post",
+        "summary": "Register",
+        "operationId": "register_api_v1_auth_register_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CheckoutSessionRequest"
+                "$ref": "#/components/schemas/UserRegister"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLogin"
               }
             }
           },
@@ -28,7 +145,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CheckoutSessionResponse"
+                  "$ref": "#/components/schemas/Token"
                 }
               }
             }
@@ -46,102 +163,42 @@
         }
       }
     },
-    "/api/v1/payments/digital-wallet": {
-      "post": {
+    "/api/v1/auth/me": {
+      "get": {
         "tags": [
-          "payments"
+          "auth"
         ],
-        "summary": "Pay Digital Wallet",
-        "operationId": "pay_digital_wallet_api_v1_payments_digital_wallet_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DigitalWalletPaymentRequest"
+        "summary": "Get Me",
+        "operationId": "get_me_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
               }
             }
-          },
-          "required": true
+          }
         },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DigitalWalletPaymentResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
           }
-        }
+        ]
       }
     },
-    "/api/v1/payments/rates": {
+    "/api/v1/tracks": {
       "get": {
         "tags": [
-          "payments"
+          "tracks"
         ],
-        "summary": "Get Rates",
-        "operationId": "get_rates_api_v1_payments_rates_get",
+        "summary": "List Tracks",
+        "operationId": "list_tracks_api_v1_tracks_get",
         "parameters": [
           {
-            "name": "base_currency",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "Base currency code",
-              "default": "USD",
-              "title": "Base Currency"
-            },
-            "description": "Base currency code"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExchangeRatesResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "List Transactions",
-        "operationId": "list_transactions_api_v1_payments_transactions_get",
-        "parameters": [
-          {
-            "name": "search",
+            "name": "difficulty",
             "in": "query",
             "required": false,
             "schema": {
@@ -153,46 +210,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Search transaction ID or email",
-              "title": "Search"
+              "description": "Filter by difficulty",
+              "title": "Difficulty"
             },
-            "description": "Search transaction ID or email"
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction status",
-              "title": "Status"
-            },
-            "description": "Filter by transaction status"
-          },
-          {
-            "name": "currency",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by currency",
-              "title": "Currency"
-            },
-            "description": "Filter by currency"
+            "description": "Filter by difficulty"
           },
           {
             "name": "skip",
@@ -213,7 +234,233 @@
               "type": "integer",
               "maximum": 100,
               "minimum": 1,
-              "default": 50,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "published_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Published Only"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TrackSummary"
+                  },
+                  "title": "Response List Tracks Api V1 Tracks Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tracks/{slug}": {
+      "get": {
+        "tags": [
+          "tracks"
+        ],
+        "summary": "Get Track By Slug",
+        "operationId": "get_track_by_slug_api_v1_tracks__slug__get",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrackDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/modules/{slug}": {
+      "get": {
+        "tags": [
+          "modules"
+        ],
+        "summary": "Get Module By Slug",
+        "operationId": "get_module_by_slug_api_v1_modules__slug__get",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModuleDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tutorials/search": {
+      "get": {
+        "tags": [
+          "tutorials"
+        ],
+        "summary": "Search Tutorials",
+        "operationId": "search_tutorials_api_v1_tutorials_search_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search term for title, content, or tags",
+              "title": "Q"
+            },
+            "description": "Search term for title, content, or tags"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by track/category",
+              "title": "Category"
+            },
+            "description": "Filter by track/category"
+          },
+          {
+            "name": "difficulty",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by difficulty",
+              "title": "Difficulty"
+            },
+            "description": "Filter by difficulty"
+          },
+          {
+            "name": "framework",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by framework (e.g. pytorch, numpy)",
+              "title": "Framework"
+            },
+            "description": "Filter by framework (e.g. pytorch, numpy)"
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
               "title": "Limit"
             }
           }
@@ -226,9 +473,9 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TransactionSummary"
+                    "$ref": "#/components/schemas/TutorialSearchResult"
                   },
-                  "title": "Response List Transactions Api V1 Payments Transactions Get"
+                  "title": "Response Search Tutorials Api V1 Tutorials Search Get"
                 }
               }
             }
@@ -246,21 +493,21 @@
         }
       }
     },
-    "/api/v1/payments/transactions/{transaction_id}": {
+    "/api/v1/tutorials/{slug}": {
       "get": {
         "tags": [
-          "payments"
+          "tutorials"
         ],
-        "summary": "Get Transaction",
-        "operationId": "get_transaction_api_v1_payments_transactions__transaction_id__get",
+        "summary": "Get Tutorial By Slug",
+        "operationId": "get_tutorial_by_slug_api_v1_tutorials__slug__get",
         "parameters": [
           {
-            "name": "transaction_id",
+            "name": "slug",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Transaction Id"
+              "title": "Slug"
             }
           }
         ],
@@ -270,7 +517,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TransactionDetail"
+                  "$ref": "#/components/schemas/TutorialDetail"
                 }
               }
             }
@@ -288,19 +535,82 @@
         }
       }
     },
-    "/api/v1/refunds": {
+    "/api/v1/quizzes/{module_id}": {
+      "get": {
+        "tags": [
+          "quizzes"
+        ],
+        "summary": "Get Quiz By Module",
+        "operationId": "get_quiz_by_module_api_v1_quizzes__module_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "module_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Module Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuizDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/quizzes/{quiz_id}/submit": {
       "post": {
         "tags": [
-          "refunds"
+          "quizzes"
         ],
-        "summary": "Create Refund Endpoint",
-        "operationId": "create_refund_endpoint_api_v1_refunds_post",
+        "summary": "Submit Quiz",
+        "operationId": "submit_quiz_api_v1_quizzes__quiz_id__submit_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "quiz_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Quiz Id"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RefundRequest"
+                "$ref": "#/components/schemas/QuizSubmitRequest"
               }
             }
           }
@@ -311,7 +621,164 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RefundSummary"
+                  "$ref": "#/components/schemas/QuizSubmitResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/progress": {
+      "get": {
+        "tags": [
+          "progress"
+        ],
+        "summary": "Get User Progress",
+        "operationId": "get_user_progress_api_v1_progress_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProgressDashboard"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/progress/{module_id}/touch": {
+      "post": {
+        "tags": [
+          "progress"
+        ],
+        "summary": "Touch Module Progress",
+        "operationId": "touch_module_progress_api_v1_progress__module_id__touch_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "module_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Module Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModuleTouchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/bookmarks": {
+      "get": {
+        "tags": [
+          "bookmarks"
+        ],
+        "summary": "List Bookmarks",
+        "operationId": "list_bookmarks_api_v1_bookmarks_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BookmarkOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Bookmarks Api V1 Bookmarks Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookmarks/{tutorial_id}": {
+      "post": {
+        "tags": [
+          "bookmarks"
+        ],
+        "summary": "Toggle Or Add Bookmark",
+        "operationId": "toggle_or_add_bookmark_api_v1_bookmarks__tutorial_id__post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tutorial_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tutorial Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookmarkToggleResponse"
                 }
               }
             }
@@ -328,105 +795,25 @@
           }
         }
       },
-      "get": {
+      "delete": {
         "tags": [
-          "refunds"
+          "bookmarks"
         ],
-        "summary": "List Refunds Endpoint",
-        "operationId": "list_refunds_endpoint_api_v1_refunds_get",
-        "parameters": [
+        "summary": "Remove Bookmark",
+        "operationId": "remove_bookmark_api_v1_bookmarks__tutorial_id__delete",
+        "security": [
           {
-            "name": "transaction_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
+            "OAuth2PasswordBearer": []
           }
         ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RefundSummary"
-                  },
-                  "title": "Response List Refunds Endpoint Api V1 Refunds Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/webhooks/stripe": {
-      "post": {
-        "tags": [
-          "webhooks"
-        ],
-        "summary": "Handle Stripe Webhook",
-        "operationId": "handle_stripe_webhook_api_v1_webhooks_stripe_post",
         "parameters": [
           {
-            "name": "stripe-signature",
-            "in": "header",
-            "required": false,
+            "name": "tutorial_id",
+            "in": "path",
+            "required": true,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Stripe-Signature"
+              "type": "string",
+              "title": "Tutorial Id"
             }
           }
         ],
@@ -446,118 +833,6 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/audit-logs": {
-      "get": {
-        "tags": [
-          "audit-logs"
-        ],
-        "summary": "List Audit Logs",
-        "operationId": "list_audit_logs_api_v1_audit_logs_get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
-          },
-          {
-            "name": "event_type",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by event type",
-              "title": "Event Type"
-            },
-            "description": "Filter by event type"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AuditLogEntry"
-                  },
-                  "title": "Response List Audit Logs Api V1 Audit Logs Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/health": {
-      "get": {
-        "summary": "Health Check",
-        "operationId": "health_check_health_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
               }
             }
           }
@@ -567,274 +842,90 @@
   },
   "components": {
     "schemas": {
-      "AuditLogEntry": {
+      "AnswerSubmission": {
+        "properties": {
+          "question_id": {
+            "type": "string",
+            "title": "Question Id"
+          },
+          "selected_option": {
+            "type": "string",
+            "title": "Selected Option"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question_id",
+          "selected_option"
+        ],
+        "title": "AnswerSubmission"
+      },
+      "BookmarkOut": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "transaction_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Transaction Id"
-          },
-          "event_type": {
+          "user_id": {
             "type": "string",
-            "title": "Event Type"
+            "title": "User Id"
           },
-          "ip_address": {
+          "tutorial_id": {
             "type": "string",
-            "title": "Ip Address"
-          },
-          "masked_payload": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Masked Payload"
+            "title": "Tutorial Id"
           },
           "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "tutorial": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "$ref": "#/components/schemas/TutorialSummary"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Created At"
+            ]
           }
         },
         "type": "object",
         "required": [
           "id",
-          "event_type",
-          "ip_address",
-          "masked_payload"
+          "user_id",
+          "tutorial_id",
+          "created_at"
         ],
-        "title": "AuditLogEntry"
+        "title": "BookmarkOut"
       },
-      "CartItem": {
+      "BookmarkToggleResponse": {
         "properties": {
-          "name": {
+          "bookmarked": {
+            "type": "boolean",
+            "title": "Bookmarked"
+          },
+          "message": {
             "type": "string",
-            "title": "Name"
+            "title": "Message"
           },
-          "quantity": {
-            "type": "integer",
-            "title": "Quantity",
-            "default": 1
-          },
-          "unit_price": {
-            "type": "number",
-            "title": "Unit Price"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "unit_price"
-        ],
-        "title": "CartItem"
-      },
-      "CheckoutSessionRequest": {
-        "properties": {
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount",
-            "description": "Amount in base currency"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "description": "Settlement/target currency",
-            "default": "USD"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "items": {
+          "bookmark": {
             "anyOf": [
               {
-                "items": {
-                  "$ref": "#/components/schemas/CartItem"
-                },
-                "type": "array"
+                "$ref": "#/components/schemas/BookmarkOut"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Items"
+            ]
           }
         },
         "type": "object",
         "required": [
-          "amount",
-          "customer_email"
+          "bookmarked",
+          "message"
         ],
-        "title": "CheckoutSessionRequest"
-      },
-      "CheckoutSessionResponse": {
-        "properties": {
-          "session_id": {
-            "type": "string",
-            "title": "Session Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "client_secret": {
-            "type": "string",
-            "title": "Client Secret"
-          },
-          "base_amount": {
-            "type": "number",
-            "title": "Base Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_amount": {
-            "type": "number",
-            "title": "Target Amount"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          }
-        },
-        "type": "object",
-        "required": [
-          "session_id",
-          "payment_intent_id",
-          "client_secret",
-          "base_amount",
-          "base_currency",
-          "target_amount",
-          "target_currency",
-          "exchange_rate"
-        ],
-        "title": "CheckoutSessionResponse"
-      },
-      "DigitalWalletPaymentRequest": {
-        "properties": {
-          "wallet_type": {
-            "type": "string",
-            "title": "Wallet Type",
-            "description": "apple_pay or google_pay"
-          },
-          "payment_token": {
-            "type": "string",
-            "title": "Payment Token"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "default": "USD"
-          },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
-          },
-          "customer_email": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Customer Email",
-            "default": "customer@example.com"
-          }
-        },
-        "type": "object",
-        "required": [
-          "wallet_type",
-          "payment_token",
-          "amount"
-        ],
-        "title": "DigitalWalletPaymentRequest"
-      },
-      "DigitalWalletPaymentResponse": {
-        "properties": {
-          "transaction_id": {
-            "type": "string",
-            "title": "Transaction Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "wallet_type": {
-            "type": "string",
-            "title": "Wallet Type"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          }
-        },
-        "type": "object",
-        "required": [
-          "transaction_id",
-          "payment_intent_id",
-          "wallet_type",
-          "amount",
-          "currency",
-          "status"
-        ],
-        "title": "DigitalWalletPaymentResponse"
-      },
-      "ExchangeRatesResponse": {
-        "properties": {
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "rates": {
-            "additionalProperties": {
-              "type": "number"
-            },
-            "type": "object",
-            "title": "Rates"
-          },
-          "timestamp": {
-            "type": "string",
-            "title": "Timestamp"
-          }
-        },
-        "type": "object",
-        "required": [
-          "base_currency",
-          "rates",
-          "timestamp"
-        ],
-        "title": "ExchangeRatesResponse"
+        "title": "BookmarkToggleResponse"
       },
       "HTTPValidationError": {
         "properties": {
@@ -849,22 +940,37 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "RefundRequest": {
+      "ModuleDetail": {
         "properties": {
-          "transaction_id": {
+          "id": {
             "type": "string",
-            "title": "Transaction Id"
+            "title": "Id"
           },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
-          },
-          "reason": {
+          "track_id": {
             "type": "string",
-            "title": "Reason"
+            "title": "Track Id"
           },
-          "memo": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "difficulty": {
+            "type": "string",
+            "title": "Difficulty"
+          },
+          "estimated_minutes": {
+            "type": "integer",
+            "title": "Estimated Minutes"
+          },
+          "prerequisites": {
             "anyOf": [
               {
                 "type": "string"
@@ -873,40 +979,13 @@
                 "type": "null"
               }
             ],
-            "title": "Memo"
-          }
-        },
-        "type": "object",
-        "required": [
-          "transaction_id",
-          "amount",
-          "reason"
-        ],
-        "title": "RefundRequest"
-      },
-      "RefundSummary": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
+            "title": "Prerequisites"
           },
-          "transaction_id": {
-            "type": "string",
-            "title": "Transaction Id"
+          "order_index": {
+            "type": "integer",
+            "title": "Order Index"
           },
-          "refund_amount": {
-            "type": "number",
-            "title": "Refund Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
-          "reason": {
-            "type": "string",
-            "title": "Reason"
-          },
-          "memo": {
+          "track_title": {
             "anyOf": [
               {
                 "type": "string"
@@ -915,177 +994,905 @@
                 "type": "null"
               }
             ],
-            "title": "Memo"
+            "title": "Track Title"
           },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "transaction_id",
-          "refund_amount",
-          "currency",
-          "reason",
-          "status"
-        ],
-        "title": "RefundSummary"
-      },
-      "TransactionDetail": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "payment_method": {
-            "type": "string",
-            "title": "Payment Method"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "converted_amount": {
-            "type": "number",
-            "title": "Converted Amount"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "refunded_amount": {
-            "type": "number",
-            "title": "Refunded Amount"
-          },
-          "remaining_refundable_balance": {
-            "type": "number",
-            "title": "Remaining Refundable Balance"
-          },
-          "refunds": {
+          "tutorials": {
             "items": {
-              "$ref": "#/components/schemas/RefundSummary"
+              "$ref": "#/components/schemas/TutorialSummary"
             },
             "type": "array",
-            "title": "Refunds"
+            "title": "Tutorials",
+            "default": []
           },
-          "created_at": {
+          "quiz_id": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Created At"
+            "title": "Quiz Id"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "base_currency",
-          "target_currency",
-          "converted_amount",
-          "exchange_rate",
-          "status",
-          "refunded_amount",
-          "remaining_refundable_balance"
+          "track_id",
+          "title",
+          "slug",
+          "summary",
+          "difficulty",
+          "estimated_minutes",
+          "order_index"
         ],
-        "title": "TransactionDetail"
+        "title": "ModuleDetail"
       },
-      "TransactionSummary": {
+      "ModuleSummary": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "payment_intent_id": {
+          "track_id": {
             "type": "string",
-            "title": "Payment Intent Id"
+            "title": "Track Id"
           },
-          "customer_email": {
+          "title": {
             "type": "string",
-            "title": "Customer Email"
+            "title": "Title"
           },
-          "payment_method": {
+          "slug": {
             "type": "string",
-            "title": "Payment Method"
+            "title": "Slug"
           },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "currency": {
+          "summary": {
             "type": "string",
-            "title": "Currency"
+            "title": "Summary"
           },
-          "status": {
+          "difficulty": {
             "type": "string",
-            "title": "Status"
+            "title": "Difficulty"
           },
-          "created_at": {
+          "estimated_minutes": {
+            "type": "integer",
+            "title": "Estimated Minutes"
+          },
+          "prerequisites": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
+            "title": "Prerequisites"
+          },
+          "order_index": {
+            "type": "integer",
+            "title": "Order Index"
+          },
+          "tutorial_count": {
+            "type": "integer",
+            "title": "Tutorial Count",
+            "default": 0
+          },
+          "has_quiz": {
+            "type": "boolean",
+            "title": "Has Quiz",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "track_id",
+          "title",
+          "slug",
+          "summary",
+          "difficulty",
+          "estimated_minutes",
+          "order_index"
+        ],
+        "title": "ModuleSummary"
+      },
+      "ModuleTouchRequest": {
+        "properties": {
+          "is_completed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Completed"
+          }
+        },
+        "type": "object",
+        "title": "ModuleTouchRequest"
+      },
+      "QuestionFeedback": {
+        "properties": {
+          "question_id": {
+            "type": "string",
+            "title": "Question Id"
+          },
+          "is_correct": {
+            "type": "boolean",
+            "title": "Is Correct"
+          },
+          "correct_answer": {
+            "type": "string",
+            "title": "Correct Answer"
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation"
+          },
+          "selected_option": {
+            "type": "string",
+            "title": "Selected Option"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question_id",
+          "is_correct",
+          "correct_answer",
+          "explanation",
+          "selected_option"
+        ],
+        "title": "QuestionFeedback"
+      },
+      "QuizDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "module_id": {
+            "type": "string",
+            "title": "Module Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "passing_score": {
+            "type": "integer",
+            "title": "Passing Score"
+          },
+          "total_questions": {
+            "type": "integer",
+            "title": "Total Questions"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/QuizQuestionOut"
+            },
+            "type": "array",
+            "title": "Questions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "module_id",
+          "title",
+          "passing_score",
+          "total_questions",
+          "questions"
+        ],
+        "title": "QuizDetail"
+      },
+      "QuizQuestionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "quiz_id": {
+            "type": "string",
+            "title": "Quiz Id"
+          },
+          "question_text": {
+            "type": "string",
+            "title": "Question Text"
+          },
+          "options": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Options"
+          },
+          "order_index": {
+            "type": "integer",
+            "title": "Order Index"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "quiz_id",
+          "question_text",
+          "options",
+          "order_index"
+        ],
+        "title": "QuizQuestionOut"
+      },
+      "QuizSubmitRequest": {
+        "properties": {
+          "answers": {
+            "items": {
+              "$ref": "#/components/schemas/AnswerSubmission"
+            },
+            "type": "array",
+            "title": "Answers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "answers"
+        ],
+        "title": "QuizSubmitRequest"
+      },
+      "QuizSubmitResponse": {
+        "properties": {
+          "quiz_id": {
+            "type": "string",
+            "title": "Quiz Id"
+          },
+          "module_id": {
+            "type": "string",
+            "title": "Module Id"
+          },
+          "score_percentage": {
+            "type": "number",
+            "title": "Score Percentage"
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed"
+          },
+          "total_questions": {
+            "type": "integer",
+            "title": "Total Questions"
+          },
+          "correct_count": {
+            "type": "integer",
+            "title": "Correct Count"
+          },
+          "passing_score": {
+            "type": "integer",
+            "title": "Passing Score"
+          },
+          "feedback": {
+            "items": {
+              "$ref": "#/components/schemas/QuestionFeedback"
+            },
+            "type": "array",
+            "title": "Feedback"
+          },
+          "is_completed": {
+            "type": "boolean",
+            "title": "Is Completed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quiz_id",
+          "module_id",
+          "score_percentage",
+          "passed",
+          "total_questions",
+          "correct_count",
+          "passing_score",
+          "feedback",
+          "is_completed"
+        ],
+        "title": "QuizSubmitResponse"
+      },
+      "RecentModuleOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "track_title": {
+            "type": "string",
+            "title": "Track Title"
+          },
+          "last_accessed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Accessed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "slug",
+          "track_title",
+          "last_accessed_at"
+        ],
+        "title": "RecentModuleOut"
+      },
+      "Token": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "user"
+        ],
+        "title": "Token"
+      },
+      "TrackDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "difficulty": {
+            "type": "string",
+            "title": "Difficulty"
+          },
+          "estimated_hours": {
+            "type": "integer",
+            "title": "Estimated Hours"
+          },
+          "prerequisites": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prerequisites"
+          },
+          "order_index": {
+            "type": "integer",
+            "title": "Order Index"
+          },
+          "is_published": {
+            "type": "boolean",
+            "title": "Is Published"
+          },
+          "modules": {
+            "items": {
+              "$ref": "#/components/schemas/ModuleSummary"
+            },
+            "type": "array",
+            "title": "Modules",
+            "default": []
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "currency",
-          "status"
+          "title",
+          "slug",
+          "description",
+          "difficulty",
+          "estimated_hours",
+          "order_index",
+          "is_published",
+          "created_at"
         ],
-        "title": "TransactionSummary"
+        "title": "TrackDetail"
+      },
+      "TrackProgressOut": {
+        "properties": {
+          "track_id": {
+            "type": "string",
+            "title": "Track Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "total_modules": {
+            "type": "integer",
+            "title": "Total Modules"
+          },
+          "completed_modules": {
+            "type": "integer",
+            "title": "Completed Modules"
+          },
+          "completion_percentage": {
+            "type": "number",
+            "title": "Completion Percentage"
+          }
+        },
+        "type": "object",
+        "required": [
+          "track_id",
+          "title",
+          "slug",
+          "total_modules",
+          "completed_modules",
+          "completion_percentage"
+        ],
+        "title": "TrackProgressOut"
+      },
+      "TrackSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "difficulty": {
+            "type": "string",
+            "title": "Difficulty"
+          },
+          "estimated_hours": {
+            "type": "integer",
+            "title": "Estimated Hours"
+          },
+          "prerequisites": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prerequisites"
+          },
+          "order_index": {
+            "type": "integer",
+            "title": "Order Index"
+          },
+          "is_published": {
+            "type": "boolean",
+            "title": "Is Published"
+          },
+          "module_count": {
+            "type": "integer",
+            "title": "Module Count",
+            "default": 0
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "slug",
+          "description",
+          "difficulty",
+          "estimated_hours",
+          "order_index",
+          "is_published",
+          "created_at"
+        ],
+        "title": "TrackSummary"
+      },
+      "TutorialDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "module_id": {
+            "type": "string",
+            "title": "Module Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "content_markdown": {
+            "type": "string",
+            "title": "Content Markdown"
+          },
+          "math_formulas": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Math Formulas"
+          },
+          "code_snippets": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code Snippets"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "order_index": {
+            "type": "integer",
+            "title": "Order Index"
+          },
+          "next_tutorial_slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Tutorial Slug"
+          },
+          "prev_tutorial_slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prev Tutorial Slug"
+          },
+          "quiz_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quiz Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "module_id",
+          "title",
+          "slug",
+          "content_markdown",
+          "order_index"
+        ],
+        "title": "TutorialDetail"
+      },
+      "TutorialSearchResult": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "module_id": {
+            "type": "string",
+            "title": "Module Id"
+          },
+          "module_title": {
+            "type": "string",
+            "title": "Module Title"
+          },
+          "track_title": {
+            "type": "string",
+            "title": "Track Title"
+          },
+          "snippet": {
+            "type": "string",
+            "title": "Snippet"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "difficulty": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Difficulty"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "slug",
+          "module_id",
+          "module_title",
+          "track_title",
+          "snippet"
+        ],
+        "title": "TutorialSearchResult"
+      },
+      "TutorialSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "module_id": {
+            "type": "string",
+            "title": "Module Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "order_index": {
+            "type": "integer",
+            "title": "Order Index"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "module_id",
+          "title",
+          "slug",
+          "order_index"
+        ],
+        "title": "TutorialSummary"
+      },
+      "UserLogin": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "UserLogin"
+      },
+      "UserOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "full_name",
+          "role",
+          "is_active",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "UserOut"
+      },
+      "UserProgressDashboard": {
+        "properties": {
+          "overall_completion_percentage": {
+            "type": "number",
+            "title": "Overall Completion Percentage"
+          },
+          "total_modules": {
+            "type": "integer",
+            "title": "Total Modules"
+          },
+          "completed_modules": {
+            "type": "integer",
+            "title": "Completed Modules"
+          },
+          "quizzes_passed": {
+            "type": "integer",
+            "title": "Quizzes Passed"
+          },
+          "recent_module": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecentModuleOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "track_progress": {
+            "items": {
+              "$ref": "#/components/schemas/TrackProgressOut"
+            },
+            "type": "array",
+            "title": "Track Progress",
+            "default": []
+          },
+          "completed_module_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Completed Module Ids",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "overall_completion_percentage",
+          "total_modules",
+          "completed_modules",
+          "quizzes_passed"
+        ],
+        "title": "UserProgressDashboard"
+      },
+      "UserRegister": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "full_name"
+        ],
+        "title": "UserRegister"
       },
       "ValidationError": {
         "properties": {
@@ -1126,6 +1933,17 @@
           "type"
         ],
         "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "OAuth2PasswordBearer": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "/api/v1/auth/login"
+          }
+        }
       }
     }
   }
