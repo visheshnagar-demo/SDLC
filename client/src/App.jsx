@@ -1,39 +1,41 @@
 import React from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-import Navbar from "./components/Navbar";
-import CheckoutPage from "./pages/CheckoutPage";
-import RefundPortalPage from "./pages/RefundPortalPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import Navbar from "./components/layout/Navbar";
+import Footer from "./components/layout/Footer";
+import CatalogPage from "./pages/CatalogPage";
+import TrackDetailPage from "./pages/TrackDetailPage";
+import TutorialPage from "./pages/TutorialPage";
+import QuizPage from "./pages/QuizPage";
+import DashboardPage from "./pages/DashboardPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 
 export function App() {
   return (
-    <Router>
-      <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-        <Navbar />
-        <main className="flex-1">
-          <Routes>
-            <Route path="/" element={<Navigate to="/checkout" replace />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/refunds" element={<RefundPortalPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="*" element={<Navigate to="/checkout" replace />} />
-          </Routes>
-        </main>
-        <footer className="bg-slate-900 text-slate-400 border-t border-slate-800 py-6 text-center text-xs">
-          <div className="max-w-7xl mx-auto px-4">
-            <p>
-              © {new Date().getFullYear()} PayGateway Service. PCI-DSS Level 1
-              Merchant Security.
-            </p>
+    <AuthProvider>
+      <BrowserRouter>
+        <div className="min-h-screen bg-[#0B0F19] text-slate-100 flex flex-col selection:bg-indigo-500/30 selection:text-indigo-200">
+          <Navbar />
+          <div className="flex-1">
+            <Routes>
+              <Route path="/" element={<Navigate to="/tracks" replace />} />
+              <Route path="/tracks" element={<CatalogPage />} />
+              <Route path="/tracks/:slug" element={<TrackDetailPage />} />
+              <Route path="/tutorials" element={<TutorialPage />} />
+              <Route path="/tutorials/:slug" element={<TutorialPage />} />
+              <Route path="/quiz/:moduleId" element={<QuizPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/bookmarks" element={<DashboardPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="*" element={<Navigate to="/tracks" replace />} />
+            </Routes>
           </div>
-        </footer>
-      </div>
-    </Router>
+          <Footer />
+        </div>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

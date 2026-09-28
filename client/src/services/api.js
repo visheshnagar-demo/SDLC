@@ -2,90 +2,108 @@ import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-export const apiClient = axios.create({
+const apiClient = axios.create({
   baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Standardized error payload extractions
-    const message =
-      error.response?.data?.detail ||
-      error.message ||
-      "An unexpected network error occurred";
-    return Promise.reject(
-      new Error(
-        typeof message === "object" ? JSON.stringify(message) : message,
-      ),
-    );
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
   },
+  (error) => Promise.reject(error),
 );
 
-export const createCheckoutSession = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/checkout-session",
-    payload,
-  );
-  return response.data;
+export const authApi = {
+  login: async (credentials) => {
+    const res = await apiClient.post("/api/v1/auth/login", credentials);
+    return res.data;
+  },
+  register: async (userData) => {
+    const res = await apiClient.post("/api/v1/auth/register", userData);
+    return res.data;
+  },
+  getMe: async () => {
+    const res = await apiClient.get("/api/v1/auth/me");
+    return res.data;
+  },
 };
 
-export const payWithDigitalWallet = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/digital-wallet",
-    payload,
-  );
-  return response.data;
+export const tracksApi = {
+  getTracks: async (params = {}) => {
+    const res = await apiClient.get("/api/v1/tracks", { params });
+    return res.data;
+  },
+  getTrackBySlug: async (slug) => {
+    const res = await apiClient.get(`/api/v1/tracks/${slug}`);
+    return res.data;
+  },
 };
 
-export const getExchangeRates = async (baseCurrency = "USD") => {
-  const response = await apiClient.get("/api/v1/payments/rates", {
-    params: { base_currency: baseCurrency },
-  });
-  return response.data;
+export const modulesApi = {
+  getModuleBySlug: async (slug) => {
+    const res = await apiClient.get(`/api/v1/modules/${slug}`);
+    return res.data;
+  },
 };
 
-export const listTransactions = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/payments/transactions", {
-    params,
-  });
-  return response.data;
+export const tutorialsApi = {
+  getTutorialBySlug: async (slug) => {
+    const res = await apiClient.get(`/api/v1/tutorials/${slug}`);
+    return res.data;
+  },
+  searchTutorials: async (query) => {
+    const res = await apiClient.get("/api/v1/tutorials/search", {
+      params: { q: query },
+    });
+    return res.data;
+  },
 };
 
-export const getTransactionDetail = async (transactionId) => {
-  const response = await apiClient.get(
-    `/api/v1/payments/transactions/${transactionId}`,
-  );
-  return response.data;
+export const quizzesApi = {
+  getQuizByModuleId: async (moduleId) => {
+    const res = await apiClient.get(`/api/v1/quizzes/${moduleId}`);
+    return res.data;
+  },
+  submitQuiz: async (quizId, submissionData) => {
+    const res = await apiClient.post(
+      `/api/v1/quizzes/${quizId}/submit`,
+      submissionData,
+    );
+    return res.data;
+  },
 };
 
-export const createRefund = async (payload) => {
-  const response = await apiClient.post("/api/v1/refunds", payload);
-  return response.data;
+export const progressApi = {
+  getProgress: async () => {
+    const res = await apiClient.get("/api/v1/progress");
+    return res.data;
+  },
+  touchModule: async (moduleId) => {
+    const res = await apiClient.post(`/api/v1/progress/${moduleId}/touch`);
+    return res.data;
+  },
 };
 
-export const listRefunds = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/refunds", { params });
-  return response.data;
+export const bookmarksApi = {
+  getBookmarks: async () => {
+    const res = await apiClient.get("/api/v1/bookmarks");
+    return res.data;
+  },
+  addBookmark: async (tutorialId) => {
+    const res = await apiClient.post(`/api/v1/bookmarks/${tutorialId}`);
+    return res.data;
+  },
+  removeBookmark: async (tutorialId) => {
+    const res = await apiClient.delete(`/api/v1/bookmarks/${tutorialId}`);
+    return res.data;
+  },
 };
 
-export const listAuditLogs = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/audit-logs", { params });
-  return response.data;
-};
-
-export default {
-  apiClient,
-  createCheckoutSession,
-  payWithDigitalWallet,
-  getExchangeRates,
-  listTransactions,
-  getTransactionDetail,
-  createRefund,
-  listRefunds,
-  listAuditLogs,
-};
+export default apiClient;
