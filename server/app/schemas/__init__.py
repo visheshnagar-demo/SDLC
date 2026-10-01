@@ -1,31 +1,31 @@
-from server.app.schemas import (
-    AppointmentCreate,
-    AppointmentResponse,
-    AppointmentStatusUpdate,
-    AuditLogCreate,
-    AuditLogResponse,
-    ClinicalNoteAddendumCreate,
-    ClinicalNoteAddendumResponse,
-    ClinicalNoteCreate,
-    ClinicalNoteResponse,
-    DoctorAvailabilityResponse,
+from server.app.schemas.auth import UserLogin, UserRegister, UserResponse, Token
+from server.app.schemas.patient import (
     EmergencyContactSchema,
+    InsuranceInfoSchema,
+    PatientCreate,
+    PatientUpdate,
+    PatientResponse,
+)
+from server.app.schemas.appointment import (
+    AppointmentCreate,
+    AppointmentStatusUpdate,
+    AppointmentResponse,
+    TimeSlot,
+    DoctorAvailabilityResponse,
+)
+from server.app.schemas.medical_record import (
     EncounterCreate,
     EncounterResponse,
-    InsuranceInfoSchema,
-    LabOrderCreate,
-    LabOrderResponse,
-    PatientCreate,
-    PatientResponse,
-    PatientUpdate,
+    ClinicalNoteCreate,
+    ClinicalNoteResponse,
+    ClinicalNoteAddendumCreate,
+    ClinicalNoteAddendumResponse,
     PrescriptionCreate,
     PrescriptionResponse,
-    TimeSlot,
-    Token,
-    UserLogin,
-    UserRegister,
-    UserResponse,
+    LabOrderCreate,
+    LabOrderResponse,
 )
+from server.app.schemas.audit_log import AuditLogCreate, AuditLogResponse
 
 __all__ = [
     "UserLogin",
