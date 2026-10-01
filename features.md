@@ -17,3 +17,14 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-402 - Interactive Kids' Eating Habits Tracker & Nutrition Dashboard
+
+### Feature Summary
+An interactive web application for kids and parents to track daily eating habits, earn badges/rewards for meeting nutrition goals, customize avatars, and view weekly nutritional progress dashboards.
+
+### Key Features
+- Child-Friendly Daily Meal Logging & Meal Categorization
+- Gamified Rewards & Healthy Streak Tracking
+- Parental Insight & Weekly Nutrition Dashboard
+- Interactive Educational Food Quizzes & Avatar Customization
