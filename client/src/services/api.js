@@ -7,85 +7,166 @@ export const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
+  timeout: 15000,
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("nutrikids_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
   (error) => {
-    // Standardized error payload extractions
-    const message =
-      error.response?.data?.detail ||
-      error.message ||
-      "An unexpected network error occurred";
-    return Promise.reject(
-      new Error(
-        typeof message === "object" ? JSON.stringify(message) : message,
-      ),
-    );
+    return Promise.reject(error);
   },
 );
 
-export const createCheckoutSession = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/checkout-session",
-    payload,
-  );
-  return response.data;
+export const authService = {
+  login: async (email, password) => {
+    const response = await apiClient.post("/api/v1/auth/login", {
+      email,
+      password,
+    });
+    if (response.data && response.data.access_token) {
+      localStorage.setItem("nutrikids_token", response.data.access_token);
+      localStorage.setItem(
+        "nutrikids_user",
+        JSON.stringify(response.data.user || { email, role: "parent" }),
+      );
+    }
+    return response.data;
+  },
+  register: async (email, password, role = "parent") => {
+    const response = await apiClient.post("/api/v1/auth/register", {
+      email,
+      password,
+      role,
+    });
+    if (response.data && response.data.access_token) {
+      localStorage.setItem("nutrikids_token", response.data.access_token);
+      localStorage.setItem(
+        "nutrikids_user",
+        JSON.stringify(response.data.user || { email, role }),
+      );
+    }
+    return response.data;
+  },
+  logout: () => {
+    localStorage.removeItem("nutrikids_token");
+    localStorage.removeItem("nutrikids_user");
+    localStorage.removeItem("nutrikids_selected_child");
+  },
+  getStoredUser: () => {
+    try {
+      const userStr = localStorage.getItem("nutrikids_user");
+      return userStr ? JSON.parse(userStr) : null;
+    } catch {
+      return null;
+    }
+  },
+  getStoredToken: () => {
+    return localStorage.getItem("nutrikids_token");
+  },
 };
 
-export const payWithDigitalWallet = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/digital-wallet",
-    payload,
-  );
-  return response.data;
+export const profileService = {
+  getChildren: async () => {
+    const response = await apiClient.get("/api/v1/profiles");
+    return response.data;
+  },
+  createChild: async (childData) => {
+    const response = await apiClient.post("/api/v1/profiles", childData);
+    return response.data;
+  },
+  getSelectedChild: () => {
+    try {
+      const childStr = localStorage.getItem("nutrikids_selected_child");
+      return childStr ? JSON.parse(childStr) : null;
+    } catch {
+      return null;
+    }
+  },
+  setSelectedChild: (child) => {
+    localStorage.setItem("nutrikids_selected_child", JSON.stringify(child));
+  },
 };
 
-export const getExchangeRates = async (baseCurrency = "USD") => {
-  const response = await apiClient.get("/api/v1/payments/rates", {
-    params: { base_currency: baseCurrency },
-  });
-  return response.data;
+export const mealService = {
+  logMeal: async (mealData) => {
+    const response = await apiClient.post("/api/v1/meals", mealData);
+    return response.data;
+  },
+  getMeals: async (childId, date = null) => {
+    const params = {};
+    if (childId) params.child_id = childId;
+    if (date) params.date = date;
+    const response = await apiClient.get("/api/v1/meals", { params });
+    return response.data;
+  },
 };
 
-export const listTransactions = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/payments/transactions", {
-    params,
-  });
-  return response.data;
+export const dashboardService = {
+  getWeeklyDashboard: async (childId) => {
+    const params = {};
+    if (childId) params.child_id = childId;
+    const response = await apiClient.get("/api/v1/dashboard/weekly", {
+      params,
+    });
+    return response.data;
+  },
 };
 
-export const getTransactionDetail = async (transactionId) => {
-  const response = await apiClient.get(
-    `/api/v1/payments/transactions/${transactionId}`,
-  );
-  return response.data;
+export const rewardService = {
+  getBadges: async (childId) => {
+    const params = {};
+    if (childId) params.child_id = childId;
+    const response = await apiClient.get("/api/v1/rewards/badges", { params });
+    return response.data;
+  },
+  getStreak: async (childId) => {
+    const params = {};
+    if (childId) params.child_id = childId;
+    const response = await apiClient.get("/api/v1/rewards/streak", { params });
+    return response.data;
+  },
 };
 
-export const createRefund = async (payload) => {
-  const response = await apiClient.post("/api/v1/refunds", payload);
-  return response.data;
+export const quizService = {
+  getDailyQuiz: async () => {
+    const response = await apiClient.get("/api/v1/quizzes/daily");
+    return response.data;
+  },
+  submitQuiz: async (data) => {
+    const response = await apiClient.post("/api/v1/quizzes/submit", data);
+    return response.data;
+  },
 };
 
-export const listRefunds = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/refunds", { params });
-  return response.data;
-};
-
-export const listAuditLogs = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/audit-logs", { params });
-  return response.data;
+export const avatarService = {
+  getCatalog: async (childId) => {
+    const params = {};
+    if (childId) params.child_id = childId;
+    const response = await apiClient.get("/api/v1/avatars/catalog", { params });
+    return response.data;
+  },
+  unlockAvatar: async (data) => {
+    const response = await apiClient.post("/api/v1/avatars/unlock", data);
+    return response.data;
+  },
+  equipAvatar: async (data) => {
+    const response = await apiClient.put("/api/v1/avatars/equip", data);
+    return response.data;
+  },
 };
 
 export default {
-  apiClient,
-  createCheckoutSession,
-  payWithDigitalWallet,
-  getExchangeRates,
-  listTransactions,
-  getTransactionDetail,
-  createRefund,
-  listRefunds,
-  listAuditLogs,
+  authService,
+  profileService,
+  mealService,
+  dashboardService,
+  rewardService,
+  quizService,
+  avatarService,
 };

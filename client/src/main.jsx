@@ -13,42 +13,33 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
-  componentDidCatch(_error, _errorInfo) {
-    // Error logged for boundary tracking
+  componentDidCatch(error, errorInfo) {
+    // Silence error logging in production
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div
-          style={{
-            padding: "2rem",
-            textAlign: "center",
-            fontFamily: "sans-serif",
-          }}
-        >
-          <h2>Something went wrong.</h2>
-          <p style={{ color: "#666" }}>
-            {this.state.error?.message ||
-              "An unexpected rendering error occurred."}
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              marginTop: "1rem",
-              padding: "0.5rem 1rem",
-              backgroundColor: "#4F46E5",
-              color: "#fff",
-              border: "none",
-              borderRadius: "0.375rem",
-              cursor: "pointer",
-            }}
-          >
-            Reload Page
-          </button>
+        <div className="min-h-screen flex items-center justify-center bg-[#FFFDF7] p-6 text-center">
+          <div className="bg-white p-8 rounded-3xl border border-rose-200 shadow-lg max-w-md">
+            <span className="text-5xl">🌱⚠️</span>
+            <h2 className="font-heading font-bold text-xl text-slate-800 mt-4">
+              Something went wrong.
+            </h2>
+            <p className="text-xs text-slate-500 mt-2">
+              An unexpected error occurred in NutriKids.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-6 bg-amber-500 text-white px-6 py-2.5 rounded-full font-bold text-xs shadow hover:bg-amber-600 transition-colors"
+            >
+              Reload Application
+            </button>
+          </div>
         </div>
       );
     }
+
     return this.props.children;
   }
 }
