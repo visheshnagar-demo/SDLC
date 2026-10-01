@@ -1,50 +1,38 @@
-def test_audit_logs_list_and_masking(client):
-    # Perform checkout
-    checkout_res = client.post(
-        "/api/v1/payments/checkout-session",
-        json={
-            "amount": 99.0,
-            "currency": "USD",
-            "customer_email": "audit_test@example.com",
-            "items": [{"name": "Test Product", "quantity": 1, "unit_price": 99.0}],
-        },
-    )
-    assert checkout_res.status_code == 200
+from fastapi.testclient import TestClient
 
-    txs = client.get(
-        "/api/v1/payments/transactions?search=audit_test@example.com"
-    ).json()
-    tx_id = txs[0]["id"]
 
-    # Issue refund to generate refund audit log
+def test_list_audit_logs(client: TestClient, admin_headers: dict):
+    # Register a patient to generate an audit log
     client.post(
-        "/api/v1/refunds",
+        "/api/v1/patients",
         json={
-            "transaction_id": tx_id,
-            "amount": 10.0,
-            "reason": "Audit refund check",
+            "first_name": "Audit",
+            "last_name": "TestPatient",
+            "date_of_birth": "1995-10-20",
+            "gender": "Other",
+            "national_id": "SSN-111-22-3333",
+            "phone": "+1-555-0011",
+            "emergency_contact": {
+                "name": "Contact",
+                "relationship": "Parent",
+                "phone": "111",
+            },
         },
+        headers=admin_headers,
     )
 
-    # Fetch audit logs for this transaction
-    logs_res = client.get(f"/api/v1/audit-logs?transaction_id={tx_id}")
-    assert logs_res.status_code == 200
-    logs = logs_res.json()
-    assert len(logs) >= 2
-
-    event_types = [log["event_type"] for log in logs]
-    assert "checkout.session.created" in event_types
-    assert "charge.refunded" in event_types
-
-    # Verify no raw PAN / CVV in masked payloads
-    for log in logs:
-        payload_str = str(log["masked_payload"]).lower()
-        assert "4242424242424242" not in payload_str
+    response = client.get("/api/v1/audit/logs", headers=admin_headers)
+    assert response.status_code == 200
+    logs = response.json()
+    assert isinstance(logs, list)
+    assert len(logs) >= 1
+    assert any(log["action"] == "REGISTER_PATIENT" for log in logs)
 
 
-def test_audit_logs_filter_by_event(client):
-    res = client.get("/api/v1/audit-logs?event_type=checkout.session.created")
-    assert res.status_code == 200
-    logs = res.json()
-    for log in logs:
-        assert log["event_type"] == "checkout.session.created"
+def test_audit_log_filtering(client: TestClient, admin_headers: dict):
+    response = client.get(
+        "/api/v1/audit/logs?entity_type=Patient", headers=admin_headers
+    )
+    assert response.status_code == 200
+    logs = response.json()
+    assert all(log["entity_type"] == "Patient" for log in logs)

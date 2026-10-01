@@ -17,3 +17,13 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-403 - Hospital Management System - Patient Registration, Appointment Scheduling, and Medical Records Management
+
+### Feature Summary
+Allows hospital administrators, medical staff, and patients to register profiles, schedule/manage doctor appointments, and maintain electronic clinical records securely.
+
+### Key Features
+- Patient Registration & Profile Management
+- Appointment Scheduling & Management
+- Electronic Medical Records (EMR) & Clinical Notes
