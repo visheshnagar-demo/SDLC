@@ -17,3 +17,15 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-404 - Library Management System
+
+### Feature Summary
+A full-stack system allowing library patrons to search and borrow books, while enabling administrators to manage inventory, patrons, loans, and overdue fines.
+
+### Key Features
+- Book Catalog & Inventory Management
+- Patron Management & Registration
+- Book Checkout & Return Workflow
+- Book Search & Availability Filtering
+- Overdue Tracking & Fines Calculation
