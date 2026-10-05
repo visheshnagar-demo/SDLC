@@ -3,89 +3,105 @@ import axios from "axios";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 export const apiClient = axios.create({
-  baseURL: BASE_URL,
+  baseURL: `${BASE_URL}/api/v1`,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Standardized error payload extractions
-    const message =
-      error.response?.data?.detail ||
-      error.message ||
-      "An unexpected network error occurred";
-    return Promise.reject(
-      new Error(
-        typeof message === "object" ? JSON.stringify(message) : message,
-      ),
-    );
-  },
-);
-
-export const createCheckoutSession = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/checkout-session",
-    payload,
-  );
+// Books API
+export const getBooks = async (params = {}) => {
+  const response = await apiClient.get("/books", { params });
   return response.data;
 };
 
-export const payWithDigitalWallet = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/digital-wallet",
-    payload,
-  );
+export const getBook = async (bookId) => {
+  const response = await apiClient.get(`/books/${bookId}`);
   return response.data;
 };
 
-export const getExchangeRates = async (baseCurrency = "USD") => {
-  const response = await apiClient.get("/api/v1/payments/rates", {
-    params: { base_currency: baseCurrency },
-  });
+export const createBook = async (bookData) => {
+  const response = await apiClient.post("/books", bookData);
   return response.data;
 };
 
-export const listTransactions = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/payments/transactions", {
-    params,
-  });
+export const updateBook = async (bookId, bookData) => {
+  const response = await apiClient.put(`/books/${bookId}`, bookData);
   return response.data;
 };
 
-export const getTransactionDetail = async (transactionId) => {
-  const response = await apiClient.get(
-    `/api/v1/payments/transactions/${transactionId}`,
-  );
+export const deleteBook = async (bookId) => {
+  const response = await apiClient.delete(`/books/${bookId}`);
   return response.data;
 };
 
-export const createRefund = async (payload) => {
-  const response = await apiClient.post("/api/v1/refunds", payload);
+// Patrons API
+export const getPatrons = async (params = {}) => {
+  const response = await apiClient.get("/patrons", { params });
   return response.data;
 };
 
-export const listRefunds = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/refunds", { params });
+export const getPatron = async (patronId) => {
+  const response = await apiClient.get(`/patrons/${patronId}`);
   return response.data;
 };
 
-export const listAuditLogs = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/audit-logs", { params });
+export const createPatron = async (patronData) => {
+  const response = await apiClient.post("/patrons", patronData);
+  return response.data;
+};
+
+export const updatePatron = async (patronId, patronData) => {
+  const response = await apiClient.put(`/patrons/${patronId}`, patronData);
+  return response.data;
+};
+
+export const getPatronLoans = async (patronId) => {
+  const response = await apiClient.get(`/patrons/${patronId}/loans`);
+  return response.data;
+};
+
+// Loans & Circulation API
+export const getLoans = async (params = {}) => {
+  const response = await apiClient.get("/loans", { params });
+  return response.data;
+};
+
+export const getOverdueLoans = async () => {
+  const response = await apiClient.get("/loans/overdue");
+  return response.data;
+};
+
+export const checkoutBook = async (checkoutData) => {
+  const response = await apiClient.post("/loans/checkout", checkoutData);
+  return response.data;
+};
+
+export const returnBook = async (loanId) => {
+  const response = await apiClient.post(`/loans/${loanId}/return`);
+  return response.data;
+};
+
+// Health Check API
+export const checkHealth = async () => {
+  const response = await apiClient.get("/health");
   return response.data;
 };
 
 export default {
-  apiClient,
-  createCheckoutSession,
-  payWithDigitalWallet,
-  getExchangeRates,
-  listTransactions,
-  getTransactionDetail,
-  createRefund,
-  listRefunds,
-  listAuditLogs,
+  getBooks,
+  getBook,
+  createBook,
+  updateBook,
+  deleteBook,
+  getPatrons,
+  getPatron,
+  createPatron,
+  updatePatron,
+  getPatronLoans,
+  getLoans,
+  getOverdueLoans,
+  checkoutBook,
+  returnBook,
+  checkHealth,
 };
