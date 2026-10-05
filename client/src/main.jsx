@@ -13,8 +13,8 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
-  componentDidCatch(_error, _errorInfo) {
-    // Error logged for boundary tracking
+  componentDidCatch() {
+    // Keep error boundary active for unhandled render errors
   }
 
   render() {
@@ -23,28 +23,25 @@ class ErrorBoundary extends React.Component {
         <div
           style={{
             padding: "2rem",
-            textAlign: "center",
             fontFamily: "sans-serif",
+            color: "#ba1a1a",
           }}
         >
-          <h2>Something went wrong.</h2>
-          <p style={{ color: "#666" }}>
-            {this.state.error?.message ||
-              "An unexpected rendering error occurred."}
-          </p>
+          <h2>Something went wrong in the Library Management System.</h2>
+          <p>{this.state.error?.message || "An unexpected error occurred."}</p>
           <button
             onClick={() => window.location.reload()}
             style={{
               marginTop: "1rem",
               padding: "0.5rem 1rem",
-              backgroundColor: "#4F46E5",
-              color: "#fff",
+              backgroundColor: "#004ac6",
+              color: "#ffffff",
               border: "none",
-              borderRadius: "0.375rem",
+              borderRadius: "4px",
               cursor: "pointer",
             }}
           >
-            Reload Page
+            Reload Application
           </button>
         </div>
       );
@@ -53,10 +50,13 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </React.StrictMode>,
-);
+const rootElement = document.getElementById("root");
+if (rootElement) {
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    </React.StrictMode>,
+  );
+}
