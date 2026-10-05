@@ -1,88 +1,81 @@
-# Project
+# Sales ETL Pipeline (SCRUM-387)
 
-## Server
+Production-grade ETL pipeline containerized as a Google Cloud Run Job. Ingests raw sales order CSV files from Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/raw_sales_data.csv`), cleans and sanitizes the records, deduplicates transactions by `order_id`, and loads the transformed dataset into a partitioned BigQuery table (`analytics.aarchi_gcs_test1`).
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+---
 
-### Setup
+## 1. Architecture Overview
 
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+- **Orchestration / Compute**: Google Cloud Run Job (Batch containerized execution).
+- **Source**: Google Cloud Storage (`gs://sdlc-workspec-store/etl/data/raw_sales_data.csv`).
+- **Processing**: Python 3.11 with Pandas / PyArrow (vectorized data cleaning and deduplication).
+- **Destination**: Google BigQuery (`analytics.aarchi_gcs_test1`), partitioned by `order_date` (DAY) and clustered by `order_id`, `customer_id`, `order_status`.
+- **Telemetry**: Structured JSON logs emitted directly to GCP Cloud Logging.
+
+---
+
+## 2. Target Schema (`analytics.aarchi_gcs_test1`)
+
+| Field Name | Type | Mode | Description |
+| :--- | :--- | :--- | :--- |
+| `order_id` | `INTEGER` | `REQUIRED` | Unique Order Identifier |
+| `customer_id` | `STRING` | `NULLABLE` | Customer reference identifier |
+| `customer_name` | `STRING` | `NULLABLE` | Customer full name |
+| `customer_email` | `STRING` | `NULLABLE` | Customer email address |
+| `product_category` | `STRING` | `NULLABLE` | Product category classification |
+| `amount` | `FLOAT` | `NULLABLE` | Total sales order transaction amount |
+| `currency` | `STRING` | `NULLABLE` | Currency code (e.g. USD) |
+| `order_status` | `STRING` | `NULLABLE` | Order status (e.g. COMPLETED, PENDING) |
+| `created_at` | `TIMESTAMP` | `NULLABLE` | Timestamp when order was originally created |
+| `order_date` | `DATE` | `REQUIRED` | Date of sales order (Partition Key) |
+| `ingestion_timestamp` | `TIMESTAMP` | `REQUIRED` | UTC Timestamp when record was loaded by ETL |
+| `etl_batch_id` | `STRING` | `REQUIRED` | UUID identifying Cloud Run Job execution batch |
+
+---
+
+## 3. Directory Layout
+
+```
+├── Dockerfile                   # Python 3.11 Cloud Run Job container
+├── requirements.txt             # Pipeline dependencies
+├── env.deploy.json              # Deployment configuration variables
+├── transformation_spec.json     # Declarative transformation mapping
+├── app.py                       # Application entrypoint wrapper
+├── pipeline/
+│   ├── __init__.py
+│   ├── extractor.py             # GCS CSV Extractor
+│   ├── transformer.py           # Sanitization & deduplication engine
+│   ├── loader.py                # BigQuery partition loader
+│   └── run_sales_etl.py         # Standalone CLI / Job runner
+├── schemas/
+│   ├── aarchi_gcs_test1_schema.json
+│   └── sales_schema.json
+├── sql/
+│   └── ddl/
+│       └── aarchi_gcs_test1.sql # BigQuery DDL with partitioning & clustering
+└── tests/
+    ├── __init__.py
+    ├── test_sales_etl.py        # Transformation and unit tests
+    └── test_sales_etl_pipeline.py
 ```
 
-2. Install dependencies:
-```bash
-cd server
-pip install -r requirements.txt
-cd ..
-```
+---
+
+## 4. Local Execution & Testing
 
 ### Running Tests
 ```bash
-cd server
-python -m pytest -v
-cd ..
+pip install -r requirements.txt
+pytest -v
 ```
 
-### Starting the Development Server
+### Running the Standalone ETL Script
 ```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+export GCS_SOURCE_BUCKET="sdlc-workspec-store"
+export GCS_SOURCE_PREFIX="etl/data/raw_sales_data.csv"
+export GCP_PROJECT_ID="upbeat-repeater-477110-q6"
+export BIGQUERY_DATASET="analytics"
+export BIGQUERY_TABLE="aarchi_gcs_test1"
+
+python -m pipeline.run_sales_etl
 ```
-
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
-```bash
-# Copy the example environment file
-cp .env.example .env
-```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-

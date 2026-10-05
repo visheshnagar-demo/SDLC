@@ -1,0 +1,178 @@
+{
+  "source_columns": [
+    "order_id",
+    "customer_id",
+    "customer_name",
+    "customer_email",
+    "product_category",
+    "amount",
+    "currency",
+    "order_status",
+    "created_at"
+  ],
+  "columns": [
+    {
+      "name": "order_id",
+      "source_name": "order_id",
+      "type": "INTEGER",
+      "mode": "REQUIRED",
+      "description": "Unique Order Identifier"
+    },
+    {
+      "name": "customer_id",
+      "source_name": "customer_id",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Customer reference identifier"
+    },
+    {
+      "name": "customer_name",
+      "source_name": "customer_name",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Customer full name"
+    },
+    {
+      "name": "customer_email",
+      "source_name": "customer_email",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Customer email address"
+    },
+    {
+      "name": "product_category",
+      "source_name": "product_category",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Product category classification"
+    },
+    {
+      "name": "amount",
+      "source_name": "amount",
+      "type": "FLOAT",
+      "mode": "NULLABLE",
+      "description": "Total sales order transaction amount"
+    },
+    {
+      "name": "currency",
+      "source_name": "currency",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Currency code (e.g. USD)"
+    },
+    {
+      "name": "order_status",
+      "source_name": "order_status",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Order status (e.g. COMPLETED, PENDING)"
+    },
+    {
+      "name": "created_at",
+      "source_name": "created_at",
+      "type": "TIMESTAMP",
+      "mode": "NULLABLE",
+      "description": "Timestamp when order was originally created"
+    },
+    {
+      "name": "order_date",
+      "source_name": "created_at",
+      "type": "DATE",
+      "mode": "REQUIRED",
+      "description": "Date of sales order (Partition Key)"
+    },
+    {
+      "name": "ingestion_timestamp",
+      "source_name": "created_at",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "UTC Timestamp when record was loaded by ETL"
+    },
+    {
+      "name": "etl_batch_id",
+      "source_name": "order_id",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "UUID identifying Cloud Run Job execution batch"
+    }
+  ],
+  "mappings": [
+    {
+      "source_column": "order_id",
+      "target_column": "order_id",
+      "target_type": "INTEGER",
+      "transform": "to_int"
+    },
+    {
+      "source_column": "customer_id",
+      "target_column": "customer_id",
+      "target_type": "STRING",
+      "transform": "trim_and_clean"
+    },
+    {
+      "source_column": "customer_name",
+      "target_column": "customer_name",
+      "target_type": "STRING",
+      "transform": "trim_and_clean"
+    },
+    {
+      "source_column": "customer_email",
+      "target_column": "customer_email",
+      "target_type": "STRING",
+      "transform": "trim_and_clean"
+    },
+    {
+      "source_column": "product_category",
+      "target_column": "product_category",
+      "target_type": "STRING",
+      "transform": "trim_and_clean"
+    },
+    {
+      "source_column": "amount",
+      "target_column": "amount",
+      "target_type": "FLOAT",
+      "transform": "to_float"
+    },
+    {
+      "source_column": "currency",
+      "target_column": "currency",
+      "target_type": "STRING",
+      "transform": "trim_and_clean"
+    },
+    {
+      "source_column": "order_status",
+      "target_column": "order_status",
+      "target_type": "STRING",
+      "transform": "trim_and_clean"
+    },
+    {
+      "source_column": "created_at",
+      "target_column": "created_at",
+      "target_type": "TIMESTAMP",
+      "transform": "to_timestamp"
+    }
+  ],
+  "derived_columns": [
+    {
+      "target_column": "order_date",
+      "target_type": "DATE",
+      "expression": "extract_date(created_at)"
+    },
+    {
+      "target_column": "ingestion_timestamp",
+      "target_type": "TIMESTAMP",
+      "expression": "current_timestamp()"
+    },
+    {
+      "target_column": "etl_batch_id",
+      "target_type": "STRING",
+      "expression": "batch_id()"
+    }
+  ],
+  "deduplication": {
+    "key_columns": [
+      "order_id"
+    ],
+    "keep": "last"
+  }
+}
