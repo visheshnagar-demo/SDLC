@@ -1,0 +1,46 @@
+{
+  "columns": [
+    {
+      "source_name": "id",
+      "target_name": "id",
+      "target_type": "STRING",
+      "transform": "trim_whitespace",
+      "nullable": false
+    },
+    {
+      "source_name": "category",
+      "target_name": "category",
+      "target_type": "STRING",
+      "transform": "clean_string",
+      "nullable": true
+    },
+    {
+      "source_name": "status",
+      "target_name": "status",
+      "target_type": "STRING",
+      "transform": "clean_string",
+      "nullable": true
+    },
+    {
+      "source_name": "data_payload",
+      "target_name": "data_payload",
+      "target_type": "STRING",
+      "transform": "clean_string",
+      "nullable": true
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "target_type": "TIMESTAMP",
+      "transform": "to_timestamp",
+      "nullable": true
+    },
+    {
+      "source_name": "updated_at",
+      "target_name": "updated_at",
+      "target_type": "TIMESTAMP",
+      "transform": "to_timestamp",
+      "nullable": true
+    }
+  ]
+}

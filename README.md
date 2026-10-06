@@ -1,88 +1,57 @@
-# Project
+# Cloud SQL PostgreSQL to BigQuery ETL Pipeline (SCRUM-414)
 
-## Server
+Enterprise-grade serverless batch ETL pipeline extracting transactional data from Google Cloud SQL PostgreSQL (`upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db`, database `postgres`, source table `test_data`), applying data cleaning and transformation logic, and loading into Google BigQuery (`analytics.postgres_test5`).
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+## Architecture Overview
+- **Compute**: Google Cloud Run Job (Python 3.11 container, batch execution, zero idle cost)
+- **Source**: Google Cloud SQL PostgreSQL authenticated via IAM database credentials (`559906504681-compute@developer`, `IPTypes.PRIVATE`)
+- **Target**: Google BigQuery (`analytics.postgres_test5`) partitioned by `created_at`
+- **Orchestration**: Self-contained Cloud Run Job runner with companion Cloud Composer / Airflow DAG
 
-### Setup
-
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+## Project Structure
+```
+├── Dockerfile                                      # Container build definition for Cloud Run Job
+├── env.deploy.json                                 # Deployment environment variables with IAM auth
+├── env.deploy.yaml                                 # Deployment YAML configuration
+├── transformation_spec.json                        # Schema transformation contract
+├── requirements.txt                                # Python dependencies (cloud-sql-python-connector, pyarrow, bigquery)
+├── dags/
+│   └── postgres_to_bigquery_etl_dag.py             # Airflow DAG for Cloud Composer
+├── pipeline/
+│   └── run_postgres_to_bigquery_etl.py             # Standalone production ETL runner script
+├── schemas/
+│   └── postgres_test5_schema.json                  # BigQuery target table schema definition
+├── sql/
+│   └── ddl/
+│       └── postgres_test5.sql                      # BigQuery target table DDL
+└── tests/
+    └── test_postgres_to_bigquery_etl_pipeline.py   # Pytest suite
 ```
 
-2. Install dependencies:
+## Running Locally
+
+1. Install dependencies:
 ```bash
-cd server
 pip install -r requirements.txt
-cd ..
 ```
 
-### Running Tests
+2. Set environment variables:
 ```bash
-cd server
-python -m pytest -v
-cd ..
+export INSTANCE_CONNECTION_NAME="upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db"
+export POSTGRES_DB="postgres"
+export POSTGRES_USER="559906504681-compute@developer"
+export CLOUD_SQL_IP_TYPE="PRIVATE"
+export GCP_PROJECT_ID="upbeat-repeater-477110-q6"
+export BIGQUERY_DATASET="analytics"
+export BIGQUERY_TABLE="postgres_test5"
 ```
 
-### Starting the Development Server
+3. Run pipeline:
 ```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+python -m pipeline.run_postgres_to_bigquery_etl
 ```
 
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
+4. Run tests:
 ```bash
-# Copy the example environment file
-cp .env.example .env
+pytest
 ```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-
