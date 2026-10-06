@@ -1,4 +1,70 @@
 {
+  "source": {
+    "type": "postgresql",
+    "instance_connection_name": "upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db",
+    "database": "postgres",
+    "table": "test_data",
+    "user": "559906504681-compute@developer",
+    "ip_type": "PRIVATE"
+  },
+  "target": {
+    "type": "bigquery",
+    "project_id": "upbeat-repeater-477110-q6",
+    "dataset": "analytics",
+    "table": "postgres_test5",
+    "write_disposition": "WRITE_APPEND",
+    "partition_field": "created_at"
+  },
+  "transformations": [
+    {
+      "source_name": "id",
+      "target_name": "id",
+      "target_type": "STRING",
+      "transform": "trim_whitespace",
+      "nullable": false,
+      "description": "Unique identifier"
+    },
+    {
+      "source_name": "category",
+      "target_name": "category",
+      "target_type": "STRING",
+      "transform": "clean_string",
+      "nullable": true,
+      "description": "Category name"
+    },
+    {
+      "source_name": "status",
+      "target_name": "status",
+      "target_type": "STRING",
+      "transform": "clean_string",
+      "nullable": true,
+      "description": "Record status"
+    },
+    {
+      "source_name": "data_payload",
+      "target_name": "data_payload",
+      "target_type": "STRING",
+      "transform": "clean_string",
+      "nullable": true,
+      "description": "JSON/text data payload"
+    },
+    {
+      "source_name": "created_at",
+      "target_name": "created_at",
+      "target_type": "TIMESTAMP",
+      "transform": "to_timestamp",
+      "nullable": true,
+      "description": "Creation timestamp"
+    },
+    {
+      "source_name": "updated_at",
+      "target_name": "updated_at",
+      "target_type": "TIMESTAMP",
+      "transform": "to_timestamp",
+      "nullable": true,
+      "description": "Update timestamp"
+    }
+  ],
   "columns": [
     {
       "source_name": "id",

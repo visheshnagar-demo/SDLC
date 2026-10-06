@@ -8,6 +8,7 @@ import sys
 import json
 import logging
 import argparse
+import re
 from datetime import datetime
 
 # Dependencies
@@ -28,6 +29,16 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
 )
 logger = logging.getLogger("postgres_to_bigquery_etl")
+
+
+def _clean_str(val):
+    """Normalizes string values, trims whitespace, and converts null sentinels to None."""
+    if val is None or (pd is not None and pd.isna(val)):
+        return None
+    s = str(val).strip()
+    if s.lower() in ("nan", "none", "null", "n/a", ""):
+        return None
+    return s
 
 
 class PipelineRunner:
@@ -137,7 +148,6 @@ class PipelineRunner:
 
         logger.info("Transforming %d raw records. Columns: %s", raw_count, list(df.columns))
 
-        import re
         df.columns = [
             re.sub(r"[^a-zA-Z0-9_]+", "_", str(col).strip().lower()).strip("_")
             for col in df.columns
@@ -145,28 +155,25 @@ class PipelineRunner:
         logger.info("Standardized columns: %s", list(df.columns))
 
         # Specification-Driven Column Transformations
-        if "id" in df.columns:
-            df["id"] = df["id"].astype(str).str.strip().replace({"nan": None, "None": None, "": None})
-            logger.info("Applied specification transformation to id -> STRING")
-        if "category" in df.columns:
-            df["category"] = df["category"].astype(str).str.strip().replace({"nan": None, "None": None, "": None})
-            logger.info("Applied specification transformation to category -> STRING")
-        if "status" in df.columns:
-            df["status"] = df["status"].astype(str).str.strip().replace({"nan": None, "None": None, "": None})
-            logger.info("Applied specification transformation to status -> STRING")
-        if "data_payload" in df.columns:
-            df["data_payload"] = df["data_payload"].astype(str).str.strip().replace({"nan": None, "None": None, "": None})
-            logger.info("Applied specification transformation to data_payload -> STRING")
-        if "created_at" in df.columns:
-            df["created_at"] = pd.to_datetime(df["created_at"], errors="coerce")
-            logger.info("Applied specification transformation to created_at -> TIMESTAMP")
-        if "updated_at" in df.columns:
-            df["updated_at"] = pd.to_datetime(df["updated_at"], errors="coerce")
-            logger.info("Applied specification transformation to updated_at -> TIMESTAMP")
+        for col in ["id", "category", "status", "data_payload"]:
+            if col in df.columns:
+                df[col] = df[col].apply(_clean_str)
+                logger.info("Applied specification transformation to %s -> STRING", col)
+
+        for col in ["created_at", "updated_at"]:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], errors="coerce")
+                logger.info("Applied specification transformation to %s -> TIMESTAMP", col)
 
         # Standardize remaining string columns
-        for col in df.select_dtypes(include=["object", "string"]).columns:
-            df[col] = df[col].astype(str).str.strip().replace({"nan": None, "None": None, "": None})
+        explicit_cols = {"id", "category", "status", "data_payload", "created_at", "updated_at"}
+        for col in df.columns:
+            if col not in explicit_cols and df[col].dtype == "object":
+                df[col] = df[col].apply(_clean_str)
+
+        # Deduplicate records by primary key 'id' if present
+        if "id" in df.columns:
+            df = df.drop_duplicates(subset=["id"], keep="last")
 
         # Basic validity filter (non-empty rows only)
         df_valid = df.dropna(how="all")

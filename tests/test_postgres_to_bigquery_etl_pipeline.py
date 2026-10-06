@@ -59,7 +59,10 @@ def test_transformation_spec_coverage():
     assert os.path.isfile(spec_path), "transformation_spec.json missing"
     with open(spec_path, "r", encoding="utf-8") as f:
         spec = json.load(f)
-    cols = spec.get("columns", [])
+    assert "source" in spec
+    assert "target" in spec
+    assert "transformations" in spec or "columns" in spec
+    cols = spec.get("transformations", []) or spec.get("columns", [])
     source_names = [c["source_name"] for c in cols]
     for required_col in ["id", "category", "status", "data_payload", "created_at", "updated_at"]:
         assert required_col in source_names
@@ -123,3 +126,6 @@ def test_deploy_env_iam_auth():
     assert env_vars.get("POSTGRES_DB") == "postgres"
     assert env_vars.get("BIGQUERY_DATASET") == "analytics"
     assert env_vars.get("BIGQUERY_TABLE") == "postgres_test5"
+    assert "failure_behavior" in env_vars or "FAILURE_BEHAVIOR" in env_vars
+    assert "cpu" in env_vars or "CPU" in env_vars or "resources" in env_vars
+    assert "memory" in env_vars or "MEMORY" in env_vars or "resources" in env_vars
