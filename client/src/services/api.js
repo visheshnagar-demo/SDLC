@@ -10,82 +10,100 @@ export const apiClient = axios.create({
   timeout: 10000,
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Standardized error payload extractions
-    const message =
-      error.response?.data?.detail ||
-      error.message ||
-      "An unexpected network error occurred";
-    return Promise.reject(
-      new Error(
-        typeof message === "object" ? JSON.stringify(message) : message,
-      ),
-    );
-  },
-);
-
-export const createCheckoutSession = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/checkout-session",
-    payload,
-  );
+// Cattle API
+export const getCattle = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/cattle", { params });
   return response.data;
 };
 
-export const payWithDigitalWallet = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/digital-wallet",
-    payload,
-  );
+export const createCattle = async (data) => {
+  const response = await apiClient.post("/api/v1/cattle", data);
   return response.data;
 };
 
-export const getExchangeRates = async (baseCurrency = "USD") => {
-  const response = await apiClient.get("/api/v1/payments/rates", {
-    params: { base_currency: baseCurrency },
-  });
+export const getCowById = async (id) => {
+  const response = await apiClient.get(`/api/v1/cattle/${id}`);
   return response.data;
 };
 
-export const listTransactions = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/payments/transactions", {
-    params,
-  });
+export const updateCow = async (id, data) => {
+  const response = await apiClient.put(`/api/v1/cattle/${id}`, data);
   return response.data;
 };
 
-export const getTransactionDetail = async (transactionId) => {
+// Milking API
+export const getMilkLogs = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/milk-logs", { params });
+  return response.data;
+};
+
+export const createMilkLog = async (data) => {
+  const response = await apiClient.post("/api/v1/milk-logs", data);
+  return response.data;
+};
+
+export const getMilkSummary = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/milk-logs/summary", { params });
+  return response.data;
+};
+
+// Breeding API
+export const getBreedingRecords = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/breeding-records", { params });
+  return response.data;
+};
+
+export const createBreedingRecord = async (data) => {
+  const response = await apiClient.post("/api/v1/breeding-records", data);
+  return response.data;
+};
+
+export const updateBreedingRecord = async (id, data) => {
+  const response = await apiClient.put(`/api/v1/breeding-records/${id}`, data);
+  return response.data;
+};
+
+// Feed API
+export const getFeedRations = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/feed-rations", { params });
+  return response.data;
+};
+
+export const createFeedRation = async (data) => {
+  const response = await apiClient.post("/api/v1/feed-rations", data);
+  return response.data;
+};
+
+export const getFeedInventory = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/feed-inventory", { params });
+  return response.data;
+};
+
+export const updateFeedInventory = async (data) => {
+  const response = await apiClient.post("/api/v1/feed-inventory", data);
+  return response.data;
+};
+
+// Health & Veterinary API
+export const getHealthRecords = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/health-records", { params });
+  return response.data;
+};
+
+export const createHealthRecord = async (data) => {
+  const response = await apiClient.post("/api/v1/health-records", data);
+  return response.data;
+};
+
+export const getActiveWithdrawals = async () => {
   const response = await apiClient.get(
-    `/api/v1/payments/transactions/${transactionId}`,
+    "/api/v1/health-records/active-withdrawals",
   );
   return response.data;
 };
 
-export const createRefund = async (payload) => {
-  const response = await apiClient.post("/api/v1/refunds", payload);
+// Analytics & Dashboard API
+export const getDashboardAnalytics = async () => {
+  const response = await apiClient.get("/api/v1/analytics/dashboard");
   return response.data;
-};
-
-export const listRefunds = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/refunds", { params });
-  return response.data;
-};
-
-export const listAuditLogs = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/audit-logs", { params });
-  return response.data;
-};
-
-export default {
-  apiClient,
-  createCheckoutSession,
-  payWithDigitalWallet,
-  getExchangeRates,
-  listTransactions,
-  getTransactionDetail,
-  createRefund,
-  listRefunds,
-  listAuditLogs,
 };

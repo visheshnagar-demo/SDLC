@@ -1,40 +1,57 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
 } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import CheckoutPage from "./pages/CheckoutPage";
-import RefundPortalPage from "./pages/RefundPortalPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
+import Navbar from "./components/layout/Navbar.jsx";
+import DashboardPage from "./pages/DashboardPage.jsx";
+import CattlePage from "./pages/CattlePage.jsx";
+import MilkingPage from "./pages/MilkingPage.jsx";
+import BreedingPage from "./pages/BreedingPage.jsx";
+import HealthPage from "./pages/HealthPage.jsx";
+import { getActiveWithdrawals } from "./services/api.js";
 
-export function App() {
+export default function App() {
+  const [activeWithholdings, setActiveWithholdings] = useState([]);
+
+  useEffect(() => {
+    const fetchWithholdings = async () => {
+      try {
+        const data = await getActiveWithdrawals();
+        if (Array.isArray(data)) {
+          setActiveWithholdings(data);
+        }
+      } catch (err) {
+        // Soft fallback
+        console.debug("Could not fetch active withholdings:", err);
+      }
+    };
+    fetchWithholdings();
+  }, []);
+
   return (
     <Router>
-      <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-        <Navbar />
+      <div className="min-h-screen bg-[#F5FAF7] flex flex-col font-sans">
+        <Navbar activeWithholdingCount={activeWithholdings.length} />
         <main className="flex-1">
           <Routes>
-            <Route path="/" element={<Navigate to="/checkout" replace />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/refunds" element={<RefundPortalPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="*" element={<Navigate to="/checkout" replace />} />
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/cattle" element={<CattlePage />} />
+            <Route path="/milking" element={<MilkingPage />} />
+            <Route path="/breeding" element={<BreedingPage />} />
+            <Route path="/health" element={<HealthPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
-        <footer className="bg-slate-900 text-slate-400 border-t border-slate-800 py-6 text-center text-xs">
+        <footer className="bg-white border-t border-[#DBE5E0] py-4 text-center text-xs text-[#6B7A73]">
           <div className="max-w-7xl mx-auto px-4">
-            <p>
-              © {new Date().getFullYear()} PayGateway Service. PCI-DSS Level 1
-              Merchant Security.
-            </p>
+            CattleCare &bull; Cattle &amp; Dairy Farm Management System &bull;
+            ISO-compliant RFID &amp; Withholding Enforcement
           </div>
         </footer>
       </div>
     </Router>
   );
 }
-
-export default App;
