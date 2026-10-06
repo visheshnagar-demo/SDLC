@@ -1,163 +1,20 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Payment Gateway Service",
-    "version": "0.1.0"
+    "title": "Cattle & Dairy Farm Management Platform",
+    "description": "Centralized farm platform for cattle profiling, RFID tracking, milk logging, breeding lifecycles, feed allocation, and veterinary records.",
+    "version": "1.0.0"
   },
   "paths": {
-    "/api/v1/payments/checkout-session": {
-      "post": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Create Session",
-        "operationId": "create_session_api_v1_payments_checkout_session_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CheckoutSessionRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CheckoutSessionResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/digital-wallet": {
-      "post": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Pay Digital Wallet",
-        "operationId": "pay_digital_wallet_api_v1_payments_digital_wallet_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DigitalWalletPaymentRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DigitalWalletPaymentResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/rates": {
+    "/api/v1/cattle": {
       "get": {
         "tags": [
-          "payments"
+          "Cattle & RFID Management"
         ],
-        "summary": "Get Rates",
-        "operationId": "get_rates_api_v1_payments_rates_get",
+        "summary": "List Cattle",
+        "description": "List cattle with optional filtering by status, breed, RFID tag, or keyword search.",
+        "operationId": "list_cattle_api_v1_cattle_get",
         "parameters": [
-          {
-            "name": "base_currency",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "Base currency code",
-              "default": "USD",
-              "title": "Base Currency"
-            },
-            "description": "Base currency code"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExchangeRatesResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "List Transactions",
-        "operationId": "list_transactions_api_v1_payments_transactions_get",
-        "parameters": [
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Search transaction ID or email",
-              "title": "Search"
-            },
-            "description": "Search transaction ID or email"
-          },
           {
             "name": "status",
             "in": "query",
@@ -171,13 +28,11 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by transaction status",
               "title": "Status"
-            },
-            "description": "Filter by transaction status"
+            }
           },
           {
-            "name": "currency",
+            "name": "breed",
             "in": "query",
             "required": false,
             "schema": {
@@ -189,10 +44,40 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by currency",
-              "title": "Currency"
-            },
-            "description": "Filter by currency"
+              "title": "Breed"
+            }
+          },
+          {
+            "name": "rfid_tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rfid Tag"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
           },
           {
             "name": "skip",
@@ -211,7 +96,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 500,
               "minimum": 1,
               "default": 50,
               "title": "Limit"
@@ -226,92 +111,9 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TransactionSummary"
+                    "$ref": "#/components/schemas/CattleOut"
                   },
-                  "title": "Response List Transactions Api V1 Payments Transactions Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions/{transaction_id}": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Get Transaction",
-        "operationId": "get_transaction_api_v1_payments_transactions__transaction_id__get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Transaction Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TransactionDetail"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/refunds": {
-      "post": {
-        "tags": [
-          "refunds"
-        ],
-        "summary": "Create Refund Endpoint",
-        "operationId": "create_refund_endpoint_api_v1_refunds_post",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RefundRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RefundSummary"
+                  "title": "Response List Cattle Api V1 Cattle Get"
                 }
               }
             }
@@ -328,114 +130,31 @@
           }
         }
       },
-      "get": {
-        "tags": [
-          "refunds"
-        ],
-        "summary": "List Refunds Endpoint",
-        "operationId": "list_refunds_endpoint_api_v1_refunds_get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RefundSummary"
-                  },
-                  "title": "Response List Refunds Endpoint Api V1 Refunds Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/webhooks/stripe": {
       "post": {
         "tags": [
-          "webhooks"
+          "Cattle & RFID Management"
         ],
-        "summary": "Handle Stripe Webhook",
-        "operationId": "handle_stripe_webhook_api_v1_webhooks_stripe_post",
-        "parameters": [
-          {
-            "name": "stripe-signature",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Stripe-Signature"
+        "summary": "Create Cattle",
+        "description": "Register a new cow with RFID ear tag and lineage details.",
+        "operationId": "create_cattle_api_v1_cattle_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CattleCreate"
+              }
             }
           }
-        ],
+        },
         "responses": {
-          "200": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/CattleOut"
+                }
               }
             }
           },
@@ -452,16 +171,145 @@
         }
       }
     },
-    "/api/v1/audit-logs": {
+    "/api/v1/cattle/{cow_id}": {
       "get": {
         "tags": [
-          "audit-logs"
+          "Cattle & RFID Management"
         ],
-        "summary": "List Audit Logs",
-        "operationId": "list_audit_logs_api_v1_audit_logs_get",
+        "summary": "Get Cattle Detail",
+        "description": "Retrieve comprehensive profile, history, and active withdrawal status for a cow.",
+        "operationId": "get_cattle_detail_api_v1_cattle__cow_id__get",
         "parameters": [
           {
-            "name": "transaction_id",
+            "name": "cow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Cow Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CattleDetailOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Cattle & RFID Management"
+        ],
+        "summary": "Update Cattle",
+        "description": "Update cattle profile, breed, or lifecycle status.",
+        "operationId": "update_cattle_api_v1_cattle__cow_id__put",
+        "parameters": [
+          {
+            "name": "cow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Cow Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CattleUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CattleOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Cattle & RFID Management"
+        ],
+        "summary": "Delete Cattle",
+        "description": "Delete a cattle record.",
+        "operationId": "delete_cattle_api_v1_cattle__cow_id__delete",
+        "parameters": [
+          {
+            "name": "cow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Cow Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/milk-logs": {
+      "get": {
+        "tags": [
+          "Milk Production & Logging"
+        ],
+        "summary": "List Milk Logs",
+        "description": "Retrieve milking session logs with optional filters.",
+        "operationId": "list_milk_logs_api_v1_milk_logs_get",
+        "parameters": [
+          {
+            "name": "cow_id",
             "in": "query",
             "required": false,
             "schema": {
@@ -473,13 +321,45 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
+              "title": "Cow Id"
+            }
           },
           {
-            "name": "event_type",
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          },
+          {
+            "name": "session",
             "in": "query",
             "required": false,
             "schema": {
@@ -491,10 +371,40 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by event type",
-              "title": "Event Type"
-            },
-            "description": "Filter by event type"
+              "title": "Session"
+            }
+          },
+          {
+            "name": "is_withheld",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Is Withheld"
+            }
+          },
+          {
+            "name": "variance_alert",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Variance Alert"
+            }
           },
           {
             "name": "skip",
@@ -513,7 +423,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 500,
               "minimum": 1,
               "default": 50,
               "title": "Limit"
@@ -528,9 +438,1341 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AuditLogEntry"
+                    "$ref": "#/components/schemas/MilkLogOut"
                   },
-                  "title": "Response List Audit Logs Api V1 Audit Logs Get"
+                  "title": "Response List Milk Logs Api V1 Milk Logs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Milk Production & Logging"
+        ],
+        "summary": "Create Milk Log",
+        "description": "Record a milking session yield with automatic withdrawal enforcement and >30% yield drop mastitis detection.",
+        "operationId": "create_milk_log_api_v1_milk_logs_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MilkLogCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MilkLogOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/milk-logs/summary": {
+      "get": {
+        "tags": [
+          "Milk Production & Logging"
+        ],
+        "summary": "Get Milk Summary",
+        "description": "Get aggregate milk production KPIs, session totals, and 7-day rolling trends.",
+        "operationId": "get_milk_summary_api_v1_milk_logs_summary_get",
+        "parameters": [
+          {
+            "name": "target_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Target Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MilkSummaryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/breeding-records": {
+      "get": {
+        "tags": [
+          "Breeding & Gestation Engine"
+        ],
+        "summary": "List Breeding Records",
+        "description": "Retrieve reproductive lifecycle and breeding records with optional filters.",
+        "operationId": "list_breeding_records_api_v1_breeding_records_get",
+        "parameters": [
+          {
+            "name": "cow_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cow Id"
+            }
+          },
+          {
+            "name": "stage",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Stage"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BreedingRecordOut"
+                  },
+                  "title": "Response List Breeding Records Api V1 Breeding Records Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Breeding & Gestation Engine"
+        ],
+        "summary": "Create Breeding Record",
+        "description": "Record a new breeding event with automated 283-day gestation calculation and cycle reset handling.",
+        "operationId": "create_breeding_record_api_v1_breeding_records_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BreedingRecordCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BreedingRecordOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/breeding-records/{record_id}": {
+      "get": {
+        "tags": [
+          "Breeding & Gestation Engine"
+        ],
+        "summary": "Get Breeding Record",
+        "description": "Retrieve details of a specific breeding record.",
+        "operationId": "get_breeding_record_api_v1_breeding_records__record_id__get",
+        "parameters": [
+          {
+            "name": "record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Record Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BreedingRecordOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Breeding & Gestation Engine"
+        ],
+        "summary": "Update Breeding Record",
+        "description": "Update breeding record stage, dates, or notes and adjust cow status.",
+        "operationId": "update_breeding_record_api_v1_breeding_records__record_id__put",
+        "parameters": [
+          {
+            "name": "record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Record Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BreedingRecordUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BreedingRecordOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Breeding & Gestation Engine"
+        ],
+        "summary": "Delete Breeding Record",
+        "description": "Delete a breeding record.",
+        "operationId": "delete_breeding_record_api_v1_breeding_records__record_id__delete",
+        "parameters": [
+          {
+            "name": "record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Record Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feed-rations/calculate-allocation": {
+      "post": {
+        "tags": [
+          "Feed & Ration Allocation"
+        ],
+        "summary": "Calculate Feed Allocation",
+        "description": "Calculate dynamic Total Mixed Ration (TMR) feed allocation based on lactation stage, milk yield, and body condition score (BCS).",
+        "operationId": "calculate_feed_allocation_api_v1_feed_rations_calculate_allocation_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedAllocationCalculateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedAllocationResultOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feed-rations/cow/{cow_id}/allocation": {
+      "get": {
+        "tags": [
+          "Feed & Ration Allocation"
+        ],
+        "summary": "Get Cow Feed Allocation",
+        "description": "Fetch cow profile, recent yield, and calculate personalized TMR feed allocation.",
+        "operationId": "get_cow_feed_allocation_api_v1_feed_rations_cow__cow_id__allocation_get",
+        "parameters": [
+          {
+            "name": "cow_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Cow Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedAllocationResultOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feed-rations": {
+      "get": {
+        "tags": [
+          "Feed & Ration Allocation"
+        ],
+        "summary": "List Feed Rations",
+        "description": "Retrieve TMR nutritional formulations per production group.",
+        "operationId": "list_feed_rations_api_v1_feed_rations_get",
+        "parameters": [
+          {
+            "name": "target_group",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Target Group"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeedRationOut"
+                  },
+                  "title": "Response List Feed Rations Api V1 Feed Rations Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Feed & Ration Allocation"
+        ],
+        "summary": "Create Feed Ration",
+        "description": "Create a new TMR feed ration profile.",
+        "operationId": "create_feed_ration_api_v1_feed_rations_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedRationCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedRationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feed-rations/{ration_id}": {
+      "get": {
+        "tags": [
+          "Feed & Ration Allocation"
+        ],
+        "summary": "Get Feed Ration",
+        "description": "Retrieve details for a specific TMR feed ration.",
+        "operationId": "get_feed_ration_api_v1_feed_rations__ration_id__get",
+        "parameters": [
+          {
+            "name": "ration_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ration Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedRationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Feed & Ration Allocation"
+        ],
+        "summary": "Update Feed Ration",
+        "description": "Update a TMR feed ration formulation.",
+        "operationId": "update_feed_ration_api_v1_feed_rations__ration_id__put",
+        "parameters": [
+          {
+            "name": "ration_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ration Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedRationUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedRationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Feed & Ration Allocation"
+        ],
+        "summary": "Delete Feed Ration",
+        "description": "Delete a feed ration.",
+        "operationId": "delete_feed_ration_api_v1_feed_rations__ration_id__delete",
+        "parameters": [
+          {
+            "name": "ration_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ration Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feed-inventory": {
+      "get": {
+        "tags": [
+          "Feed & Ration Allocation"
+        ],
+        "summary": "List Feed Inventory",
+        "description": "Retrieve real-time feed inventory levels and stock reorder alerts.",
+        "operationId": "list_feed_inventory_api_v1_feed_inventory_get",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "name": "reorder_alert_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Reorder Alert Only"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeedInventoryOut"
+                  },
+                  "title": "Response List Feed Inventory Api V1 Feed Inventory Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Feed & Ration Allocation"
+        ],
+        "summary": "Create Feed Inventory",
+        "description": "Create or register a feed stock inventory item.",
+        "operationId": "create_feed_inventory_api_v1_feed_inventory_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedInventoryCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedInventoryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feed-inventory/{item_id}": {
+      "get": {
+        "tags": [
+          "Feed & Ration Allocation"
+        ],
+        "summary": "Get Feed Inventory Item",
+        "description": "Get stock details for a specific feed item.",
+        "operationId": "get_feed_inventory_item_api_v1_feed_inventory__item_id__get",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedInventoryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Feed & Ration Allocation"
+        ],
+        "summary": "Update Feed Inventory",
+        "description": "Update feed stock balance or consumption rate with automated threshold calculation.",
+        "operationId": "update_feed_inventory_api_v1_feed_inventory__item_id__put",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedInventoryUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedInventoryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Feed & Ration Allocation"
+        ],
+        "summary": "Delete Feed Inventory Item",
+        "description": "Delete a feed inventory item.",
+        "operationId": "delete_feed_inventory_item_api_v1_feed_inventory__item_id__delete",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health-records": {
+      "get": {
+        "tags": [
+          "Health & Veterinary Services"
+        ],
+        "summary": "List Health Records",
+        "description": "Retrieve veterinary encounters, treatments, and vaccination history.",
+        "operationId": "list_health_records_api_v1_health_records_get",
+        "parameters": [
+          {
+            "name": "cow_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cow Id"
+            }
+          },
+          {
+            "name": "record_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Record Type"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HealthRecordOut"
+                  },
+                  "title": "Response List Health Records Api V1 Health Records Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Health & Veterinary Services"
+        ],
+        "summary": "Create Health Record",
+        "description": "Log a veterinary encounter or treatment with automated milk/meat withdrawal calculations.",
+        "operationId": "create_health_record_api_v1_health_records_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HealthRecordCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthRecordOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health-records/schedules": {
+      "get": {
+        "tags": [
+          "Health & Veterinary Services"
+        ],
+        "summary": "List Scheduled Vet Visits",
+        "description": "Retrieve scheduled routine vet checkups and upcoming vaccinations.",
+        "operationId": "list_scheduled_vet_visits_api_v1_health_records_schedules_get",
+        "parameters": [
+          {
+            "name": "upcoming_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Upcoming Only"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HealthRecordOut"
+                  },
+                  "title": "Response List Scheduled Vet Visits Api V1 Health Records Schedules Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health-records/schedule-visit": {
+      "post": {
+        "tags": [
+          "Health & Veterinary Services"
+        ],
+        "summary": "Schedule Vet Visit",
+        "description": "Schedule a routine veterinary visit, herd health check, or vaccination event.",
+        "operationId": "schedule_vet_visit_api_v1_health_records_schedule_visit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VetScheduleCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthRecordOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health-records/active-withdrawals": {
+      "get": {
+        "tags": [
+          "Health & Veterinary Services"
+        ],
+        "summary": "List Active Withdrawals",
+        "description": "List all cattle currently subject to mandatory milk withdrawal due to active medical treatments.",
+        "operationId": "list_active_withdrawals_api_v1_health_records_active_withdrawals_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ActiveWithdrawalOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Active Withdrawals Api V1 Health Records Active Withdrawals Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health-records/verify-bulk-milk": {
+      "post": {
+        "tags": [
+          "Health & Veterinary Services"
+        ],
+        "summary": "Verify Bulk Milk Compliance",
+        "description": "Validate that none of the provided cattle are under active milk withdrawal before inclusion in bulk tank sales.",
+        "operationId": "verify_bulk_milk_compliance_api_v1_health_records_verify_bulk_milk_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkMilkVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkWizardCheckResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health-records/{record_id}": {
+      "get": {
+        "tags": [
+          "Health & Veterinary Services"
+        ],
+        "summary": "Get Health Record",
+        "description": "Retrieve details of a specific health or treatment record.",
+        "operationId": "get_health_record_api_v1_health_records__record_id__get",
+        "parameters": [
+          {
+            "name": "record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Record Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthRecordOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Health & Veterinary Services"
+        ],
+        "summary": "Delete Health Record",
+        "description": "Delete a health record.",
+        "operationId": "delete_health_record_api_v1_health_records__record_id__delete",
+        "parameters": [
+          {
+            "name": "record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Record Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/dashboard": {
+      "get": {
+        "tags": [
+          "Herd Analytics & Executive Dashboard"
+        ],
+        "summary": "Get Dashboard Analytics",
+        "description": "Aggregate executive farm KPIs, 7-day rolling yield curves, fertility rates, and active alerts.",
+        "operationId": "get_dashboard_analytics_api_v1_analytics_dashboard_get",
+        "parameters": [
+          {
+            "name": "target_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Target Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardAnalyticsOut"
                 }
               }
             }
@@ -563,17 +1805,45 @@
           }
         }
       }
+    },
+    "/api/v1/health": {
+      "get": {
+        "summary": "Api Health Check",
+        "operationId": "api_health_check_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
-      "AuditLogEntry": {
+      "ActiveWithdrawalOut": {
         "properties": {
-          "id": {
+          "record_id": {
             "type": "string",
-            "title": "Id"
+            "title": "Record Id"
           },
-          "transaction_id": {
+          "cow_id": {
+            "type": "string",
+            "title": "Cow Id"
+          },
+          "tag_number": {
+            "type": "string",
+            "title": "Tag Number"
+          },
+          "rfid_tag": {
+            "type": "string",
+            "title": "Rfid Tag"
+          },
+          "medication_administered": {
             "anyOf": [
               {
                 "type": "string"
@@ -582,176 +1852,113 @@
                 "type": "null"
               }
             ],
-            "title": "Transaction Id"
+            "title": "Medication Administered"
           },
-          "event_type": {
+          "diagnosis": {
             "type": "string",
-            "title": "Event Type"
+            "title": "Diagnosis"
           },
-          "ip_address": {
+          "treatment_date": {
             "type": "string",
-            "title": "Ip Address"
+            "format": "date-time",
+            "title": "Treatment Date"
           },
-          "masked_payload": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Masked Payload"
+          "milk_withdrawal_hours": {
+            "type": "integer",
+            "title": "Milk Withdrawal Hours"
+          },
+          "milk_withdrawal_end": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Milk Withdrawal End"
+          },
+          "hours_remaining": {
+            "type": "number",
+            "title": "Hours Remaining"
+          }
+        },
+        "type": "object",
+        "required": [
+          "record_id",
+          "cow_id",
+          "tag_number",
+          "rfid_tag",
+          "medication_administered",
+          "diagnosis",
+          "treatment_date",
+          "milk_withdrawal_hours",
+          "milk_withdrawal_end",
+          "hours_remaining"
+        ],
+        "title": "ActiveWithdrawalOut"
+      },
+      "AlertItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
           },
           "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
             "title": "Created At"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "event_type",
-          "ip_address",
-          "masked_payload"
+          "type",
+          "severity",
+          "title",
+          "message",
+          "created_at"
         ],
-        "title": "AuditLogEntry"
+        "title": "AlertItem"
       },
-      "CartItem": {
+      "BreedingRecordCreate": {
         "properties": {
-          "name": {
+          "cow_id": {
             "type": "string",
-            "title": "Name"
+            "title": "Cow Id"
           },
-          "quantity": {
-            "type": "integer",
-            "title": "Quantity",
-            "default": 1
-          },
-          "unit_price": {
-            "type": "number",
-            "title": "Unit Price"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "unit_price"
-        ],
-        "title": "CartItem"
-      },
-      "CheckoutSessionRequest": {
-        "properties": {
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount",
-            "description": "Amount in base currency"
-          },
-          "currency": {
+          "stage": {
             "type": "string",
-            "title": "Currency",
-            "description": "Settlement/target currency",
-            "default": "USD"
+            "title": "Stage",
+            "default": "In Heat"
           },
-          "customer_email": {
+          "event_date": {
             "type": "string",
-            "title": "Customer Email"
+            "format": "date",
+            "title": "Event Date"
           },
-          "items": {
+          "insemination_date": {
             "anyOf": [
               {
-                "items": {
-                  "$ref": "#/components/schemas/CartItem"
-                },
-                "type": "array"
+                "type": "string",
+                "format": "date"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Items"
-          }
-        },
-        "type": "object",
-        "required": [
-          "amount",
-          "customer_email"
-        ],
-        "title": "CheckoutSessionRequest"
-      },
-      "CheckoutSessionResponse": {
-        "properties": {
-          "session_id": {
-            "type": "string",
-            "title": "Session Id"
+            "title": "Insemination Date"
           },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "client_secret": {
-            "type": "string",
-            "title": "Client Secret"
-          },
-          "base_amount": {
-            "type": "number",
-            "title": "Base Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_amount": {
-            "type": "number",
-            "title": "Target Amount"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          }
-        },
-        "type": "object",
-        "required": [
-          "session_id",
-          "payment_intent_id",
-          "client_secret",
-          "base_amount",
-          "base_currency",
-          "target_amount",
-          "target_currency",
-          "exchange_rate"
-        ],
-        "title": "CheckoutSessionResponse"
-      },
-      "DigitalWalletPaymentRequest": {
-        "properties": {
-          "wallet_type": {
-            "type": "string",
-            "title": "Wallet Type",
-            "description": "apple_pay or google_pay"
-          },
-          "payment_token": {
-            "type": "string",
-            "title": "Payment Token"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "default": "USD"
-          },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
-          },
-          "customer_email": {
+          "sire_rfid_or_code": {
             "anyOf": [
               {
                 "type": "string"
@@ -760,81 +1967,1204 @@
                 "type": "null"
               }
             ],
-            "title": "Customer Email",
-            "default": "customer@example.com"
+            "title": "Sire Rfid Or Code"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
           }
         },
         "type": "object",
         "required": [
-          "wallet_type",
-          "payment_token",
-          "amount"
+          "cow_id",
+          "event_date"
         ],
-        "title": "DigitalWalletPaymentRequest"
+        "title": "BreedingRecordCreate"
       },
-      "DigitalWalletPaymentResponse": {
+      "BreedingRecordOut": {
         "properties": {
-          "transaction_id": {
+          "cow_id": {
             "type": "string",
-            "title": "Transaction Id"
+            "title": "Cow Id"
           },
-          "payment_intent_id": {
+          "stage": {
             "type": "string",
-            "title": "Payment Intent Id"
+            "title": "Stage",
+            "default": "In Heat"
           },
-          "wallet_type": {
+          "event_date": {
             "type": "string",
-            "title": "Wallet Type"
+            "format": "date",
+            "title": "Event Date"
           },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
+          "insemination_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insemination Date"
           },
-          "currency": {
+          "sire_rfid_or_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sire Rfid Or Code"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "id": {
             "type": "string",
-            "title": "Currency"
+            "title": "Id"
+          },
+          "gestation_check_due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gestation Check Due Date"
+          },
+          "expected_calving_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Calving Date"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cow_id",
+          "event_date",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "BreedingRecordOut"
+      },
+      "BreedingRecordUpdate": {
+        "properties": {
+          "stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage"
+          },
+          "event_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Date"
+          },
+          "insemination_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insemination Date"
+          },
+          "sire_rfid_or_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sire Rfid Or Code"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "title": "BreedingRecordUpdate"
+      },
+      "BulkMilkVerifyRequest": {
+        "properties": {
+          "cow_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Cow Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cow_ids"
+        ],
+        "title": "BulkMilkVerifyRequest"
+      },
+      "BulkWizardCheckResponse": {
+        "properties": {
+          "compliant": {
+            "type": "boolean",
+            "title": "Compliant"
+          },
+          "blocked_cow_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Blocked Cow Ids",
+            "default": []
+          },
+          "active_withholding_records": {
+            "items": {
+              "$ref": "#/components/schemas/ActiveWithdrawalOut"
+            },
+            "type": "array",
+            "title": "Active Withholding Records",
+            "default": []
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "compliant",
+          "message"
+        ],
+        "title": "BulkWizardCheckResponse"
+      },
+      "CattleCreate": {
+        "properties": {
+          "tag_number": {
+            "type": "string",
+            "title": "Tag Number",
+            "description": "Unique ear tag code (e.g. COW-1042)"
+          },
+          "rfid_tag": {
+            "type": "string",
+            "title": "Rfid Tag",
+            "description": "Unique 12-15 digit RFID tag (e.g. 982 000010428912)"
+          },
+          "breed": {
+            "type": "string",
+            "title": "Breed",
+            "default": "Holstein-Friesian"
+          },
+          "gender": {
+            "type": "string",
+            "title": "Gender",
+            "default": "Female"
+          },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date",
+            "title": "Date Of Birth"
+          },
+          "dam_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dam Id"
+          },
+          "sire_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sire Id"
           },
           "status": {
             "type": "string",
-            "title": "Status"
+            "title": "Status",
+            "default": "Active"
+          },
+          "body_condition_score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Condition Score",
+            "default": 3.0
+          },
+          "weight_kg": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1500.0,
+                "minimum": 50.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight Kg",
+            "default": 600.0
           }
         },
         "type": "object",
         "required": [
-          "transaction_id",
-          "payment_intent_id",
-          "wallet_type",
-          "amount",
-          "currency",
-          "status"
+          "tag_number",
+          "rfid_tag",
+          "date_of_birth"
         ],
-        "title": "DigitalWalletPaymentResponse"
+        "title": "CattleCreate"
       },
-      "ExchangeRatesResponse": {
+      "CattleDetailOut": {
         "properties": {
-          "base_currency": {
+          "tag_number": {
             "type": "string",
-            "title": "Base Currency"
+            "title": "Tag Number",
+            "description": "Unique ear tag code (e.g. COW-1042)"
           },
-          "rates": {
-            "additionalProperties": {
-              "type": "number"
+          "rfid_tag": {
+            "type": "string",
+            "title": "Rfid Tag",
+            "description": "Unique 12-15 digit RFID tag (e.g. 982 000010428912)"
+          },
+          "breed": {
+            "type": "string",
+            "title": "Breed",
+            "default": "Holstein-Friesian"
+          },
+          "gender": {
+            "type": "string",
+            "title": "Gender",
+            "default": "Female"
+          },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date",
+            "title": "Date Of Birth"
+          },
+          "dam_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dam Id"
+          },
+          "sire_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sire Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "Active"
+          },
+          "body_condition_score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Condition Score",
+            "default": 3.0
+          },
+          "weight_kg": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1500.0,
+                "minimum": 50.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight Kg",
+            "default": 600.0
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "recent_milk_logs": {
+            "items": {
+              "$ref": "#/components/schemas/MilkLogOut"
             },
-            "type": "object",
-            "title": "Rates"
+            "type": "array",
+            "title": "Recent Milk Logs",
+            "default": []
           },
-          "timestamp": {
-            "type": "string",
-            "title": "Timestamp"
+          "recent_breeding_records": {
+            "items": {
+              "$ref": "#/components/schemas/BreedingRecordOut"
+            },
+            "type": "array",
+            "title": "Recent Breeding Records",
+            "default": []
+          },
+          "recent_health_records": {
+            "items": {
+              "$ref": "#/components/schemas/HealthRecordOut"
+            },
+            "type": "array",
+            "title": "Recent Health Records",
+            "default": []
+          },
+          "has_active_withdrawal": {
+            "type": "boolean",
+            "title": "Has Active Withdrawal",
+            "default": false
           }
         },
         "type": "object",
         "required": [
-          "base_currency",
-          "rates",
-          "timestamp"
+          "tag_number",
+          "rfid_tag",
+          "date_of_birth",
+          "id",
+          "created_at",
+          "updated_at"
         ],
-        "title": "ExchangeRatesResponse"
+        "title": "CattleDetailOut"
+      },
+      "CattleOut": {
+        "properties": {
+          "tag_number": {
+            "type": "string",
+            "title": "Tag Number",
+            "description": "Unique ear tag code (e.g. COW-1042)"
+          },
+          "rfid_tag": {
+            "type": "string",
+            "title": "Rfid Tag",
+            "description": "Unique 12-15 digit RFID tag (e.g. 982 000010428912)"
+          },
+          "breed": {
+            "type": "string",
+            "title": "Breed",
+            "default": "Holstein-Friesian"
+          },
+          "gender": {
+            "type": "string",
+            "title": "Gender",
+            "default": "Female"
+          },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date",
+            "title": "Date Of Birth"
+          },
+          "dam_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dam Id"
+          },
+          "sire_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sire Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "Active"
+          },
+          "body_condition_score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Condition Score",
+            "default": 3.0
+          },
+          "weight_kg": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1500.0,
+                "minimum": 50.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight Kg",
+            "default": 600.0
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tag_number",
+          "rfid_tag",
+          "date_of_birth",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CattleOut"
+      },
+      "CattleUpdate": {
+        "properties": {
+          "tag_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tag Number"
+          },
+          "rfid_tag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rfid Tag"
+          },
+          "breed": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Breed"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "date_of_birth": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Birth"
+          },
+          "dam_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dam Id"
+          },
+          "sire_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sire Id"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "body_condition_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Condition Score"
+          },
+          "weight_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight Kg"
+          }
+        },
+        "type": "object",
+        "title": "CattleUpdate"
+      },
+      "DashboardAnalyticsOut": {
+        "properties": {
+          "total_cows": {
+            "type": "integer",
+            "title": "Total Cows"
+          },
+          "active_cows_count": {
+            "type": "integer",
+            "title": "Active Cows Count"
+          },
+          "active_lactating_count": {
+            "type": "integer",
+            "title": "Active Lactating Count"
+          },
+          "dry_count": {
+            "type": "integer",
+            "title": "Dry Count"
+          },
+          "pregnant_count": {
+            "type": "integer",
+            "title": "Pregnant Count"
+          },
+          "culled_count": {
+            "type": "integer",
+            "title": "Culled Count"
+          },
+          "total_daily_yield": {
+            "type": "number",
+            "title": "Total Daily Yield"
+          },
+          "rolling_7d_yield": {
+            "type": "number",
+            "title": "Rolling 7D Yield"
+          },
+          "average_yield_per_cow": {
+            "type": "number",
+            "title": "Average Yield Per Cow"
+          },
+          "fertility_rate": {
+            "type": "number",
+            "title": "Fertility Rate"
+          },
+          "feed_conversion_efficiency": {
+            "type": "number",
+            "title": "Feed Conversion Efficiency"
+          },
+          "active_withholding_count": {
+            "type": "integer",
+            "title": "Active Withholding Count"
+          },
+          "culling_rate": {
+            "type": "number",
+            "title": "Culling Rate"
+          },
+          "data_incomplete_warning": {
+            "type": "boolean",
+            "title": "Data Incomplete Warning"
+          },
+          "lactation_curve": {
+            "items": {
+              "$ref": "#/components/schemas/LactationCurvePoint"
+            },
+            "type": "array",
+            "title": "Lactation Curve",
+            "default": []
+          },
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/AlertItem"
+            },
+            "type": "array",
+            "title": "Alerts",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_cows",
+          "active_cows_count",
+          "active_lactating_count",
+          "dry_count",
+          "pregnant_count",
+          "culled_count",
+          "total_daily_yield",
+          "rolling_7d_yield",
+          "average_yield_per_cow",
+          "fertility_rate",
+          "feed_conversion_efficiency",
+          "active_withholding_count",
+          "culling_rate",
+          "data_incomplete_warning"
+        ],
+        "title": "DashboardAnalyticsOut"
+      },
+      "FeedAllocationCalculateRequest": {
+        "properties": {
+          "cow_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cow Id"
+          },
+          "lactation_stage": {
+            "type": "string",
+            "title": "Lactation Stage",
+            "description": "Early Lactation, Mid Lactation, Late Lactation, Dry",
+            "default": "Mid Lactation"
+          },
+          "daily_milk_yield_liters": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Daily Milk Yield Liters",
+            "default": 25.0
+          },
+          "body_condition_score": {
+            "type": "number",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Body Condition Score",
+            "default": 3.0
+          },
+          "body_weight_kg": {
+            "type": "number",
+            "minimum": 100.0,
+            "title": "Body Weight Kg",
+            "default": 600.0
+          }
+        },
+        "type": "object",
+        "title": "FeedAllocationCalculateRequest"
+      },
+      "FeedAllocationResultOut": {
+        "properties": {
+          "cow_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cow Id"
+          },
+          "lactation_stage": {
+            "type": "string",
+            "title": "Lactation Stage"
+          },
+          "daily_milk_yield_liters": {
+            "type": "number",
+            "title": "Daily Milk Yield Liters"
+          },
+          "body_condition_score": {
+            "type": "number",
+            "title": "Body Condition Score"
+          },
+          "body_weight_kg": {
+            "type": "number",
+            "title": "Body Weight Kg"
+          },
+          "recommended_dry_matter_kg": {
+            "type": "number",
+            "title": "Recommended Dry Matter Kg"
+          },
+          "silage_kg": {
+            "type": "number",
+            "title": "Silage Kg"
+          },
+          "concentrate_kg": {
+            "type": "number",
+            "title": "Concentrate Kg"
+          },
+          "forage_supplements_kg": {
+            "type": "number",
+            "title": "Forage Supplements Kg"
+          },
+          "ration_target_group": {
+            "type": "string",
+            "title": "Ration Target Group"
+          },
+          "formulation_notes": {
+            "type": "string",
+            "title": "Formulation Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lactation_stage",
+          "daily_milk_yield_liters",
+          "body_condition_score",
+          "body_weight_kg",
+          "recommended_dry_matter_kg",
+          "silage_kg",
+          "concentrate_kg",
+          "forage_supplements_kg",
+          "ration_target_group",
+          "formulation_notes"
+        ],
+        "title": "FeedAllocationResultOut"
+      },
+      "FeedInventoryCreate": {
+        "properties": {
+          "feed_name": {
+            "type": "string",
+            "title": "Feed Name"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "current_stock_kg": {
+            "type": "number",
+            "title": "Current Stock Kg"
+          },
+          "daily_consumption_kg": {
+            "type": "number",
+            "title": "Daily Consumption Kg"
+          },
+          "reorder_threshold_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reorder Threshold Kg"
+          }
+        },
+        "type": "object",
+        "required": [
+          "feed_name",
+          "category",
+          "current_stock_kg",
+          "daily_consumption_kg"
+        ],
+        "title": "FeedInventoryCreate"
+      },
+      "FeedInventoryOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "feed_name": {
+            "type": "string",
+            "title": "Feed Name"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "current_stock_kg": {
+            "type": "number",
+            "title": "Current Stock Kg"
+          },
+          "daily_consumption_kg": {
+            "type": "number",
+            "title": "Daily Consumption Kg"
+          },
+          "reorder_threshold_kg": {
+            "type": "number",
+            "title": "Reorder Threshold Kg"
+          },
+          "reorder_alert": {
+            "type": "boolean",
+            "title": "Reorder Alert"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "feed_name",
+          "category",
+          "current_stock_kg",
+          "daily_consumption_kg",
+          "reorder_threshold_kg",
+          "reorder_alert",
+          "updated_at"
+        ],
+        "title": "FeedInventoryOut"
+      },
+      "FeedInventoryUpdate": {
+        "properties": {
+          "feed_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feed Name"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "current_stock_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Stock Kg"
+          },
+          "daily_consumption_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Consumption Kg"
+          },
+          "reorder_threshold_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reorder Threshold Kg"
+          }
+        },
+        "type": "object",
+        "title": "FeedInventoryUpdate"
+      },
+      "FeedRationCreate": {
+        "properties": {
+          "ration_name": {
+            "type": "string",
+            "title": "Ration Name"
+          },
+          "target_group": {
+            "type": "string",
+            "title": "Target Group"
+          },
+          "dry_matter_kg_per_day": {
+            "type": "number",
+            "title": "Dry Matter Kg Per Day",
+            "default": 20.0
+          },
+          "silage_pct": {
+            "type": "number",
+            "title": "Silage Pct",
+            "default": 60.0
+          },
+          "concentrate_pct": {
+            "type": "number",
+            "title": "Concentrate Pct",
+            "default": 25.0
+          },
+          "forage_supplements_pct": {
+            "type": "number",
+            "title": "Forage Supplements Pct",
+            "default": 15.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "ration_name",
+          "target_group"
+        ],
+        "title": "FeedRationCreate"
+      },
+      "FeedRationOut": {
+        "properties": {
+          "ration_name": {
+            "type": "string",
+            "title": "Ration Name"
+          },
+          "target_group": {
+            "type": "string",
+            "title": "Target Group"
+          },
+          "dry_matter_kg_per_day": {
+            "type": "number",
+            "title": "Dry Matter Kg Per Day",
+            "default": 20.0
+          },
+          "silage_pct": {
+            "type": "number",
+            "title": "Silage Pct",
+            "default": 60.0
+          },
+          "concentrate_pct": {
+            "type": "number",
+            "title": "Concentrate Pct",
+            "default": 25.0
+          },
+          "forage_supplements_pct": {
+            "type": "number",
+            "title": "Forage Supplements Pct",
+            "default": 15.0
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ration_name",
+          "target_group",
+          "id",
+          "created_at"
+        ],
+        "title": "FeedRationOut"
+      },
+      "FeedRationUpdate": {
+        "properties": {
+          "ration_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ration Name"
+          },
+          "target_group": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Group"
+          },
+          "dry_matter_kg_per_day": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dry Matter Kg Per Day"
+          },
+          "silage_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Silage Pct"
+          },
+          "concentrate_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Concentrate Pct"
+          },
+          "forage_supplements_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forage Supplements Pct"
+          }
+        },
+        "type": "object",
+        "title": "FeedRationUpdate"
       },
       "HTTPValidationError": {
         "properties": {
@@ -849,22 +3179,22 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "RefundRequest": {
+      "HealthRecordCreate": {
         "properties": {
-          "transaction_id": {
+          "cow_id": {
             "type": "string",
-            "title": "Transaction Id"
+            "title": "Cow Id"
           },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
-          },
-          "reason": {
+          "record_type": {
             "type": "string",
-            "title": "Reason"
+            "title": "Record Type",
+            "default": "Treatment"
           },
-          "memo": {
+          "diagnosis": {
+            "type": "string",
+            "title": "Diagnosis"
+          },
+          "medication_administered": {
             "anyOf": [
               {
                 "type": "string"
@@ -873,40 +3203,9 @@
                 "type": "null"
               }
             ],
-            "title": "Memo"
-          }
-        },
-        "type": "object",
-        "required": [
-          "transaction_id",
-          "amount",
-          "reason"
-        ],
-        "title": "RefundRequest"
-      },
-      "RefundSummary": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
+            "title": "Medication Administered"
           },
-          "transaction_id": {
-            "type": "string",
-            "title": "Transaction Id"
-          },
-          "refund_amount": {
-            "type": "number",
-            "title": "Refund Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
-          "reason": {
-            "type": "string",
-            "title": "Reason"
-          },
-          "memo": {
+          "dosage": {
             "anyOf": [
               {
                 "type": "string"
@@ -915,13 +3214,9 @@
                 "type": "null"
               }
             ],
-            "title": "Memo"
+            "title": "Dosage"
           },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "created_at": {
+          "treatment_date": {
             "anyOf": [
               {
                 "type": "string",
@@ -931,161 +3226,415 @@
                 "type": "null"
               }
             ],
+            "title": "Treatment Date"
+          },
+          "scheduled_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduled Date"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "Completed"
+          },
+          "milk_withdrawal_hours": {
+            "type": "integer",
+            "title": "Milk Withdrawal Hours",
+            "default": 0
+          },
+          "meat_withdrawal_days": {
+            "type": "integer",
+            "title": "Meat Withdrawal Days",
+            "default": 0
+          },
+          "veterinarian_name": {
+            "type": "string",
+            "title": "Veterinarian Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cow_id",
+          "diagnosis",
+          "veterinarian_name"
+        ],
+        "title": "HealthRecordCreate"
+      },
+      "HealthRecordOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "cow_id": {
+            "type": "string",
+            "title": "Cow Id"
+          },
+          "record_type": {
+            "type": "string",
+            "title": "Record Type"
+          },
+          "diagnosis": {
+            "type": "string",
+            "title": "Diagnosis"
+          },
+          "medication_administered": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medication Administered"
+          },
+          "dosage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dosage"
+          },
+          "treatment_date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Treatment Date"
+          },
+          "scheduled_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduled Date"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "milk_withdrawal_hours": {
+            "type": "integer",
+            "title": "Milk Withdrawal Hours"
+          },
+          "milk_withdrawal_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Milk Withdrawal End"
+          },
+          "meat_withdrawal_days": {
+            "type": "integer",
+            "title": "Meat Withdrawal Days"
+          },
+          "veterinarian_name": {
+            "type": "string",
+            "title": "Veterinarian Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "transaction_id",
-          "refund_amount",
-          "currency",
-          "reason",
-          "status"
+          "cow_id",
+          "record_type",
+          "diagnosis",
+          "treatment_date",
+          "status",
+          "milk_withdrawal_hours",
+          "meat_withdrawal_days",
+          "veterinarian_name",
+          "created_at"
         ],
-        "title": "RefundSummary"
+        "title": "HealthRecordOut"
       },
-      "TransactionDetail": {
+      "LactationCurvePoint": {
         "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "avg_yield_liters": {
+            "type": "number",
+            "title": "Avg Yield Liters"
+          },
+          "total_yield_liters": {
+            "type": "number",
+            "title": "Total Yield Liters"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "avg_yield_liters",
+          "total_yield_liters"
+        ],
+        "title": "LactationCurvePoint"
+      },
+      "MilkDailyTrend": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "total_yield": {
+            "type": "number",
+            "title": "Total Yield"
+          },
+          "morning_yield": {
+            "type": "number",
+            "title": "Morning Yield"
+          },
+          "evening_yield": {
+            "type": "number",
+            "title": "Evening Yield"
+          },
+          "avg_yield_per_cow": {
+            "type": "number",
+            "title": "Avg Yield Per Cow"
+          },
+          "session_count": {
+            "type": "integer",
+            "title": "Session Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "total_yield",
+          "morning_yield",
+          "evening_yield",
+          "avg_yield_per_cow",
+          "session_count"
+        ],
+        "title": "MilkDailyTrend"
+      },
+      "MilkLogCreate": {
+        "properties": {
+          "cow_id": {
+            "type": "string",
+            "title": "Cow Id"
+          },
+          "milking_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Milking Date"
+          },
+          "session": {
+            "type": "string",
+            "title": "Session",
+            "default": "Morning"
+          },
+          "yield_liters": {
+            "type": "number",
+            "title": "Yield Liters"
+          },
+          "fat_percentage": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fat Percentage"
+          },
+          "protein_percentage": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protein Percentage"
+          },
+          "somatic_cell_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Somatic Cell Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cow_id",
+          "milking_date",
+          "yield_liters"
+        ],
+        "title": "MilkLogCreate"
+      },
+      "MilkLogOut": {
+        "properties": {
+          "cow_id": {
+            "type": "string",
+            "title": "Cow Id"
+          },
+          "milking_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Milking Date"
+          },
+          "session": {
+            "type": "string",
+            "title": "Session",
+            "default": "Morning"
+          },
+          "yield_liters": {
+            "type": "number",
+            "title": "Yield Liters"
+          },
+          "fat_percentage": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fat Percentage"
+          },
+          "protein_percentage": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protein Percentage"
+          },
+          "somatic_cell_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Somatic Cell Count"
+          },
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
+          "is_withheld": {
+            "type": "boolean",
+            "title": "Is Withheld"
           },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
+          "variance_alert": {
+            "type": "boolean",
+            "title": "Variance Alert"
           },
-          "payment_method": {
+          "created_at": {
             "type": "string",
-            "title": "Payment Method"
-          },
-          "amount": {
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cow_id",
+          "milking_date",
+          "yield_liters",
+          "id",
+          "is_withheld",
+          "variance_alert",
+          "created_at"
+        ],
+        "title": "MilkLogOut"
+      },
+      "MilkSummaryOut": {
+        "properties": {
+          "total_yield": {
             "type": "number",
-            "title": "Amount"
+            "title": "Total Yield"
           },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "converted_amount": {
+          "average_yield_per_cow": {
             "type": "number",
-            "title": "Converted Amount"
+            "title": "Average Yield Per Cow"
           },
-          "exchange_rate": {
+          "morning_yield": {
             "type": "number",
-            "title": "Exchange Rate"
+            "title": "Morning Yield"
           },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "refunded_amount": {
+          "evening_yield": {
             "type": "number",
-            "title": "Refunded Amount"
+            "title": "Evening Yield"
           },
-          "remaining_refundable_balance": {
+          "afternoon_yield": {
             "type": "number",
-            "title": "Remaining Refundable Balance"
+            "title": "Afternoon Yield"
           },
-          "refunds": {
+          "rolling_7d_yield": {
+            "type": "number",
+            "title": "Rolling 7D Yield"
+          },
+          "withheld_yield": {
+            "type": "number",
+            "title": "Withheld Yield"
+          },
+          "variance_alerts_count": {
+            "type": "integer",
+            "title": "Variance Alerts Count"
+          },
+          "daily_trends": {
             "items": {
-              "$ref": "#/components/schemas/RefundSummary"
+              "$ref": "#/components/schemas/MilkDailyTrend"
             },
             "type": "array",
-            "title": "Refunds"
-          },
-          "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Created At"
+            "title": "Daily Trends",
+            "default": []
           }
         },
         "type": "object",
         "required": [
-          "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "base_currency",
-          "target_currency",
-          "converted_amount",
-          "exchange_rate",
-          "status",
-          "refunded_amount",
-          "remaining_refundable_balance"
+          "total_yield",
+          "average_yield_per_cow",
+          "morning_yield",
+          "evening_yield",
+          "afternoon_yield",
+          "rolling_7d_yield",
+          "withheld_yield",
+          "variance_alerts_count"
         ],
-        "title": "TransactionDetail"
-      },
-      "TransactionSummary": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "payment_method": {
-            "type": "string",
-            "title": "Payment Method"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "currency",
-          "status"
-        ],
-        "title": "TransactionSummary"
+        "title": "MilkSummaryOut"
       },
       "ValidationError": {
         "properties": {
@@ -1126,6 +3675,46 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VetScheduleCreate": {
+        "properties": {
+          "cow_id": {
+            "type": "string",
+            "title": "Cow Id"
+          },
+          "diagnosis": {
+            "type": "string",
+            "title": "Diagnosis",
+            "default": "Routine Health & Vaccination Check"
+          },
+          "scheduled_date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Scheduled Date"
+          },
+          "veterinarian_name": {
+            "type": "string",
+            "title": "Veterinarian Name"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cow_id",
+          "scheduled_date",
+          "veterinarian_name"
+        ],
+        "title": "VetScheduleCreate"
       }
     }
   }
