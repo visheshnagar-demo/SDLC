@@ -11,16 +11,16 @@ import argparse
 import re
 from datetime import datetime
 
-# Dependencies
+# Safe imports for optional dependencies
 try:
     import pandas as pd
-except ImportError:
+except (ImportError, Exception):
     pd = None
 
 try:
     import pyarrow as pa
     import pyarrow.parquet as pq
-except ImportError:
+except (ImportError, Exception):
     pa = None
     pq = None
 
@@ -33,12 +33,83 @@ logger = logging.getLogger("postgres_to_bigquery_etl")
 
 def _clean_str(val):
     """Normalizes string values, trims whitespace, and converts null sentinels to None."""
-    if val is None or (pd is not None and pd.isna(val)):
+    if val is None:
+        return None
+    if isinstance(val, float) and val != val:
         return None
     s = str(val).strip()
-    if s.lower() in ("nan", "none", "null", "n/a", ""):
+    if s.lower() in ("nan", "none", "null", "n/a", "<na>", ""):
         return None
     return s
+
+
+def _parse_timestamp(val):
+    """Parses timestamp strings into ISO format or None."""
+    if val is None:
+        return None
+    if isinstance(val, float) and val != val:
+        return None
+    if hasattr(val, "isoformat"):
+        return val.isoformat()
+    s = _clean_str(val)
+    if s is None:
+        return None
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d"):
+        try:
+            dt = datetime.strptime(s, fmt)
+            return dt.isoformat()
+        except ValueError:
+            continue
+    return None
+
+
+def transform_record(row: dict) -> dict:
+    """Transforms a single record dict according to data cleaning specifications."""
+    if not isinstance(row, dict):
+        return {}
+    cleaned = {}
+    for k, v in row.items():
+        std_key = re.sub(r"[^a-zA-Z0-9_]+", "_", str(k).strip().lower()).strip("_")
+        if std_key in ("id", "category", "status", "data_payload"):
+            cleaned[std_key] = _clean_str(v)
+        elif std_key in ("created_at", "updated_at"):
+            cleaned[std_key] = _parse_timestamp(v)
+        else:
+            if isinstance(v, str):
+                cleaned[std_key] = _clean_str(v)
+            else:
+                cleaned[std_key] = v
+    return cleaned
+
+
+def transform_records(records: list) -> list:
+    """Cleans a list of dict records, handles deduplication, and adds ingestion audit timestamp."""
+    if not records:
+        return []
+    cleaned_records = []
+    seen_ids = set()
+
+    for rec in records:
+        cleaned_rec = transform_record(rec)
+        if any(v is not None for v in cleaned_rec.values()):
+            cleaned_records.append(cleaned_rec)
+
+    deduped = []
+    for rec in reversed(cleaned_records):
+        rec_id = rec.get("id")
+        if rec_id is not None:
+            if rec_id not in seen_ids:
+                seen_ids.add(rec_id)
+                deduped.append(rec)
+        else:
+            deduped.append(rec)
+    deduped.reverse()
+
+    now_iso = datetime.utcnow().isoformat()
+    for rec in deduped:
+        rec["ingested_at"] = now_iso
+
+    return deduped
 
 
 class PipelineRunner:
@@ -54,8 +125,6 @@ class PipelineRunner:
         Zero-mock policy: if credentials or sources are unavailable, raises an error immediately.
         """
         logger.info("Starting real extraction from source: postgresql...")
-        if pd is None:
-            raise RuntimeError("FATAL: pandas is required for pipeline execution.")
         db_url = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL")
         sql_engine = None
         sql_connector = None
@@ -116,22 +185,35 @@ class PipelineRunner:
         query = "SELECT * FROM test_data"
         logger.info("Executing extraction query against PostgreSQL: %s", query)
         try:
-            df = pd.read_sql(query, con=con_target)
+            if pd is not None:
+                df = pd.read_sql(query, con=con_target)
+                row_count = len(df)
+                df.to_parquet(self.staging_file, index=False)
+            else:
+                import sqlalchemy
+                if not isinstance(con_target, sqlalchemy.engine.Engine):
+                    con_target = sqlalchemy.create_engine(con_target)
+                with con_target.connect() as conn:
+                    result = conn.execute(sqlalchemy.text(query))
+                    rows = [dict(row._mapping) for row in result]
+                row_count = len(rows)
+                json_path = self.staging_file.replace(".parquet", ".json")
+                with open(json_path, "w", encoding="utf-8") as f:
+                    json.dump(rows, f, default=str)
+                self.staging_file = json_path
         finally:
             if sql_engine is not None:
                 sql_engine.dispose()
             if sql_connector is not None:
                 sql_connector.close()
 
-        row_count = len(df)
-        df.to_parquet(self.staging_file, index=False)
         logger.info("Extracted %d real records to %s", row_count, self.staging_file)
         return row_count
 
     def transform(self) -> int:
         """Schema-adaptive transformation with flexible parsing.
 
-        - Discovers columns dynamically from the extracted DataFrame.
+        - Discovers columns dynamically from the extracted data.
         - Parses all date/timestamp columns.
         - Trims whitespace and normalizes nulls.
         - Circuit breaker: if 100% of rows fail validation, exits with code 1.
@@ -140,68 +222,48 @@ class PipelineRunner:
             logger.warning("Staging file is empty. Nothing to transform.")
             return 0
 
-        df = pd.read_parquet(self.staging_file)
-        raw_count = len(df)
+        # Read records from staging (JSON or Parquet)
+        if self.staging_file.endswith(".json"):
+            with open(self.staging_file, "r", encoding="utf-8") as f:
+                records = json.load(f)
+        elif pd is not None and self.staging_file.endswith(".parquet"):
+            df = pd.read_parquet(self.staging_file)
+            records = df.to_dict(orient="records")
+        else:
+            with open(self.staging_file, "r", encoding="utf-8") as f:
+                records = json.load(f)
+
+        raw_count = len(records)
         if raw_count == 0:
             logger.warning("Staging DataFrame is empty. Nothing to transform.")
             return 0
 
-        logger.info("Transforming %d raw records. Columns: %s", raw_count, list(df.columns))
-
-        df.columns = [
-            re.sub(r"[^a-zA-Z0-9_]+", "_", str(col).strip().lower()).strip("_")
-            for col in df.columns
-        ]
-        logger.info("Standardized columns: %s", list(df.columns))
-
-        # Specification-Driven Column Transformations
-        for col in ["id", "category", "status", "data_payload"]:
-            if col in df.columns:
-                df[col] = df[col].apply(_clean_str)
-                logger.info("Applied specification transformation to %s -> STRING", col)
-
-        for col in ["created_at", "updated_at"]:
-            if col in df.columns:
-                df[col] = pd.to_datetime(df[col], errors="coerce")
-                logger.info("Applied specification transformation to %s -> TIMESTAMP", col)
-
-        # Standardize remaining string columns
-        explicit_cols = {"id", "category", "status", "data_payload", "created_at", "updated_at"}
-        for col in df.columns:
-            if col not in explicit_cols and df[col].dtype == "object":
-                df[col] = df[col].apply(_clean_str)
-
-        # Deduplicate records by primary key 'id' if present
-        if "id" in df.columns:
-            df = df.drop_duplicates(subset=["id"], keep="last")
-
-        # Basic validity filter (non-empty rows only)
-        df_valid = df.dropna(how="all")
-        quarantined = raw_count - len(df_valid)
+        logger.info("Transforming %d raw records.", raw_count)
+        cleaned = transform_records(records)
+        quarantined = raw_count - len(cleaned)
         if quarantined > 0:
             logger.warning("Quarantined %d fully-null records", quarantined)
 
         # Circuit breaker
-        if raw_count > 0 and len(df_valid) == 0:
+        if raw_count > 0 and len(cleaned) == 0:
             logger.error(
                 "FATAL: 100%% of %d raw records were quarantined. "
-                "This indicates a schema contract violation between "
-                "the source data and the pipeline expectations. "
-                "Failing the pipeline.", raw_count
+                "This indicates a schema contract violation.", raw_count
             )
             sys.exit(1)
 
-        # Add ingestion audit timestamp
-        df_valid = df_valid.copy()
-        df_valid["ingested_at"] = datetime.utcnow().isoformat()
+        # Write cleaned records back
+        if self.staging_file.endswith(".parquet") and pd is not None:
+            df_out = pd.DataFrame(cleaned)
+            df_out.to_parquet(self.staging_file, index=False)
+        else:
+            json_path = self.staging_file if self.staging_file.endswith(".json") else self.staging_file.replace(".parquet", ".json")
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(cleaned, f, default=str)
+            self.staging_file = json_path
 
-        # Overwrite staging file with cleaned data
-        df_valid.to_parquet(self.staging_file, index=False)
-        logger.info(
-            "Transform complete: raw=%d, valid=%d, quarantined=%d",
-            raw_count, len(df_valid), quarantined,
-        )
-        return len(df_valid)
+        logger.info("Transform complete: raw=%d, valid=%d, quarantined=%d", raw_count, len(cleaned), quarantined)
+        return len(cleaned)
 
     def load(self) -> bool:
         """Loads staged records into real bigquery destination.
@@ -232,7 +294,6 @@ class PipelineRunner:
 
         table_ref = f"{project_id}.{dataset_id}.{table_id}" if project_id else f"{dataset_id}.{table_id}"
 
-        # Pre-create target dataset if it does not exist
         dataset_ref = client.dataset(dataset_id, project=project_id)
         try:
             client.get_dataset(dataset_ref)
@@ -241,8 +302,6 @@ class PipelineRunner:
             ds.location = os.getenv("BQ_LOCATION", "us-central1")
             client.create_dataset(ds, exists_ok=True)
             logger.info("Ensured target BigQuery dataset '%s' exists.", dataset_ref)
-
-        df = pd.read_parquet(self.staging_file)
 
         job_config = bigquery.LoadJobConfig(
             write_disposition=bigquery.WriteDisposition.WRITE_APPEND if write_mode == "append" else bigquery.WriteDisposition.WRITE_TRUNCATE,
@@ -260,61 +319,8 @@ class PipelineRunner:
 
         if schema_file:
             raw_schema = client.schema_from_json(schema_file)
-            # Reconcile schema against actual DataFrame columns
-            reconciled_schema = []
-            for field in raw_schema:
-                if field.name not in df.columns:
-                    df[field.name] = None
-                    reconciled_schema.append(
-                        bigquery.SchemaField(
-                            name=field.name,
-                            field_type=field.field_type,
-                            mode="NULLABLE",
-                            description=field.description,
-                        )
-                    )
-                    logger.info("Reconciled missing schema column '%s' in DataFrame with NULLs.", field.name)
-                else:
-                    reconciled_schema.append(field)
-
-            schema_col_names = {sf.name for sf in raw_schema}
-            for col in df.columns:
-                if col not in schema_col_names:
-                    reconciled_schema.append(
-                        bigquery.SchemaField(
-                            name=col,
-                            field_type="STRING",
-                            mode="NULLABLE",
-                            description=f"Dynamically discovered column '{col}'",
-                        )
-                    )
-                    logger.info("Appended dynamically discovered column '%s' to BigQuery schema.", col)
-
-            # Type-safe coercion to prevent pyarrow conversion errors
-            for field in reconciled_schema:
-                col = field.name
-                f_type = field.field_type.upper()
-                if col in df.columns:
-                    try:
-                        if f_type in ("INTEGER", "INT64"):
-                            df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
-                        elif f_type in ("FLOAT", "FLOAT64", "NUMERIC", "BIGNUMERIC"):
-                            df[col] = pd.to_numeric(df[col], errors="coerce")
-                        elif f_type in ("TIMESTAMP", "DATETIME"):
-                            df[col] = pd.to_datetime(df[col], errors="coerce", utc=True)
-                        elif f_type in ("BOOLEAN", "BOOL"):
-                            df[col] = df[col].map(
-                                lambda v: True if str(v).strip().lower() in ("true", "1", "t", "yes")
-                                else (False if str(v).strip().lower() in ("false", "0", "f", "no") else None)
-                                if pd.notna(v) else None
-                            ).astype("boolean")
-                        elif f_type == "STRING":
-                            df[col] = df[col].apply(lambda v: str(v) if pd.notna(v) else None)
-                    except (ValueError, TypeError) as cast_err:
-                        logger.warning("Type casting warning for column '%s' (%s): %s", col, f_type, cast_err)
-
-            job_config.schema = reconciled_schema
-            logger.info("Attached and reconciled explicit BigQuery schema from %s (%d fields)", schema_file, len(reconciled_schema))
+            job_config.schema = raw_schema
+            logger.info("Attached BigQuery schema from %s (%d fields)", schema_file, len(raw_schema))
         else:
             job_config.autodetect = True
 
@@ -324,14 +330,71 @@ class PipelineRunner:
                 bigquery.SchemaUpdateOption.ALLOW_FIELD_RELAXATION,
             ]
 
-        try:
-            job = client.load_table_from_dataframe(df, table_ref, job_config=job_config)
-            job.result()  # Blocks until BigQuery load completes
-        except Exception as load_err:
-            logger.error("Primary load_table_from_dataframe failed: %s", load_err)
-            raise RuntimeError(f"BigQuery load failed: {load_err}") from load_err
+        if self.staging_file.endswith(".parquet") and pd is not None:
+            df = pd.read_parquet(self.staging_file)
+            if schema_file and job_config.schema:
+                reconciled_schema = []
+                for field in job_config.schema:
+                    if field.name not in df.columns:
+                        df[field.name] = None
+                        reconciled_schema.append(bigquery.SchemaField(field.name, field.field_type, mode="NULLABLE"))
+                    else:
+                        reconciled_schema.append(field)
+                for col in df.columns:
+                    if col not in {sf.name for sf in reconciled_schema}:
+                        reconciled_schema.append(bigquery.SchemaField(col, "STRING", mode="NULLABLE"))
+                job_config.schema = reconciled_schema
 
-        logger.info("Successfully loaded %d records into BigQuery table: %s", len(df), table_ref)
+                for field in reconciled_schema:
+                    col = field.name
+                    f_type = field.field_type.upper()
+                    if col in df.columns:
+                        try:
+                            if f_type in ("INTEGER", "INT64"):
+                                df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
+                            elif f_type in ("FLOAT", "FLOAT64", "NUMERIC", "BIGNUMERIC"):
+                                df[col] = pd.to_numeric(df[col], errors="coerce")
+                            elif f_type in ("TIMESTAMP", "DATETIME"):
+                                df[col] = pd.to_datetime(df[col], errors="coerce", utc=True)
+                            elif f_type in ("BOOLEAN", "BOOL"):
+                                df[col] = df[col].map(
+                                    lambda v: True if str(v).strip().lower() in ("true", "1", "t", "yes")
+                                    else (False if str(v).strip().lower() in ("false", "0", "f", "no") else None)
+                                    if pd.notna(v) else None
+                                ).astype("boolean")
+                            elif f_type == "STRING":
+                                df[col] = df[col].apply(lambda v: str(v) if pd.notna(v) else None)
+                        except (ValueError, TypeError, KeyError) as cast_err:
+                            logger.warning("Type casting warning for column '%s' (%s): %s", col, f_type, cast_err)
+
+            try:
+                job = client.load_table_from_dataframe(df, table_ref, job_config=job_config)
+                job.result()
+            except Exception as load_err:
+                logger.error("Primary load_table_from_dataframe failed: %s", load_err)
+                raise RuntimeError(f"BigQuery load failed: {load_err}") from load_err
+
+            logger.info("Successfully loaded %d records into BigQuery table: %s", len(df), table_ref)
+        else:
+            job_config.source_format = bigquery.SourceFormat.NEWLINE_DELIMITED_JSON
+            json_file = self.staging_file if self.staging_file.endswith(".json") else self.staging_file.replace(".parquet", ".json")
+            with open(json_file, "r", encoding="utf-8") as f:
+                records = json.load(f)
+            ndjson_path = json_file + ".ndjson"
+            with open(ndjson_path, "w", encoding="utf-8") as f:
+                for rec in records:
+                    f.write(json.dumps(rec, default=str) + "\n")
+            try:
+                with open(ndjson_path, "rb") as source_file:
+                    job = client.load_table_from_file(source_file, table_ref, job_config=job_config)
+                    job.result()
+            except Exception as load_err:
+                logger.error("load_table_from_file failed: %s", load_err)
+                raise RuntimeError(f"BigQuery load failed: {load_err}") from load_err
+            finally:
+                if os.path.exists(ndjson_path):
+                    os.remove(ndjson_path)
+            logger.info("Successfully loaded %d records from JSON into BigQuery table: %s", len(records), table_ref)
         return True
 
     def run(self) -> int:

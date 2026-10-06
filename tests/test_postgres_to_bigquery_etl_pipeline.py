@@ -69,46 +69,90 @@ def test_transformation_spec_coverage():
 
 
 def test_transformation_logic():
-    """Tests data cleaning and transformation logic on sample DataFrame."""
-    pd = pytest.importorskip("pandas")
-    from pipeline.run_postgres_to_bigquery_etl import PipelineRunner
+    """Tests data cleaning and transformation logic on sample records."""
+    from pipeline.run_postgres_to_bigquery_etl import (
+        _clean_str,
+        _parse_timestamp,
+        transform_record,
+        transform_records,
+        PipelineRunner,
+    )
 
+    # 1. Unit test scalar string cleaner
+    assert _clean_str("  hello  ") == "hello"
+    assert _clean_str("nan") is None
+    assert _clean_str("None") is None
+    assert _clean_str("NULL") is None
+    assert _clean_str("") is None
+    assert _clean_str(None) is None
+
+    # 2. Unit test timestamp parser
+    assert _parse_timestamp("2026-05-18 10:00:00") is not None
+    assert _parse_timestamp("invalid_date") is None
+    assert _parse_timestamp(None) is None
+
+    # 3. Test record list transformation & deduplication
+    raw_records = [
+        {
+            "id": " 101 ",
+            "category": "  electronics ",
+            "status": "active",
+            "data_payload": "{\"key\": \"val\"}",
+            "created_at": "2026-05-18 10:00:00",
+            "updated_at": "2026-05-18 11:00:00"
+        },
+        {
+            "id": "102",
+            "category": "nan",
+            "status": "None",
+            "data_payload": "",
+            "created_at": "invalid_date",
+            "updated_at": "2026-05-18 12:00:00"
+        },
+        {
+            "id": "101",
+            "category": "  electronics_updated ",
+            "status": "active",
+            "data_payload": "{\"key\": \"new_val\"}",
+            "created_at": "2026-05-18 10:00:00",
+            "updated_at": "2026-05-18 13:00:00"
+        }
+    ]
+
+    cleaned = transform_records(raw_records)
+    # Deduplication keeps the latest record for id=101
+    assert len(cleaned) == 2
+
+    # Verify first record (id 102)
+    rec_102 = next((r for r in cleaned if r["id"] == "102"), None)
+    assert rec_102 is not None
+    assert rec_102["category"] is None
+    assert rec_102["status"] is None
+    assert rec_102["data_payload"] is None
+    assert rec_102["created_at"] is None
+    assert "ingested_at" in rec_102
+
+    # Verify latest record for id 101
+    rec_101 = next((r for r in cleaned if r["id"] == "101"), None)
+    assert rec_101 is not None
+    assert rec_101["category"] == "electronics_updated"
+    assert rec_101["status"] == "active"
+    assert "ingested_at" in rec_101
+
+    # 4. Test PipelineRunner transform method via temporary staging file
     with tempfile.TemporaryDirectory() as tmpdir:
         runner = PipelineRunner(execution_date="2026-05-18")
         runner.staging_dir = tmpdir
-        runner.staging_file = os.path.join(tmpdir, "data.parquet")
-
-        raw_df = pd.DataFrame([
-            {
-                "id": " 101 ",
-                "category": "  electronics ",
-                "status": "active",
-                "data_payload": "{\"key\": \"val\"}",
-                "created_at": "2026-05-18 10:00:00",
-                "updated_at": "2026-05-18 11:00:00"
-            },
-            {
-                "id": "102",
-                "category": "nan",
-                "status": "None",
-                "data_payload": "",
-                "created_at": "invalid_date",
-                "updated_at": "2026-05-18 12:00:00"
-            }
-        ])
-        raw_df.to_parquet(runner.staging_file, index=False)
+        json_file = os.path.join(tmpdir, "data.json")
+        with open(json_file, "w", encoding="utf-8") as f:
+            json.dump(raw_records, f)
+        runner.staging_file = json_file
 
         valid_count = runner.transform()
         assert valid_count == 2
-
-        transformed_df = pd.read_parquet(runner.staging_file)
-        assert transformed_df.iloc[0]["id"] == "101"
-        assert transformed_df.iloc[0]["category"] == "electronics"
-        assert pd.isna(transformed_df.iloc[1]["category"])
-        assert pd.isna(transformed_df.iloc[1]["status"])
-        assert pd.isna(transformed_df.iloc[1]["data_payload"])
-        assert pd.isna(transformed_df.iloc[1]["created_at"])
-        assert "ingested_at" in transformed_df.columns
+        with open(runner.staging_file, "r", encoding="utf-8") as f:
+            staged_out = json.load(f)
+        assert len(staged_out) == 2
 
 
 def test_deploy_env_iam_auth():
