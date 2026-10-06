@@ -1,17 +1,22 @@
 import os
 import uuid
-import datetime
+import bcrypt
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
-from sqlalchemy.exc import IntegrityError
-import bcrypt
+from sqlalchemy.pool import StaticPool
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:////tmp/app.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./hospital.db")
 
-connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
-engine = create_engine(DATABASE_URL, connect_args=connect_args)
+connect_args = {}
+engine_kwargs = {}
+if DATABASE_URL.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
+    if ":memory:" in DATABASE_URL or DATABASE_URL == "sqlite://":
+        engine_kwargs["poolclass"] = StaticPool
+
+engine = create_engine(DATABASE_URL, connect_args=connect_args, **engine_kwargs)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 Base = declarative_base()
 
 
@@ -23,76 +28,153 @@ def get_db():
         db.close()
 
 
-def get_password_hash(password: str) -> str:
+def _hash_password(password: str) -> str:
+    pwd_bytes = password.encode("utf-8")[:72]
     salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+    return bcrypt.hashpw(pwd_bytes, salt).decode("utf-8")
 
 
 def init_db():
     from server import models  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
-    db = SessionLocal()
-    try:
-        seed_data(db)
-    finally:
-        db.close()
 
 
 def seed_data(db: Session):
-    from server.models import User, ExchangeRateCache
+    from server import models
 
-    # Seed regular test user
     try:
-        user = db.query(User).filter(User.email == "test@example.com").first()
-        if not user:
-            user = User(
-                id=str(uuid.uuid4()),
-                email="test@example.com",
-                hashed_password=get_password_hash("testpassword"),
-                role="user",
-                is_active=True,
-                is_verified=True,
-            )
-            db.add(user)
-            db.commit()
-    except IntegrityError:
-        db.rollback()
-
-    # Seed admin user
-    try:
-        admin = db.query(User).filter(User.email == "admin@example.com").first()
-        if not admin:
-            admin = User(
+        # Seed Admin User
+        admin_user = db.query(models.User).filter_by(email="admin@example.com").first()
+        if not admin_user:
+            admin_user = models.User(
                 id=str(uuid.uuid4()),
                 email="admin@example.com",
-                hashed_password=get_password_hash("adminpassword"),
-                role="admin",
+                hashed_password=_hash_password("adminpassword"),
+                full_name="Hospital Administrator",
+                role="Admin",
                 is_active=True,
-                is_verified=True,
             )
-            db.add(admin)
-            db.commit()
-    except IntegrityError:
-        db.rollback()
+            db.add(admin_user)
 
-    # Seed initial exchange rates cache
-    try:
-        cache = (
-            db.query(ExchangeRateCache)
-            .filter(ExchangeRateCache.base_currency == "USD")
-            .first()
-        )
-        if not cache:
-            now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-            cache = ExchangeRateCache(
+        # Seed Test Regular User / Patient
+        test_user = db.query(models.User).filter_by(email="test@example.com").first()
+        if not test_user:
+            test_user = models.User(
                 id=str(uuid.uuid4()),
-                base_currency="USD",
-                rates_json='{"USD": 1.0, "EUR": 0.925, "GBP": 0.79, "JPY": 155.0, "CAD": 1.36}',
-                fetched_at=now,
-                expires_at=now + datetime.timedelta(minutes=15),
+                email="test@example.com",
+                hashed_password=_hash_password("testpassword"),
+                full_name="Jane Doe",
+                role="Patient",
+                is_active=True,
             )
-            db.add(cache)
+            db.add(test_user)
+
+        # Seed Doctor User
+        doc_user = db.query(models.User).filter_by(email="doctor@example.com").first()
+        if not doc_user:
+            doc_user = models.User(
+                id=str(uuid.uuid4()),
+                email="doctor@example.com",
+                hashed_password=_hash_password("doctorpassword"),
+                full_name="Dr. Sarah Jenkins",
+                role="Doctor",
+                is_active=True,
+            )
+            db.add(doc_user)
+
+        db.commit()
+
+        # Seed Doctors
+        doc_jenkins = (
+            db.query(models.Doctor).filter_by(name="Dr. Sarah Jenkins").first()
+        )
+        if not doc_jenkins:
+            doc_jenkins = models.Doctor(
+                id=str(uuid.uuid4()),
+                user_id=doc_user.id if doc_user else None,
+                name="Dr. Sarah Jenkins",
+                specialty="Cardiology",
+                department="Cardiology",
+                consultation_fee=150.0,
+                available_days="Mon,Tue,Wed,Thu,Fri",
+                slot_duration_minutes=30,
+            )
+            db.add(doc_jenkins)
+
+        doc_vance = db.query(models.Doctor).filter_by(name="Dr. Marcus Vance").first()
+        if not doc_vance:
+            doc_vance = models.Doctor(
+                id=str(uuid.uuid4()),
+                name="Dr. Marcus Vance",
+                specialty="Neurology",
+                department="Neurology",
+                consultation_fee=200.0,
+                available_days="Mon,Tue,Wed,Thu",
+                slot_duration_minutes=30,
+            )
+            db.add(doc_vance)
+
+        doc_kim = db.query(models.Doctor).filter_by(name="Dr. David Kim").first()
+        if not doc_kim:
+            doc_kim = models.Doctor(
+                id=str(uuid.uuid4()),
+                name="Dr. David Kim",
+                specialty="Pediatrics",
+                department="Pediatrics",
+                consultation_fee=120.0,
+                available_days="Tue,Wed,Thu,Fri,Sat",
+                slot_duration_minutes=30,
+            )
+            db.add(doc_kim)
+
+        db.commit()
+
+        # Seed Sample Patient
+        patient_jane = db.query(models.Patient).filter_by(mrn="MRN-99201").first()
+        if not patient_jane:
+            patient_jane = models.Patient(
+                id=str(uuid.uuid4()),
+                user_id=test_user.id if test_user else None,
+                mrn="MRN-99201",
+                first_name="Jane",
+                last_name="Doe",
+                date_of_birth="1988-04-15",
+                gender="Female",
+                phone="+1 (555) 0199",
+                email="jane.doe@example.com",
+                address="742 Evergreen Terrace",
+                emergency_contact_name="John Doe",
+                emergency_contact_phone="+1 (555) 0198",
+                emergency_contact_relationship="Spouse",
+                insurance_provider="BlueCross BlueShield",
+                insurance_policy_number="BCS-992014",
+                insurance_group_number="GRP-88210",
+                insurance_status="Active",
+                allergies="Penicillin (Severe)",
+            )
+            db.add(patient_jane)
             db.commit()
-    except IntegrityError:
+
+        # Seed an initial appointment if none exists
+        existing_appt = (
+            db.query(models.Appointment).filter_by(patient_id=patient_jane.id).first()
+        )
+        if not existing_appt and doc_jenkins and patient_jane:
+            appt = models.Appointment(
+                id=str(uuid.uuid4()),
+                patient_id=patient_jane.id,
+                doctor_id=doc_jenkins.id,
+                appointment_date="2026-06-10",
+                start_time="10:00",
+                end_time="10:30",
+                reason="Persistent hypertension and chest tightness following exercise.",
+                appointment_type="Consultation / Routine Checkup",
+                status="Scheduled",
+                version=1,
+            )
+            db.add(appt)
+            db.commit()
+
+    except Exception:
         db.rollback()
