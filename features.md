@@ -17,3 +17,16 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-413 - Cattle & Dairy Farm Management System (Cattle Profiling, Milk Logging, Breeding Lifecycle, Feed & Health Records, Analytics)
+
+### Feature Summary
+A centralized cattle and dairy farm management platform enabling RFID cow profiling, daily milk yield logging, breeding/gestation lifecycle tracking, feed allocation, health/veterinary records, and executive herd analytics.
+
+### Key Features
+- Cattle Profiling & RFID Ear Tag Management
+- Milk Production & Daily Yield Logging
+- Breeding & Lactation Lifecycle Tracking
+- Feed & Ration Allocation Management
+- Health, Vaccination & Veterinary Records
+- Dairy Herd Analytics & Executive Dashboard

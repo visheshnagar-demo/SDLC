@@ -1,143 +1,179 @@
 import uuid
-import datetime
+from datetime import datetime, timezone
 from sqlalchemy import (
     Column,
     String,
     Float,
+    Integer,
     Boolean,
+    Date,
     DateTime,
     ForeignKey,
     Text,
 )
-from sqlalchemy.orm import relationship
-from server.database import Base
+from sqlalchemy.orm import DeclarativeBase, relationship
+
+
+class Base(DeclarativeBase):
+    pass
 
 
 def generate_uuid() -> str:
     return str(uuid.uuid4())
 
 
-def get_utc_now() -> datetime.datetime:
-    return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
-class User(Base):
-    __tablename__ = "users"
+class Cattle(Base):
+    __tablename__ = "cattle"
 
-    id = Column(String, primary_key=True, default=generate_uuid)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    role = Column(String, default="user", nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False)
-    is_verified = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    id = Column(String(36), primary_key=True, default=generate_uuid, index=True)
+    tag_number = Column(String(64), unique=True, nullable=False, index=True)
+    rfid_tag = Column(String(64), unique=True, nullable=False, index=True)
+    breed = Column(String(64), nullable=False, default="Holstein-Friesian")
+    gender = Column(String(16), nullable=False, default="Female")
+    date_of_birth = Column(Date, nullable=False)
+    dam_id = Column(
+        String(36), ForeignKey("cattle.id", ondelete="SET NULL"), nullable=True
+    )
+    sire_id = Column(
+        String(36), ForeignKey("cattle.id", ondelete="SET NULL"), nullable=True
+    )
+    status = Column(String(32), nullable=False, default="Active")
+    body_condition_score = Column(
+        Float, nullable=True, default=3.0
+    )  # BCS scale 1.0 - 5.0
+    weight_kg = Column(Float, nullable=True, default=600.0)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at = Column(
-        DateTime,
-        default=get_utc_now,
-        onupdate=get_utc_now,
-        nullable=False,
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
     )
 
-    transactions = relationship("Transaction", back_populates="user")
-    refunds = relationship("Refund", back_populates="actor")
+    # Relationships
+    dam = relationship("Cattle", foreign_keys=[dam_id], remote_side=[id])
+    sire = relationship("Cattle", foreign_keys=[sire_id], remote_side=[id])
+    milk_logs = relationship(
+        "MilkLog", back_populates="cow", cascade="all, delete-orphan"
+    )
+    breeding_records = relationship(
+        "BreedingRecord", back_populates="cow", cascade="all, delete-orphan"
+    )
+    health_records = relationship(
+        "HealthRecord", back_populates="cow", cascade="all, delete-orphan"
+    )
 
 
-class CheckoutSession(Base):
-    __tablename__ = "checkout_sessions"
+class MilkLog(Base):
+    __tablename__ = "milk_logs"
 
-    id = Column(String, primary_key=True, default=lambda: f"cs_{uuid.uuid4().hex[:16]}")
-    session_id = Column(String, unique=True, index=True, nullable=False)
-    payment_intent_id = Column(String, index=True, nullable=False)
-    client_secret = Column(String, nullable=False)
-    customer_email = Column(String, index=True, nullable=False)
-    amount = Column(Float, nullable=False)
-    currency = Column(String, nullable=False)
-    target_amount = Column(Float, nullable=False)
-    target_currency = Column(String, nullable=False)
-    exchange_rate = Column(Float, default=1.0, nullable=False)
-    items_json = Column(Text, default="[]", nullable=False)
-    status = Column(String, default="PENDING", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    id = Column(String(36), primary_key=True, default=generate_uuid, index=True)
+    cow_id = Column(
+        String(36),
+        ForeignKey("cattle.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    milking_date = Column(Date, nullable=False, index=True)
+    session = Column(
+        String(16), nullable=False, default="Morning"
+    )  # Morning, Evening, Afternoon
+    yield_liters = Column(Float, nullable=False)
+    fat_percentage = Column(Float, nullable=True)
+    protein_percentage = Column(Float, nullable=True)
+    somatic_cell_count = Column(Integer, nullable=True)
+    is_withheld = Column(Boolean, nullable=False, default=False)
+    variance_alert = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+    cow = relationship("Cattle", back_populates="milk_logs")
 
 
-class Transaction(Base):
-    __tablename__ = "transactions"
+class BreedingRecord(Base):
+    __tablename__ = "breeding_records"
 
-    id = Column(String, primary_key=True, default=lambda: f"tx_{uuid.uuid4().hex[:12]}")
-    payment_intent_id = Column(String, index=True, nullable=False)
-    user_id = Column(String, ForeignKey("users.id"), nullable=True)
-    customer_email = Column(String, index=True, nullable=False)
-    payment_method = Column(String, default="card", nullable=False)
-    amount = Column(Float, nullable=False)
-    base_currency = Column(String, default="USD", nullable=False)
-    target_currency = Column(String, default="USD", nullable=False)
-    converted_amount = Column(Float, nullable=False)
-    exchange_rate = Column(Float, default=1.0, nullable=False)
-    status = Column(String, default="COMPLETED", nullable=False)
-    refunded_amount = Column(Float, default=0.0, nullable=False)
-    remaining_refundable_balance = Column(Float, nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    id = Column(String(36), primary_key=True, default=generate_uuid, index=True)
+    cow_id = Column(
+        String(36),
+        ForeignKey("cattle.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    stage = Column(
+        String(32), nullable=False, default="In Heat"
+    )  # In Heat, Inseminated, Confirmed Pregnant, Dry Period, Calved, Failed Conception
+    event_date = Column(Date, nullable=False)
+    insemination_date = Column(Date, nullable=True)
+    sire_rfid_or_code = Column(String(64), nullable=True)
+    gestation_check_due_date = Column(Date, nullable=True)
+    expected_calving_date = Column(Date, nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at = Column(
-        DateTime,
-        default=get_utc_now,
-        onupdate=get_utc_now,
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
+
+    cow = relationship("Cattle", back_populates="breeding_records")
+
+
+class HealthRecord(Base):
+    __tablename__ = "health_records"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid, index=True)
+    cow_id = Column(
+        String(36),
+        ForeignKey("cattle.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
+    record_type = Column(
+        String(32), nullable=False, default="Treatment"
+    )  # Treatment, Vaccination, Routine Check, Surgery, Scheduled Visit
+    diagnosis = Column(String(255), nullable=False)
+    medication_administered = Column(String(255), nullable=True)
+    dosage = Column(String(64), nullable=True)
+    treatment_date = Column(DateTime(timezone=True), nullable=False, default=utc_now)
+    scheduled_date = Column(DateTime(timezone=True), nullable=True)
+    status = Column(
+        String(32), nullable=False, default="Completed"
+    )  # Completed, Scheduled, Overdue, Cancelled
+    milk_withdrawal_hours = Column(Integer, nullable=False, default=0)
+    milk_withdrawal_end = Column(DateTime(timezone=True), nullable=True, index=True)
+    meat_withdrawal_days = Column(Integer, nullable=False, default=0)
+    veterinarian_name = Column(String(128), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
 
-    user = relationship("User", back_populates="transactions")
-    refunds = relationship(
-        "Refund", back_populates="transaction", cascade="all, delete-orphan"
+    cow = relationship("Cattle", back_populates="health_records")
+
+
+class FeedRation(Base):
+    __tablename__ = "feed_rations"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid, index=True)
+    ration_name = Column(String(128), nullable=False)
+    target_group = Column(
+        String(64), nullable=False
+    )  # High Yield, Mid Yield, Dry Cows, Heifers
+    dry_matter_kg_per_day = Column(Float, nullable=False, default=20.0)
+    silage_pct = Column(Float, nullable=False, default=60.0)
+    concentrate_pct = Column(Float, nullable=False, default=25.0)
+    forage_supplements_pct = Column(Float, nullable=False, default=15.0)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+class FeedInventory(Base):
+    __tablename__ = "feed_inventory"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid, index=True)
+    feed_name = Column(String(128), unique=True, nullable=False)
+    category = Column(
+        String(64), nullable=False
+    )  # Forage, Concentrate, Mineral/Supplement
+    current_stock_kg = Column(Float, nullable=False, default=0.0)
+    daily_consumption_kg = Column(Float, nullable=False, default=0.0)
+    reorder_threshold_kg = Column(Float, nullable=False, default=0.0)
+    reorder_alert = Column(Boolean, nullable=False, default=False)
+    updated_at = Column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
     )
-    audit_logs = relationship("AuditLog", back_populates="transaction")
-
-
-class Refund(Base):
-    __tablename__ = "refunds"
-
-    id = Column(
-        String, primary_key=True, default=lambda: f"ref_{uuid.uuid4().hex[:12]}"
-    )
-    transaction_id = Column(String, ForeignKey("transactions.id"), nullable=False)
-    actor_id = Column(String, ForeignKey("users.id"), nullable=True)
-    refund_amount = Column(Float, nullable=False)
-    currency = Column(String, default="USD", nullable=False)
-    reason = Column(String, nullable=False)
-    memo = Column(String, nullable=True)
-    status = Column(String, default="COMPLETED", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
-
-    transaction = relationship("Transaction", back_populates="refunds")
-    actor = relationship("User", back_populates="refunds")
-
-
-class AuditLog(Base):
-    __tablename__ = "audit_logs"
-
-    id = Column(
-        String, primary_key=True, default=lambda: f"log_{uuid.uuid4().hex[:12]}"
-    )
-    transaction_id = Column(String, ForeignKey("transactions.id"), nullable=True)
-    event_type = Column(String, index=True, nullable=False)
-    ip_address = Column(String, default="127.0.0.1", nullable=False)
-    masked_payload = Column(Text, default="{}", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
-
-    transaction = relationship("Transaction", back_populates="audit_logs")
-
-
-class ExchangeRateCache(Base):
-    __tablename__ = "exchange_rate_caches"
-
-    id = Column(String, primary_key=True, default=generate_uuid)
-    base_currency = Column(String, index=True, nullable=False)
-    rates_json = Column(Text, nullable=False)
-    fetched_at = Column(DateTime, default=get_utc_now, nullable=False)
-    expires_at = Column(DateTime, nullable=False)
-
-
-class WebhookEvent(Base):
-    __tablename__ = "webhook_events"
-
-    id = Column(String, primary_key=True)
-    event_type = Column(String, nullable=False)
-    processed_at = Column(DateTime, default=get_utc_now, nullable=False)

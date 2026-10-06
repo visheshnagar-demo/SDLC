@@ -1,4 +1,56 @@
-# Project
+# Cattle & Dairy Farm Management Platform
+
+A centralized, full-stack cattle and dairy farm operations platform supporting RFID ear tag profiling, daily morning/evening milk logging with automated mastitis (>30% drop) detection, 283-day breeding and gestation lifecycle tracking, TMR feed ration allocation and inventory monitor (5-day threshold alerts), veterinary treatment and milk withholding enforcement, and executive herd analytics dashboards.
+
+## System Architecture
+
+- **Backend**: Python 3.11, FastAPI, SQLAlchemy 2.x, Pydantic v2, SQLite (Local / Test) & PostgreSQL (Production)
+- **Frontend**: React 18, Vite, Tailwind CSS, Lucide Icons, Recharts
+- **Deployment**: Google Cloud Run & Cloud SQL
+
+---
+
+## Full-Stack Local Development
+
+### 1. Server Setup & Execution
+
+```bash
+cd server
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn server.main:app --reload --port 8000
+```
+
+The API will be available at `http://localhost:8000`. Interactive OpenAPI documentation is at `http://localhost:8000/docs`.
+
+### 2. Running Backend Tests
+
+```bash
+cd server
+pytest
+```
+
+### 3. Frontend Setup & Execution
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+The frontend development server runs at `http://localhost:5173` and proxies API requests to `http://localhost:8000`.
+
+---
+
+## API Endpoints Summary
+
+- **Cattle & RFID**: `GET/POST /api/v1/cattle`, `GET/PUT/DELETE /api/v1/cattle/{id}`
+- **Milking Operations**: `GET/POST /api/v1/milk-logs`, `GET /api/v1/milk-logs/summary`
+- **Breeding & Reproduction**: `GET/POST /api/v1/breeding-records`, `GET/PUT/DELETE /api/v1/breeding-records/{id}`
+- **Feed & Rations**: `GET/POST /api/v1/feed-rations`, `GET/POST /api/v1/feed-inventory`
+- **Health & Veterinary**: `GET/POST /api/v1/health-records`, `GET /api/v1/health-records/active-withdrawals`, `POST /api/v1/health-records/verify-bulk-milk`
+- **Analytics & Dashboard**: `GET /api/v1/analytics/dashboard`
 
 ## Server
 
