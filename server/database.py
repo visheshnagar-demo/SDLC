@@ -43,6 +43,8 @@ def seed_data(db: Session):
                 gender="Female",
                 date_of_birth=date(2019, 4, 10),
                 status="Active",
+                body_condition_score=3.2,
+                weight_kg=620.0,
             )
             sire = Cattle(
                 id="c0000000-0000-0000-0000-000000000002",
@@ -52,6 +54,8 @@ def seed_data(db: Session):
                 gender="Male",
                 date_of_birth=date(2018, 2, 20),
                 status="Active",
+                body_condition_score=3.5,
+                weight_kg=850.0,
             )
             db.add(dam)
             db.add(sire)
@@ -68,6 +72,8 @@ def seed_data(db: Session):
                 dam_id=dam.id,
                 sire_id=sire.id,
                 status="Lactating",
+                body_condition_score=3.25,
+                weight_kg=610.0,
             )
             cow2 = Cattle(
                 id="c0000000-0000-0000-0000-000000001043",
@@ -77,6 +83,8 @@ def seed_data(db: Session):
                 gender="Female",
                 date_of_birth=date(2021, 8, 22),
                 status="Lactating",
+                body_condition_score=3.0,
+                weight_kg=450.0,
             )
             cow3 = Cattle(
                 id="c0000000-0000-0000-0000-000000001044",
@@ -86,6 +94,8 @@ def seed_data(db: Session):
                 gender="Female",
                 date_of_birth=date(2023, 1, 10),
                 status="Pregnant",
+                body_condition_score=3.5,
+                weight_kg=580.0,
             )
             db.add(cow1)
             db.add(cow2)

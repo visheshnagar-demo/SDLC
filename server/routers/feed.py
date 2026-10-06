@@ -62,9 +62,6 @@ def calculate_feed_allocation(
             yield_l = latest_milk.yield_liters * 2.0
 
     # Base dry matter intake (DMI) formula:
-    # Maintenance DMI: ~ 1.8% to 2.0% of body weight
-    # Production DMI: ~ 0.33 kg DMI per liter of milk yield
-    # BCS Adjustment: If BCS < 3.0 (underconditioned), increase DM by +5-10% to regain reserves; if BCS > 3.75, slightly reduce concentrates
     base_maintenance_dmi = weight * 0.019
     production_dmi = yield_l * 0.33
 

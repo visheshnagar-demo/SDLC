@@ -1,6 +1,6 @@
 # Cattle & Dairy Farm Management Platform
 
-A centralized, full-stack cattle and dairy farm operations platform supporting RFID ear tag profiling, daily morning/evening milk logging with automated mastitis (>30% drop) detection, 283-day breeding and gestation lifecycle tracking, TMR feed ration allocation and inventory monitor (5-day threshold alerts), veterinary treatment and milk withholding enforcement, and executive herd analytics dashboards.
+A centralized, full-stack cattle and dairy farm operations platform supporting RFID ear tag profiling, daily morning/evening milk logging with automated mastitis (>30% drop) detection, 283-day breeding and gestation lifecycle tracking, dynamic TMR feed ration allocation (based on lactation stage, milk yield, and BCS) and inventory monitor (5-day threshold alerts), veterinary treatment and milk withholding enforcement, routine visit scheduling, and executive herd analytics dashboards.
 
 ## System Architecture
 
@@ -48,8 +48,8 @@ The frontend development server runs at `http://localhost:5173` and proxies API 
 - **Cattle & RFID**: `GET/POST /api/v1/cattle`, `GET/PUT/DELETE /api/v1/cattle/{id}`
 - **Milking Operations**: `GET/POST /api/v1/milk-logs`, `GET /api/v1/milk-logs/summary`
 - **Breeding & Reproduction**: `GET/POST /api/v1/breeding-records`, `GET/PUT/DELETE /api/v1/breeding-records/{id}`
-- **Feed & Rations**: `GET/POST /api/v1/feed-rations`, `GET/POST /api/v1/feed-inventory`
-- **Health & Veterinary**: `GET/POST /api/v1/health-records`, `GET /api/v1/health-records/active-withdrawals`, `POST /api/v1/health-records/verify-bulk-milk`
+- **Feed & Rations**: `GET/POST /api/v1/feed-rations`, `POST /api/v1/feed-rations/calculate-allocation`, `GET /api/v1/feed-rations/cow/{id}/allocation`, `GET/POST /api/v1/feed-inventory`
+- **Health & Veterinary**: `GET/POST /api/v1/health-records`, `GET /api/v1/health-records/active-withdrawals`, `POST /api/v1/health-records/verify-bulk-milk`, `POST /api/v1/health-records/schedule-visit`, `GET /api/v1/health-records/schedules`
 - **Analytics & Dashboard**: `GET /api/v1/analytics/dashboard`
 
 ## Server

@@ -32,6 +32,8 @@ def test_create_cattle_success(client):
         "gender": "Female",
         "date_of_birth": "2023-05-10",
         "status": "Active",
+        "body_condition_score": 3.25,
+        "weight_kg": 600.0,
     }
     response = client.post("/api/v1/cattle", json=payload)
     assert response.status_code == 201

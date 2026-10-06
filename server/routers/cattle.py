@@ -97,6 +97,8 @@ def create_cattle(payload: CattleCreate, db: Session = Depends(get_db)):
         dam_id=payload.dam_id,
         sire_id=payload.sire_id,
         status=payload.status,
+        body_condition_score=payload.body_condition_score,
+        weight_kg=payload.weight_kg,
     )
     db.add(new_cow)
     db.commit()
@@ -164,6 +166,8 @@ def get_cattle_detail(cow_id: str, db: Session = Depends(get_db)):
         dam_id=cow.dam_id,
         sire_id=cow.sire_id,
         status=cow.status,
+        body_condition_score=cow.body_condition_score,
+        weight_kg=cow.weight_kg,
         created_at=cow.created_at,
         updated_at=cow.updated_at,
         recent_milk_logs=recent_milk,
@@ -223,6 +227,10 @@ def update_cattle(cow_id: str, payload: CattleUpdate, db: Session = Depends(get_
         cow.sire_id = payload.sire_id
     if payload.status is not None:
         cow.status = payload.status
+    if payload.body_condition_score is not None:
+        cow.body_condition_score = payload.body_condition_score
+    if payload.weight_kg is not None:
+        cow.weight_kg = payload.weight_kg
 
     cow.updated_at = datetime.now(timezone.utc)
     db.commit()
