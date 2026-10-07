@@ -7,85 +7,123 @@ export const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
+  timeout: 15000,
 });
 
+// Attach Authorization header if JWT token is stored
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
+
+// Response interceptor to handle standard API errors
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Standardized error payload extractions
-    const message =
-      error.response?.data?.detail ||
-      error.message ||
-      "An unexpected network error occurred";
-    return Promise.reject(
-      new Error(
-        typeof message === "object" ? JSON.stringify(message) : message,
-      ),
-    );
+    if (error.response?.status === 401) {
+      // Clear token if expired or unauthorized
+      if (
+        typeof window !== "undefined" &&
+        window.location.pathname !== "/login"
+      ) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
+    }
+    return Promise.reject(error);
   },
 );
 
-export const createCheckoutSession = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/checkout-session",
-    payload,
-  );
+// Auth Endpoints
+export const login = async (credentials) => {
+  const response = await apiClient.post("/api/v1/auth/login", credentials);
   return response.data;
 };
 
-export const payWithDigitalWallet = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/digital-wallet",
-    payload,
-  );
+export const register = async (userData) => {
+  const response = await apiClient.post("/api/v1/auth/register", userData);
   return response.data;
 };
 
-export const getExchangeRates = async (baseCurrency = "USD") => {
-  const response = await apiClient.get("/api/v1/payments/rates", {
-    params: { base_currency: baseCurrency },
+// Cattle Inventory Endpoints
+export const getCows = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/cows", { params });
+  return response.data;
+};
+
+export const getCowById = async (id) => {
+  const response = await apiClient.get(`/api/v1/cows/${id}`);
+  return response.data;
+};
+
+export const createCow = async (cowData) => {
+  const response = await apiClient.post("/api/v1/cows", cowData);
+  return response.data;
+};
+
+export const updateCow = async (id, cowData) => {
+  const response = await apiClient.put(`/api/v1/cows/${id}`, cowData);
+  return response.data;
+};
+
+export const deleteCow = async (id) => {
+  const response = await apiClient.delete(`/api/v1/cows/${id}`);
+  return response.data;
+};
+
+// Health & Veterinary Endpoints
+export const getHealthRecords = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/health-records", { params });
+  return response.data;
+};
+
+export const createHealthRecord = async (recordData) => {
+  const response = await apiClient.post("/api/v1/health-records", recordData);
+  return response.data;
+};
+
+// Milk Yield Logging Endpoints
+export const getMilkYields = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/milk-yields", { params });
+  return response.data;
+};
+
+export const createMilkYield = async (yieldData) => {
+  const response = await apiClient.post("/api/v1/milk-yields", yieldData);
+  return response.data;
+};
+
+// Analytics Endpoints
+export const getAnalyticsSummary = async () => {
+  const response = await apiClient.get("/api/v1/analytics/summary");
+  return response.data;
+};
+
+export const getYieldTrends = async (days = 30) => {
+  const response = await apiClient.get("/api/v1/analytics/yield-trends", {
+    params: { days },
   });
-  return response.data;
-};
-
-export const listTransactions = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/payments/transactions", {
-    params,
-  });
-  return response.data;
-};
-
-export const getTransactionDetail = async (transactionId) => {
-  const response = await apiClient.get(
-    `/api/v1/payments/transactions/${transactionId}`,
-  );
-  return response.data;
-};
-
-export const createRefund = async (payload) => {
-  const response = await apiClient.post("/api/v1/refunds", payload);
-  return response.data;
-};
-
-export const listRefunds = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/refunds", { params });
-  return response.data;
-};
-
-export const listAuditLogs = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/audit-logs", { params });
   return response.data;
 };
 
 export default {
-  apiClient,
-  createCheckoutSession,
-  payWithDigitalWallet,
-  getExchangeRates,
-  listTransactions,
-  getTransactionDetail,
-  createRefund,
-  listRefunds,
-  listAuditLogs,
+  login,
+  register,
+  getCows,
+  getCowById,
+  createCow,
+  updateCow,
+  deleteCow,
+  getHealthRecords,
+  createHealthRecord,
+  getMilkYields,
+  createMilkYield,
+  getAnalyticsSummary,
+  getYieldTrends,
 };
