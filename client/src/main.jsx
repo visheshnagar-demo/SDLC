@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App";
+import App from "./App.jsx";
 import "./index.css";
 
 class ErrorBoundary extends React.Component {
@@ -13,42 +13,31 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
-  componentDidCatch(_error, _errorInfo) {
-    // Error logged for boundary tracking
+  componentDidCatch(error, errorInfo) {
+    // In production we could log error to an error reporting service
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div
-          style={{
-            padding: "2rem",
-            textAlign: "center",
-            fontFamily: "sans-serif",
-          }}
-        >
-          <h2>Something went wrong.</h2>
-          <p style={{ color: "#666" }}>
-            {this.state.error?.message ||
-              "An unexpected rendering error occurred."}
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              marginTop: "1rem",
-              padding: "0.5rem 1rem",
-              backgroundColor: "#4F46E5",
-              color: "#fff",
-              border: "none",
-              borderRadius: "0.375rem",
-              cursor: "pointer",
-            }}
-          >
-            Reload Page
-          </button>
+        <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-6">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-lg w-full text-center shadow-xl">
+            <span className="text-4xl mb-4 block">⚠️</span>
+            <h1 className="text-xl font-bold mb-2">Something went wrong</h1>
+            <p className="text-sm text-slate-400 mb-6">
+              The application encountered an unexpected render issue.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition"
+            >
+              Reload Application
+            </button>
+          </div>
         </div>
       );
     }
+
     return this.props.children;
   }
 }
