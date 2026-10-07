@@ -1,16 +1,21 @@
 import os
-from pydantic import BaseModel
 
 
-class Settings(BaseModel):
-    PROJECT_NAME: str = "Payment Gateway Service"
-    API_V1_STR: str = "/api/v1"
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:////tmp/app.db")
-    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "dev-secret-change-in-production")
-    ALLOWED_ORIGINS: list[str] = os.getenv(
-        "ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000"
-    ).split(",")
-    STRIPE_WEBHOOK_SECRET: str = os.getenv("STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+class Settings:
+    PROJECT_NAME: str = (
+        "Hospital Management System (HMS) Core Platform & Patient Portal"
+    )
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:////tmp/hms_test.db")
+    JWT_SECRET_KEY: str = os.getenv(
+        "JWT_SECRET_KEY", "hms-secret-key-super-secure-2026"
+    )
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day for dev/testing
+    ALLOWED_ORIGINS: str = os.getenv(
+        "ALLOWED_ORIGINS",
+        "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000",
+    )
+    TESTING: bool = os.getenv("TESTING", "false").lower() == "true"
 
 
 settings = Settings()

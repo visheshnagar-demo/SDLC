@@ -1,143 +1,187 @@
 import uuid
-import datetime
+from datetime import datetime, timezone
 from sqlalchemy import (
     Column,
     String,
-    Float,
     Boolean,
-    DateTime,
-    ForeignKey,
+    Float,
+    Integer,
     Text,
+    DateTime,
+    Date,
+    ForeignKey,
+    JSON,
 )
-from sqlalchemy.orm import relationship
-from server.database import Base
+from sqlalchemy.orm import declarative_base, relationship
 
-
-def generate_uuid() -> str:
-    return str(uuid.uuid4())
-
-
-def get_utc_now() -> datetime.datetime:
-    return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+Base = declarative_base()
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(String, primary_key=True, default=generate_uuid)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    role = Column(String, default="user", nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False)
-    is_verified = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    hashed_password = Column(String(255), nullable=False)
+    full_name = Column(String(255), nullable=False)
+    phone_number = Column(String(50), nullable=True)
+    role = Column(String(50), nullable=False, default="PATIENT", index=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
     updated_at = Column(
-        DateTime,
-        default=get_utc_now,
-        onupdate=get_utc_now,
-        nullable=False,
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
-    transactions = relationship("Transaction", back_populates="user")
-    refunds = relationship("Refund", back_populates="actor")
+    patient_profile = relationship(
+        "Patient", back_populates="user", uselist=False, cascade="all, delete-orphan"
+    )
+    doctor_profile = relationship(
+        "Doctor", back_populates="user", uselist=False, cascade="all, delete-orphan"
+    )
+    audit_logs = relationship("AuditLog", back_populates="user")
 
 
-class CheckoutSession(Base):
-    __tablename__ = "checkout_sessions"
+class Patient(Base):
+    __tablename__ = "patients"
 
-    id = Column(String, primary_key=True, default=lambda: f"cs_{uuid.uuid4().hex[:16]}")
-    session_id = Column(String, unique=True, index=True, nullable=False)
-    payment_intent_id = Column(String, index=True, nullable=False)
-    client_secret = Column(String, nullable=False)
-    customer_email = Column(String, index=True, nullable=False)
-    amount = Column(Float, nullable=False)
-    currency = Column(String, nullable=False)
-    target_amount = Column(Float, nullable=False)
-    target_currency = Column(String, nullable=False)
-    exchange_rate = Column(Float, default=1.0, nullable=False)
-    items_json = Column(Text, default="[]", nullable=False)
-    status = Column(String, default="PENDING", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
-
-
-class Transaction(Base):
-    __tablename__ = "transactions"
-
-    id = Column(String, primary_key=True, default=lambda: f"tx_{uuid.uuid4().hex[:12]}")
-    payment_intent_id = Column(String, index=True, nullable=False)
-    user_id = Column(String, ForeignKey("users.id"), nullable=True)
-    customer_email = Column(String, index=True, nullable=False)
-    payment_method = Column(String, default="card", nullable=False)
-    amount = Column(Float, nullable=False)
-    base_currency = Column(String, default="USD", nullable=False)
-    target_currency = Column(String, default="USD", nullable=False)
-    converted_amount = Column(Float, nullable=False)
-    exchange_rate = Column(Float, default=1.0, nullable=False)
-    status = Column(String, default="COMPLETED", nullable=False)
-    refunded_amount = Column(Float, default=0.0, nullable=False)
-    remaining_refundable_balance = Column(Float, nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id"), unique=True, nullable=False)
+    national_id = Column(String(100), unique=True, nullable=False, index=True)
+    date_of_birth = Column(Date, nullable=False)
+    gender = Column(String(20), nullable=False)
+    blood_group = Column(String(10), nullable=True)
+    address = Column(Text, nullable=True)
+    emergency_contact_name = Column(String(255), nullable=False)
+    emergency_contact_phone = Column(String(50), nullable=False)
+    insurance_provider = Column(String(255), nullable=True)
+    insurance_policy_number = Column(String(100), nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
     updated_at = Column(
-        DateTime,
-        default=get_utc_now,
-        onupdate=get_utc_now,
-        nullable=False,
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
-    user = relationship("User", back_populates="transactions")
-    refunds = relationship(
-        "Refund", back_populates="transaction", cascade="all, delete-orphan"
+    user = relationship("User", back_populates="patient_profile")
+    appointments = relationship(
+        "Appointment", back_populates="patient", cascade="all, delete-orphan"
     )
-    audit_logs = relationship("AuditLog", back_populates="transaction")
-
-
-class Refund(Base):
-    __tablename__ = "refunds"
-
-    id = Column(
-        String, primary_key=True, default=lambda: f"ref_{uuid.uuid4().hex[:12]}"
+    ehr_records = relationship(
+        "EHRRecord", back_populates="patient", cascade="all, delete-orphan"
     )
-    transaction_id = Column(String, ForeignKey("transactions.id"), nullable=False)
-    actor_id = Column(String, ForeignKey("users.id"), nullable=True)
-    refund_amount = Column(Float, nullable=False)
-    currency = Column(String, default="USD", nullable=False)
-    reason = Column(String, nullable=False)
-    memo = Column(String, nullable=True)
-    status = Column(String, default="COMPLETED", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
 
-    transaction = relationship("Transaction", back_populates="refunds")
-    actor = relationship("User", back_populates="refunds")
+
+class Doctor(Base):
+    __tablename__ = "doctors"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id"), unique=True, nullable=False)
+    department = Column(String(100), nullable=False, index=True)
+    specialization = Column(String(255), nullable=False)
+    consultation_fee = Column(Float, nullable=False, default=0.0)
+    slot_duration_minutes = Column(Integer, nullable=False, default=30)
+    is_available = Column(Boolean, nullable=False, default=True)
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    user = relationship("User", back_populates="doctor_profile")
+    appointments = relationship(
+        "Appointment", back_populates="doctor", cascade="all, delete-orphan"
+    )
+    ehr_records = relationship(
+        "EHRRecord", back_populates="doctor", cascade="all, delete-orphan"
+    )
+
+
+class Appointment(Base):
+    __tablename__ = "appointments"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    patient_id = Column(
+        String(36), ForeignKey("patients.id"), nullable=False, index=True
+    )
+    doctor_id = Column(String(36), ForeignKey("doctors.id"), nullable=False, index=True)
+    start_time = Column(DateTime(timezone=True), nullable=False, index=True)
+    end_time = Column(DateTime(timezone=True), nullable=False)
+    status = Column(
+        String(50), nullable=False, default="SCHEDULED"
+    )  # SCHEDULED, CHECKED_IN, COMPLETED, CANCELLED
+    reason = Column(Text, nullable=True)
+    cancellation_reason = Column(Text, nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    patient = relationship("Patient", back_populates="appointments")
+    doctor = relationship("Doctor", back_populates="appointments")
+    ehr_record = relationship("EHRRecord", back_populates="appointment", uselist=False)
+
+
+class EHRRecord(Base):
+    __tablename__ = "ehr_records"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    patient_id = Column(
+        String(36), ForeignKey("patients.id"), nullable=False, index=True
+    )
+    doctor_id = Column(String(36), ForeignKey("doctors.id"), nullable=False, index=True)
+    appointment_id = Column(String(36), ForeignKey("appointments.id"), nullable=True)
+    diagnosis = Column(Text, nullable=False)
+    clinical_notes = Column(Text, nullable=False)
+    prescriptions = Column(
+        JSON, nullable=False, default=list
+    )  # list of {medication_name, dosage, frequency, duration_days}
+    lab_orders = Column(
+        JSON, nullable=False, default=list
+    )  # list of str or test details
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    patient = relationship("Patient", back_populates="ehr_records")
+    doctor = relationship("Doctor", back_populates="ehr_records")
+    appointment = relationship("Appointment", back_populates="ehr_record")
 
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 
-    id = Column(
-        String, primary_key=True, default=lambda: f"log_{uuid.uuid4().hex[:12]}"
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=True, index=True)
+    action = Column(
+        String(100), nullable=False, index=True
+    )  # READ_EHR, CREATE_EHR, BOOK_APPOINTMENT, etc.
+    resource_type = Column(
+        String(100), nullable=False
+    )  # PATIENT, EHR_RECORD, APPOINTMENT, AUTH
+    resource_id = Column(String(255), nullable=True)
+    ip_address = Column(String(50), nullable=True)
+    user_agent = Column(Text, nullable=True)
+    details = Column(JSON, nullable=True)
+    timestamp = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True
     )
-    transaction_id = Column(String, ForeignKey("transactions.id"), nullable=True)
-    event_type = Column(String, index=True, nullable=False)
-    ip_address = Column(String, default="127.0.0.1", nullable=False)
-    masked_payload = Column(Text, default="{}", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
 
-    transaction = relationship("Transaction", back_populates="audit_logs")
-
-
-class ExchangeRateCache(Base):
-    __tablename__ = "exchange_rate_caches"
-
-    id = Column(String, primary_key=True, default=generate_uuid)
-    base_currency = Column(String, index=True, nullable=False)
-    rates_json = Column(Text, nullable=False)
-    fetched_at = Column(DateTime, default=get_utc_now, nullable=False)
-    expires_at = Column(DateTime, nullable=False)
-
-
-class WebhookEvent(Base):
-    __tablename__ = "webhook_events"
-
-    id = Column(String, primary_key=True)
-    event_type = Column(String, nullable=False)
-    processed_at = Column(DateTime, default=get_utc_now, nullable=False)
+    user = relationship("User", back_populates="audit_logs")

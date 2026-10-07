@@ -1,18 +1,24 @@
-import os
 import uuid
-import datetime
-from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
-from sqlalchemy.exc import IntegrityError
 import bcrypt
+from datetime import date
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:////tmp/app.db")
+from server.config import settings
+from server.models import Base, User, Patient, Doctor
 
-connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
-engine = create_engine(DATABASE_URL, connect_args=connect_args)
+# Database engine configuration
+if settings.DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(
+        settings.DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool if ":memory:" in settings.DATABASE_URL else None,
+    )
+else:
+    engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base = declarative_base()
 
 
 def get_db():
@@ -23,76 +29,169 @@ def get_db():
         db.close()
 
 
-def get_password_hash(password: str) -> str:
+def hash_password(password: str) -> str:
+    pwd_bytes = password.encode("utf-8")[:72]
     salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+    return bcrypt.hashpw(pwd_bytes, salt).decode("utf-8")
+
+
+def seed_data(db):
+    """Seed initial demo and role accounts idempotently."""
+    try:
+        # 1. Admin user
+        admin = db.query(User).filter(User.email == "admin@example.com").first()
+        if not admin:
+            admin = User(
+                id=str(uuid.uuid4()),
+                email="admin@example.com",
+                hashed_password=hash_password("adminpassword"),
+                full_name="System Administrator",
+                phone_number="+1-555-0100",
+                role="ADMIN",
+                is_active=True,
+            )
+            db.add(admin)
+            db.flush()
+
+        # 2. Doctor user & profile
+        doctor_user = db.query(User).filter(User.email == "doctor@example.com").first()
+        if not doctor_user:
+            doctor_user = User(
+                id=str(uuid.uuid4()),
+                email="doctor@example.com",
+                hashed_password=hash_password("doctorpassword"),
+                full_name="Dr. Sarah Smith, MD",
+                phone_number="+1-555-0101",
+                role="DOCTOR",
+                is_active=True,
+            )
+            db.add(doctor_user)
+            db.flush()
+
+        doc_profile = db.query(Doctor).filter(Doctor.user_id == doctor_user.id).first()
+        if not doc_profile:
+            doc_profile = Doctor(
+                id=str(uuid.uuid4()),
+                user_id=doctor_user.id,
+                department="Cardiology",
+                specialization="Cardiologist",
+                consultation_fee=150.0,
+                slot_duration_minutes=30,
+                is_available=True,
+            )
+            db.add(doc_profile)
+            db.flush()
+
+        # Additional Doctor in Neurology
+        doctor2_user = (
+            db.query(User).filter(User.email == "doctor.neuro@example.com").first()
+        )
+        if not doctor2_user:
+            doctor2_user = User(
+                id=str(uuid.uuid4()),
+                email="doctor.neuro@example.com",
+                hashed_password=hash_password("doctorpassword"),
+                full_name="Dr. Marcus Vance, MD",
+                phone_number="+1-555-0105",
+                role="DOCTOR",
+                is_active=True,
+            )
+            db.add(doctor2_user)
+            db.flush()
+
+        doc2_profile = (
+            db.query(Doctor).filter(Doctor.user_id == doctor2_user.id).first()
+        )
+        if not doc2_profile:
+            doc2_profile = Doctor(
+                id=str(uuid.uuid4()),
+                user_id=doctor2_user.id,
+                department="Neurology",
+                specialization="Neurologist",
+                consultation_fee=180.0,
+                slot_duration_minutes=30,
+                is_available=True,
+            )
+            db.add(doc2_profile)
+            db.flush()
+
+        # 3. Nurse user
+        nurse_user = db.query(User).filter(User.email == "nurse@example.com").first()
+        if not nurse_user:
+            nurse_user = User(
+                id=str(uuid.uuid4()),
+                email="nurse@example.com",
+                hashed_password=hash_password("nursepassword"),
+                full_name="Nurse John Doe, RN",
+                phone_number="+1-555-0102",
+                role="NURSE",
+                is_active=True,
+            )
+            db.add(nurse_user)
+            db.flush()
+
+        # 4. Receptionist user
+        receptionist_user = (
+            db.query(User).filter(User.email == "receptionist@example.com").first()
+        )
+        if not receptionist_user:
+            receptionist_user = User(
+                id=str(uuid.uuid4()),
+                email="receptionist@example.com",
+                hashed_password=hash_password("receptionistpassword"),
+                full_name="Mary Jenkins",
+                phone_number="+1-555-0103",
+                role="RECEPTIONIST",
+                is_active=True,
+            )
+            db.add(receptionist_user)
+            db.flush()
+
+        # 5. Patient user & profile (test@example.com / testpassword)
+        patient_user = db.query(User).filter(User.email == "test@example.com").first()
+        if not patient_user:
+            patient_user = User(
+                id=str(uuid.uuid4()),
+                email="test@example.com",
+                hashed_password=hash_password("testpassword"),
+                full_name="Jane Doe",
+                phone_number="+1-555-0199",
+                role="PATIENT",
+                is_active=True,
+            )
+            db.add(patient_user)
+            db.flush()
+
+        patient_profile = (
+            db.query(Patient).filter(Patient.user_id == patient_user.id).first()
+        )
+        if not patient_profile:
+            patient_profile = Patient(
+                id=str(uuid.uuid4()),
+                user_id=patient_user.id,
+                national_id="SSN-123-45-6789",
+                date_of_birth=date(1990, 5, 15),
+                gender="Female",
+                blood_group="A+",
+                address="123 Health Ave, Metropolis, NY",
+                emergency_contact_name="John Doe",
+                emergency_contact_phone="+1-555-0100",
+                insurance_provider="BlueCross BlueShield",
+                insurance_policy_number="POL-987654",
+            )
+            db.add(patient_profile)
+            db.flush()
+
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"Warning: Seed data initialization encountered an issue: {e}")
 
 
 def init_db():
-    from server import models  # noqa: F401
-
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
         seed_data(db)
     finally:
         db.close()
-
-
-def seed_data(db: Session):
-    from server.models import User, ExchangeRateCache
-
-    # Seed regular test user
-    try:
-        user = db.query(User).filter(User.email == "test@example.com").first()
-        if not user:
-            user = User(
-                id=str(uuid.uuid4()),
-                email="test@example.com",
-                hashed_password=get_password_hash("testpassword"),
-                role="user",
-                is_active=True,
-                is_verified=True,
-            )
-            db.add(user)
-            db.commit()
-    except IntegrityError:
-        db.rollback()
-
-    # Seed admin user
-    try:
-        admin = db.query(User).filter(User.email == "admin@example.com").first()
-        if not admin:
-            admin = User(
-                id=str(uuid.uuid4()),
-                email="admin@example.com",
-                hashed_password=get_password_hash("adminpassword"),
-                role="admin",
-                is_active=True,
-                is_verified=True,
-            )
-            db.add(admin)
-            db.commit()
-    except IntegrityError:
-        db.rollback()
-
-    # Seed initial exchange rates cache
-    try:
-        cache = (
-            db.query(ExchangeRateCache)
-            .filter(ExchangeRateCache.base_currency == "USD")
-            .first()
-        )
-        if not cache:
-            now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-            cache = ExchangeRateCache(
-                id=str(uuid.uuid4()),
-                base_currency="USD",
-                rates_json='{"USD": 1.0, "EUR": 0.925, "GBP": 0.79, "JPY": 155.0, "CAD": 1.36}',
-                fetched_at=now,
-                expires_at=now + datetime.timedelta(minutes=15),
-            )
-            db.add(cache)
-            db.commit()
-    except IntegrityError:
-        db.rollback()
