@@ -1,34 +1,35 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Payment Gateway Service",
-    "version": "0.1.0"
+    "title": "Livestock Cattle Management & Tracking System (Cows System)",
+    "description": "Livestock Cattle Management & Tracking System (Cows System) API",
+    "version": "1.0.0"
   },
   "paths": {
-    "/api/v1/payments/checkout-session": {
+    "/api/v1/auth/register": {
       "post": {
         "tags": [
-          "payments"
+          "Authentication"
         ],
-        "summary": "Create Session",
-        "operationId": "create_session_api_v1_payments_checkout_session_post",
+        "summary": "Register new farm user",
+        "operationId": "register_api_v1_auth_register_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CheckoutSessionRequest"
+                "$ref": "#/components/schemas/UserCreate"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CheckoutSessionResponse"
+                  "$ref": "#/components/schemas/UserResponse"
                 }
               }
             }
@@ -46,154 +47,66 @@
         }
       }
     },
-    "/api/v1/payments/digital-wallet": {
+    "/api/v1/auth/login": {
       "post": {
         "tags": [
-          "payments"
+          "Authentication"
         ],
-        "summary": "Pay Digital Wallet",
-        "operationId": "pay_digital_wallet_api_v1_payments_digital_wallet_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DigitalWalletPaymentRequest"
+        "summary": "Authenticate user and issue JWT bearer token",
+        "operationId": "login_api_v1_auth_login_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
               }
             }
-          },
-          "required": true
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Get current user profile",
+        "operationId": "get_me_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
         },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DigitalWalletPaymentResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
+        "security": [
+          {
+            "HTTPBearer": []
           }
-        }
+        ]
       }
     },
-    "/api/v1/payments/rates": {
+    "/api/v1/cows": {
       "get": {
         "tags": [
-          "payments"
+          "Cattle Inventory"
         ],
-        "summary": "Get Rates",
-        "operationId": "get_rates_api_v1_payments_rates_get",
-        "parameters": [
+        "summary": "List cattle profiles with pagination and search filters",
+        "operationId": "list_cows_api_v1_cows_get",
+        "security": [
           {
-            "name": "base_currency",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "Base currency code",
-              "default": "USD",
-              "title": "Base Currency"
-            },
-            "description": "Base currency code"
+            "HTTPBearer": []
           }
         ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExchangeRatesResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "List Transactions",
-        "operationId": "list_transactions_api_v1_payments_transactions_get",
         "parameters": [
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Search transaction ID or email",
-              "title": "Search"
-            },
-            "description": "Search transaction ID or email"
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction status",
-              "title": "Status"
-            },
-            "description": "Filter by transaction status"
-          },
-          {
-            "name": "currency",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by currency",
-              "title": "Currency"
-            },
-            "description": "Filter by currency"
-          },
           {
             "name": "skip",
             "in": "query",
@@ -213,9 +126,63 @@
               "type": "integer",
               "maximum": 100,
               "minimum": 1,
-              "default": 50,
+              "default": 20,
               "title": "Limit"
             }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search by Tag ID, Breed, or Location",
+              "title": "Search"
+            },
+            "description": "Search by Tag ID, Breed, or Location"
+          },
+          {
+            "name": "health_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by health status",
+              "title": "Health Status"
+            },
+            "description": "Filter by health status"
+          },
+          {
+            "name": "location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by location",
+              "title": "Location"
+            },
+            "description": "Filter by location"
           }
         ],
         "responses": {
@@ -226,92 +193,9 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TransactionSummary"
+                    "$ref": "#/components/schemas/CowResponse"
                   },
-                  "title": "Response List Transactions Api V1 Payments Transactions Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions/{transaction_id}": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Get Transaction",
-        "operationId": "get_transaction_api_v1_payments_transactions__transaction_id__get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Transaction Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TransactionDetail"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/refunds": {
-      "post": {
-        "tags": [
-          "refunds"
-        ],
-        "summary": "Create Refund Endpoint",
-        "operationId": "create_refund_endpoint_api_v1_refunds_post",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RefundRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RefundSummary"
+                  "title": "Response List Cows Api V1 Cows Get"
                 }
               }
             }
@@ -328,15 +212,206 @@
           }
         }
       },
+      "post": {
+        "tags": [
+          "Cattle Inventory"
+        ],
+        "summary": "Create a new cattle profile (Farm Manager only)",
+        "operationId": "create_cow_api_v1_cows_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CowCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CowResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cows/{id}": {
       "get": {
         "tags": [
-          "refunds"
+          "Cattle Inventory"
         ],
-        "summary": "List Refunds Endpoint",
-        "operationId": "list_refunds_endpoint_api_v1_refunds_get",
+        "summary": "Get detailed cattle profile by ID",
+        "operationId": "get_cow_api_v1_cows__id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
-            "name": "transaction_id",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CowDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Cattle Inventory"
+        ],
+        "summary": "Update cattle profile (Farm Manager only)",
+        "operationId": "update_cow_api_v1_cows__id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CowUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CowResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Cattle Inventory"
+        ],
+        "summary": "Delete cattle profile (Farm Manager only)",
+        "operationId": "delete_cow_api_v1_cows__id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health-records": {
+      "get": {
+        "tags": [
+          "Health & Veterinary"
+        ],
+        "summary": "List medical checkup and vaccination records",
+        "operationId": "list_health_records_api_v1_health_records_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cow_id",
             "in": "query",
             "required": false,
             "schema": {
@@ -348,10 +423,28 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
+              "description": "Filter by Cow ID",
+              "title": "Cow Id"
             },
-            "description": "Filter by transaction ID"
+            "description": "Filter by Cow ID"
+          },
+          {
+            "name": "record_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by record type (Vaccination, Checkup, Treatment, Deworming)",
+              "title": "Record Type"
+            },
+            "description": "Filter by record type (Vaccination, Checkup, Treatment, Deworming)"
           },
           {
             "name": "skip",
@@ -372,7 +465,7 @@
               "type": "integer",
               "maximum": 100,
               "minimum": 1,
-              "default": 50,
+              "default": 20,
               "title": "Limit"
             }
           }
@@ -385,9 +478,53 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/RefundSummary"
+                    "$ref": "#/components/schemas/HealthRecordResponse"
                   },
-                  "title": "Response List Refunds Endpoint Api V1 Refunds Get"
+                  "title": "Response List Health Records Api V1 Health Records Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Health & Veterinary"
+        ],
+        "summary": "Record medical treatment or vaccination (Farm Manager only)",
+        "operationId": "create_health_record_api_v1_health_records_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HealthRecordCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthRecordResponse"
                 }
               }
             }
@@ -405,17 +542,22 @@
         }
       }
     },
-    "/api/v1/webhooks/stripe": {
-      "post": {
+    "/api/v1/milk-yields": {
+      "get": {
         "tags": [
-          "webhooks"
+          "Milk Production & Yields"
         ],
-        "summary": "Handle Stripe Webhook",
-        "operationId": "handle_stripe_webhook_api_v1_webhooks_stripe_post",
+        "summary": "List daily milk production logs",
+        "operationId": "list_milk_yields_api_v1_milk_yields_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
-            "name": "stripe-signature",
-            "in": "header",
+            "name": "cow_id",
+            "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
@@ -426,10 +568,234 @@
                   "type": "null"
                 }
               ],
-              "title": "Stripe-Signature"
+              "description": "Filter by Cow ID",
+              "title": "Cow Id"
+            },
+            "description": "Filter by Cow ID"
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Start date filter",
+              "title": "Start Date"
+            },
+            "description": "Start date filter"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "End date filter",
+              "title": "End Date"
+            },
+            "description": "End date filter"
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 30,
+              "title": "Limit"
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MilkYieldLogResponse"
+                  },
+                  "title": "Response List Milk Yields Api V1 Milk Yields Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Milk Production & Yields"
+        ],
+        "summary": "Record morning and evening milk yield session",
+        "operationId": "create_milk_yield_api_v1_milk_yields_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MilkYieldLogCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MilkYieldLogResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/summary": {
+      "get": {
+        "tags": [
+          "Analytics & KPIs"
+        ],
+        "summary": "Retrieve KPI metrics and status distribution summary",
+        "operationId": "get_analytics_summary_api_v1_analytics_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyticsSummaryResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/analytics/yield-trends": {
+      "get": {
+        "tags": [
+          "Analytics & KPIs"
+        ],
+        "summary": "Retrieve aggregate milk production trend series",
+        "operationId": "get_yield_trends_api_v1_analytics_yield_trends_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "description": "Number of historical days",
+              "default": 30,
+              "title": "Days"
+            },
+            "description": "Number of historical days"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/YieldTrendPoint"
+                  },
+                  "title": "Response Get Yield Trends Api V1 Analytics Yield Trends Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_healthz_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -438,118 +804,15 @@
                 "schema": {}
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/audit-logs": {
-      "get": {
-        "tags": [
-          "audit-logs"
-        ],
-        "summary": "List Audit Logs",
-        "operationId": "list_audit_logs_api_v1_audit_logs_get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
-          },
-          {
-            "name": "event_type",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by event type",
-              "title": "Event Type"
-            },
-            "description": "Filter by event type"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AuditLogEntry"
-                  },
-                  "title": "Response List Audit Logs Api V1 Audit Logs Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
         }
       }
     },
     "/health": {
       "get": {
+        "tags": [
+          "Health"
+        ],
         "summary": "Health Check",
         "operationId": "health_check_health_get",
         "responses": {
@@ -567,191 +830,240 @@
   },
   "components": {
     "schemas": {
-      "AuditLogEntry": {
+      "AnalyticsSummaryResponse": {
+        "properties": {
+          "total_cows": {
+            "type": "integer",
+            "title": "Total Cows"
+          },
+          "lactating_cows": {
+            "type": "integer",
+            "title": "Lactating Cows"
+          },
+          "today_total_yield_liters": {
+            "type": "number",
+            "title": "Today Total Yield Liters"
+          },
+          "active_health_alerts": {
+            "type": "integer",
+            "title": "Active Health Alerts"
+          },
+          "status_breakdown": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Status Breakdown"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_cows",
+          "lactating_cows",
+          "today_total_yield_liters",
+          "active_health_alerts",
+          "status_breakdown"
+        ],
+        "title": "AnalyticsSummaryResponse"
+      },
+      "CowCreate": {
+        "properties": {
+          "tag_id": {
+            "type": "string",
+            "title": "Tag Id"
+          },
+          "breed": {
+            "type": "string",
+            "title": "Breed"
+          },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date",
+            "title": "Date Of Birth"
+          },
+          "gender": {
+            "type": "string",
+            "pattern": "^(Female|Male)$",
+            "title": "Gender"
+          },
+          "health_status": {
+            "type": "string",
+            "title": "Health Status",
+            "default": "Healthy"
+          },
+          "weight_kg": {
+            "type": "number",
+            "title": "Weight Kg"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tag_id",
+          "breed",
+          "date_of_birth",
+          "gender",
+          "weight_kg",
+          "location"
+        ],
+        "title": "CowCreate"
+      },
+      "CowDetailResponse": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "transaction_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Transaction Id"
-          },
-          "event_type": {
+          "tag_id": {
             "type": "string",
-            "title": "Event Type"
+            "title": "Tag Id"
           },
-          "ip_address": {
+          "breed": {
             "type": "string",
-            "title": "Ip Address"
+            "title": "Breed"
           },
-          "masked_payload": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Masked Payload"
+          "date_of_birth": {
+            "type": "string",
+            "format": "date",
+            "title": "Date Of Birth"
+          },
+          "gender": {
+            "type": "string",
+            "title": "Gender"
+          },
+          "health_status": {
+            "type": "string",
+            "title": "Health Status"
+          },
+          "weight_kg": {
+            "type": "number",
+            "title": "Weight Kg"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location"
           },
           "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "recent_health_records": {
+            "items": {
+              "$ref": "#/components/schemas/HealthRecordResponse"
+            },
+            "type": "array",
+            "title": "Recent Health Records",
+            "default": []
+          },
+          "recent_milk_logs": {
+            "items": {
+              "$ref": "#/components/schemas/MilkYieldLogResponse"
+            },
+            "type": "array",
+            "title": "Recent Milk Logs",
+            "default": []
+          },
+          "seven_day_avg_yield": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "number"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Created At"
+            "title": "Seven Day Avg Yield",
+            "default": 0.0
           }
         },
         "type": "object",
         "required": [
           "id",
-          "event_type",
-          "ip_address",
-          "masked_payload"
+          "tag_id",
+          "breed",
+          "date_of_birth",
+          "gender",
+          "health_status",
+          "weight_kg",
+          "location",
+          "created_at",
+          "updated_at"
         ],
-        "title": "AuditLogEntry"
+        "title": "CowDetailResponse"
       },
-      "CartItem": {
+      "CowResponse": {
         "properties": {
-          "name": {
+          "id": {
             "type": "string",
-            "title": "Name"
+            "title": "Id"
           },
-          "quantity": {
-            "type": "integer",
-            "title": "Quantity",
-            "default": 1
+          "tag_id": {
+            "type": "string",
+            "title": "Tag Id"
           },
-          "unit_price": {
+          "breed": {
+            "type": "string",
+            "title": "Breed"
+          },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date",
+            "title": "Date Of Birth"
+          },
+          "gender": {
+            "type": "string",
+            "title": "Gender"
+          },
+          "health_status": {
+            "type": "string",
+            "title": "Health Status"
+          },
+          "weight_kg": {
             "type": "number",
-            "title": "Unit Price"
+            "title": "Weight Kg"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
-          "name",
-          "unit_price"
+          "id",
+          "tag_id",
+          "breed",
+          "date_of_birth",
+          "gender",
+          "health_status",
+          "weight_kg",
+          "location",
+          "created_at",
+          "updated_at"
         ],
-        "title": "CartItem"
+        "title": "CowResponse"
       },
-      "CheckoutSessionRequest": {
+      "CowUpdate": {
         "properties": {
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount",
-            "description": "Amount in base currency"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "description": "Settlement/target currency",
-            "default": "USD"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "items": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/CartItem"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Items"
-          }
-        },
-        "type": "object",
-        "required": [
-          "amount",
-          "customer_email"
-        ],
-        "title": "CheckoutSessionRequest"
-      },
-      "CheckoutSessionResponse": {
-        "properties": {
-          "session_id": {
-            "type": "string",
-            "title": "Session Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "client_secret": {
-            "type": "string",
-            "title": "Client Secret"
-          },
-          "base_amount": {
-            "type": "number",
-            "title": "Base Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_amount": {
-            "type": "number",
-            "title": "Target Amount"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          }
-        },
-        "type": "object",
-        "required": [
-          "session_id",
-          "payment_intent_id",
-          "client_secret",
-          "base_amount",
-          "base_currency",
-          "target_amount",
-          "target_currency",
-          "exchange_rate"
-        ],
-        "title": "CheckoutSessionResponse"
-      },
-      "DigitalWalletPaymentRequest": {
-        "properties": {
-          "wallet_type": {
-            "type": "string",
-            "title": "Wallet Type",
-            "description": "apple_pay or google_pay"
-          },
-          "payment_token": {
-            "type": "string",
-            "title": "Payment Token"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "default": "USD"
-          },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
-          },
-          "customer_email": {
+          "tag_id": {
             "anyOf": [
               {
                 "type": "string"
@@ -760,81 +1072,78 @@
                 "type": "null"
               }
             ],
-            "title": "Customer Email",
-            "default": "customer@example.com"
+            "title": "Tag Id"
+          },
+          "breed": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Breed"
+          },
+          "date_of_birth": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Birth"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "health_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Health Status"
+          },
+          "weight_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight Kg"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
           }
         },
         "type": "object",
-        "required": [
-          "wallet_type",
-          "payment_token",
-          "amount"
-        ],
-        "title": "DigitalWalletPaymentRequest"
-      },
-      "DigitalWalletPaymentResponse": {
-        "properties": {
-          "transaction_id": {
-            "type": "string",
-            "title": "Transaction Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "wallet_type": {
-            "type": "string",
-            "title": "Wallet Type"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          }
-        },
-        "type": "object",
-        "required": [
-          "transaction_id",
-          "payment_intent_id",
-          "wallet_type",
-          "amount",
-          "currency",
-          "status"
-        ],
-        "title": "DigitalWalletPaymentResponse"
-      },
-      "ExchangeRatesResponse": {
-        "properties": {
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "rates": {
-            "additionalProperties": {
-              "type": "number"
-            },
-            "type": "object",
-            "title": "Rates"
-          },
-          "timestamp": {
-            "type": "string",
-            "title": "Timestamp"
-          }
-        },
-        "type": "object",
-        "required": [
-          "base_currency",
-          "rates",
-          "timestamp"
-        ],
-        "title": "ExchangeRatesResponse"
+        "title": "CowUpdate"
       },
       "HTTPValidationError": {
         "properties": {
@@ -849,22 +1158,21 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "RefundRequest": {
+      "HealthRecordCreate": {
         "properties": {
-          "transaction_id": {
+          "cow_id": {
             "type": "string",
-            "title": "Transaction Id"
+            "title": "Cow Id"
           },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
-          },
-          "reason": {
+          "record_type": {
             "type": "string",
-            "title": "Reason"
+            "title": "Record Type"
           },
-          "memo": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "diagnosis": {
             "anyOf": [
               {
                 "type": "string"
@@ -873,40 +1181,9 @@
                 "type": "null"
               }
             ],
-            "title": "Memo"
-          }
-        },
-        "type": "object",
-        "required": [
-          "transaction_id",
-          "amount",
-          "reason"
-        ],
-        "title": "RefundRequest"
-      },
-      "RefundSummary": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
+            "title": "Diagnosis"
           },
-          "transaction_id": {
-            "type": "string",
-            "title": "Transaction Id"
-          },
-          "refund_amount": {
-            "type": "number",
-            "title": "Refund Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
-          "reason": {
-            "type": "string",
-            "title": "Reason"
-          },
-          "memo": {
+          "treatment_plan": {
             "anyOf": [
               {
                 "type": "string"
@@ -915,152 +1192,322 @@
                 "type": "null"
               }
             ],
-            "title": "Memo"
+            "title": "Treatment Plan"
           },
-          "status": {
+          "event_date": {
             "type": "string",
-            "title": "Status"
+            "format": "date",
+            "title": "Event Date"
           },
-          "created_at": {
+          "next_due_date": {
             "anyOf": [
               {
                 "type": "string",
-                "format": "date-time"
+                "format": "date"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Created At"
+            "title": "Next Due Date"
+          },
+          "administered_by": {
+            "type": "string",
+            "title": "Administered By"
           }
         },
         "type": "object",
         "required": [
-          "id",
-          "transaction_id",
-          "refund_amount",
-          "currency",
-          "reason",
-          "status"
+          "cow_id",
+          "record_type",
+          "title",
+          "event_date",
+          "administered_by"
         ],
-        "title": "RefundSummary"
+        "title": "HealthRecordCreate"
       },
-      "TransactionDetail": {
+      "HealthRecordResponse": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "payment_intent_id": {
+          "cow_id": {
             "type": "string",
-            "title": "Payment Intent Id"
+            "title": "Cow Id"
           },
-          "customer_email": {
+          "record_type": {
             "type": "string",
-            "title": "Customer Email"
+            "title": "Record Type"
           },
-          "payment_method": {
+          "title": {
             "type": "string",
-            "title": "Payment Method"
+            "title": "Title"
           },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "converted_amount": {
-            "type": "number",
-            "title": "Converted Amount"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "refunded_amount": {
-            "type": "number",
-            "title": "Refunded Amount"
-          },
-          "remaining_refundable_balance": {
-            "type": "number",
-            "title": "Remaining Refundable Balance"
-          },
-          "refunds": {
-            "items": {
-              "$ref": "#/components/schemas/RefundSummary"
-            },
-            "type": "array",
-            "title": "Refunds"
-          },
-          "created_at": {
+          "diagnosis": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
+            "title": "Diagnosis"
+          },
+          "treatment_plan": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Treatment Plan"
+          },
+          "event_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Event Date"
+          },
+          "next_due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Due Date"
+          },
+          "administered_by": {
+            "type": "string",
+            "title": "Administered By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "base_currency",
-          "target_currency",
-          "converted_amount",
-          "exchange_rate",
-          "status",
-          "refunded_amount",
-          "remaining_refundable_balance"
+          "cow_id",
+          "record_type",
+          "title",
+          "event_date",
+          "administered_by",
+          "created_at",
+          "updated_at"
         ],
-        "title": "TransactionDetail"
+        "title": "HealthRecordResponse"
       },
-      "TransactionSummary": {
+      "MilkYieldLogCreate": {
+        "properties": {
+          "cow_id": {
+            "type": "string",
+            "title": "Cow Id"
+          },
+          "logging_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Logging Date"
+          },
+          "morning_yield_liters": {
+            "type": "number",
+            "title": "Morning Yield Liters",
+            "default": 0.0
+          },
+          "evening_yield_liters": {
+            "type": "number",
+            "title": "Evening Yield Liters",
+            "default": 0.0
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cow_id",
+          "logging_date"
+        ],
+        "title": "MilkYieldLogCreate"
+      },
+      "MilkYieldLogResponse": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "payment_intent_id": {
+          "cow_id": {
             "type": "string",
-            "title": "Payment Intent Id"
+            "title": "Cow Id"
           },
-          "customer_email": {
+          "logging_date": {
             "type": "string",
-            "title": "Customer Email"
+            "format": "date",
+            "title": "Logging Date"
           },
-          "payment_method": {
-            "type": "string",
-            "title": "Payment Method"
-          },
-          "amount": {
+          "morning_yield_liters": {
             "type": "number",
-            "title": "Amount"
+            "title": "Morning Yield Liters"
           },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
+          "evening_yield_liters": {
+            "type": "number",
+            "title": "Evening Yield Liters"
           },
-          "status": {
+          "total_yield_liters": {
+            "type": "number",
+            "title": "Total Yield Liters"
+          },
+          "yield_drop_alert": {
+            "type": "boolean",
+            "title": "Yield Drop Alert"
+          },
+          "seven_day_average": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seven Day Average"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "created_at": {
             "type": "string",
-            "title": "Status"
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "cow_id",
+          "logging_date",
+          "morning_yield_liters",
+          "evening_yield_liters",
+          "total_yield_liters",
+          "yield_drop_alert",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "MilkYieldLogResponse"
+      },
+      "Token": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "user"
+        ],
+        "title": "Token"
+      },
+      "UserCreate": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role",
+            "default": "farm_worker"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "full_name"
+        ],
+        "title": "UserCreate"
+      },
+      "UserResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
           },
           "created_at": {
             "anyOf": [
@@ -1078,14 +1525,12 @@
         "type": "object",
         "required": [
           "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "currency",
-          "status"
+          "email",
+          "full_name",
+          "role",
+          "is_active"
         ],
-        "title": "TransactionSummary"
+        "title": "UserResponse"
       },
       "ValidationError": {
         "properties": {
@@ -1126,6 +1571,35 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "YieldTrendPoint": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "total_yield": {
+            "type": "number",
+            "title": "Total Yield"
+          },
+          "average_per_cow": {
+            "type": "number",
+            "title": "Average Per Cow"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "total_yield",
+          "average_per_cow"
+        ],
+        "title": "YieldTrendPoint"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }
