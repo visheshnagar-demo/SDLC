@@ -5,8 +5,13 @@
 body {
   margin: 0;
   font-family:
-    "Inter",
-    system-ui,
+    "Plus Jakarta Sans",
+    Inter,
     -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
     sans-serif;
+  background-color: #f8fafc;
+  color: #0f172a;
 }
