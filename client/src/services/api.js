@@ -2,7 +2,7 @@ import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-export const apiClient = axios.create({
+const apiClient = axios.create({
   baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
@@ -10,82 +10,103 @@ export const apiClient = axios.create({
   timeout: 10000,
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Standardized error payload extractions
-    const message =
-      error.response?.data?.detail ||
-      error.message ||
-      "An unexpected network error occurred";
-    return Promise.reject(
-      new Error(
-        typeof message === "object" ? JSON.stringify(message) : message,
-      ),
-    );
+export const api = {
+  // Analytics
+  getDashboardAnalytics: async () => {
+    const response = await apiClient.get("/api/v1/analytics/dashboard");
+    return response.data;
   },
-);
 
-export const createCheckoutSession = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/checkout-session",
-    payload,
-  );
-  return response.data;
+  // Rooms
+  getRooms: async (params = {}) => {
+    const response = await apiClient.get("/api/v1/rooms", { params });
+    return response.data;
+  },
+  getRoomById: async (id) => {
+    const response = await apiClient.get(`/api/v1/rooms/${id}`);
+    return response.data;
+  },
+  createRoom: async (data) => {
+    const response = await apiClient.post("/api/v1/rooms", data);
+    return response.data;
+  },
+  updateRoomStatus: async (id, statusData) => {
+    const response = await apiClient.patch(
+      `/api/v1/rooms/${id}/status`,
+      statusData,
+    );
+    return response.data;
+  },
+  updateRoom: async (id, data) => {
+    const response = await apiClient.patch(`/api/v1/rooms/${id}`, data);
+    return response.data;
+  },
+
+  // Guests
+  getGuests: async (params = {}) => {
+    const response = await apiClient.get("/api/v1/guests", { params });
+    return response.data;
+  },
+  getGuestById: async (id) => {
+    const response = await apiClient.get(`/api/v1/guests/${id}`);
+    return response.data;
+  },
+  createGuest: async (data) => {
+    const response = await apiClient.post("/api/v1/guests", data);
+    return response.data;
+  },
+
+  // Bookings
+  getBookings: async (params = {}) => {
+    const response = await apiClient.get("/api/v1/bookings", { params });
+    return response.data;
+  },
+  getBookingById: async (id) => {
+    const response = await apiClient.get(`/api/v1/bookings/${id}`);
+    return response.data;
+  },
+  createBooking: async (data) => {
+    const response = await apiClient.post("/api/v1/bookings", data);
+    return response.data;
+  },
+  checkInGuest: async (id, data = {}) => {
+    const response = await apiClient.post(
+      `/api/v1/bookings/${id}/check-in`,
+      data,
+    );
+    return response.data;
+  },
+  checkOutGuest: async (id, data = {}) => {
+    const response = await apiClient.post(
+      `/api/v1/bookings/${id}/check-out`,
+      data,
+    );
+    return response.data;
+  },
+
+  // Invoices & Billing
+  getInvoices: async (params = {}) => {
+    const response = await apiClient.get("/api/v1/invoices", { params });
+    return response.data;
+  },
+  getInvoiceById: async (id) => {
+    const response = await apiClient.get(`/api/v1/invoices/${id}`);
+    return response.data;
+  },
+  addInvoiceItem: async (id, itemData) => {
+    const response = await apiClient.post(
+      `/api/v1/invoices/${id}/items`,
+      itemData,
+    );
+    return response.data;
+  },
+  payInvoice: async (id, paymentData) => {
+    const response = await apiClient.post(
+      `/api/v1/invoices/${id}/pay`,
+      paymentData,
+    );
+    return response.data;
+  },
 };
 
-export const payWithDigitalWallet = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/digital-wallet",
-    payload,
-  );
-  return response.data;
-};
-
-export const getExchangeRates = async (baseCurrency = "USD") => {
-  const response = await apiClient.get("/api/v1/payments/rates", {
-    params: { base_currency: baseCurrency },
-  });
-  return response.data;
-};
-
-export const listTransactions = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/payments/transactions", {
-    params,
-  });
-  return response.data;
-};
-
-export const getTransactionDetail = async (transactionId) => {
-  const response = await apiClient.get(
-    `/api/v1/payments/transactions/${transactionId}`,
-  );
-  return response.data;
-};
-
-export const createRefund = async (payload) => {
-  const response = await apiClient.post("/api/v1/refunds", payload);
-  return response.data;
-};
-
-export const listRefunds = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/refunds", { params });
-  return response.data;
-};
-
-export const listAuditLogs = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/audit-logs", { params });
-  return response.data;
-};
-
-export default {
-  apiClient,
-  createCheckoutSession,
-  payWithDigitalWallet,
-  getExchangeRates,
-  listTransactions,
-  getTransactionDetail,
-  createRefund,
-  listRefunds,
-  listAuditLogs,
-};
+export default apiClient;
