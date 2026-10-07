@@ -1,18 +1,24 @@
+import os
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from fastapi.testclient import TestClient
 
-from server.database import Base, get_db, seed_data
-import server.models  # noqa: F401
+# Set test environment
+os.environ["TESTING"] = "true"
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+
+from server.models import Base
+from server.database import get_db, seed_data
 from server.main import app
+from server.auth import create_access_token
 
-# In-memory SQLite for testing with StaticPool
-TEST_DATABASE_URL = "sqlite:///:memory:"
+# Shared in-memory test database
+SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
 test_engine = create_engine(
-    TEST_DATABASE_URL,
+    SQLALCHEMY_DATABASE_URL,
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
@@ -32,19 +38,23 @@ def setup_database():
 
 
 @pytest.fixture
-def db_session():
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+def db():
+    connection = test_engine.connect()
+    transaction = connection.begin()
+    session = TestingSessionLocal(bind=connection)
+
+    yield session
+
+    session.close()
+    transaction.rollback()
+    connection.close()
 
 
 @pytest.fixture
-def client(db_session):
+def client(db):
     def override_get_db():
         try:
-            yield db_session
+            yield db
         finally:
             pass
 
@@ -52,3 +62,47 @@ def client(db_session):
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def admin_token(db):
+    from server.models import User
+
+    admin = db.query(User).filter(User.email == "admin@example.com").first()
+    return create_access_token({"sub": admin.id, "email": admin.email, "role": "ADMIN"})
+
+
+@pytest.fixture
+def doctor_token(db):
+    from server.models import User
+
+    doc = db.query(User).filter(User.email == "doctor@example.com").first()
+    return create_access_token({"sub": doc.id, "email": doc.email, "role": "DOCTOR"})
+
+
+@pytest.fixture
+def nurse_token(db):
+    from server.models import User
+
+    nurse = db.query(User).filter(User.email == "nurse@example.com").first()
+    return create_access_token({"sub": nurse.id, "email": nurse.email, "role": "NURSE"})
+
+
+@pytest.fixture
+def receptionist_token(db):
+    from server.models import User
+
+    rec = db.query(User).filter(User.email == "receptionist@example.com").first()
+    return create_access_token(
+        {"sub": rec.id, "email": rec.email, "role": "RECEPTIONIST"}
+    )
+
+
+@pytest.fixture
+def patient_token(db):
+    from server.models import User
+
+    patient = db.query(User).filter(User.email == "test@example.com").first()
+    return create_access_token(
+        {"sub": patient.id, "email": patient.email, "role": "PATIENT"}
+    )

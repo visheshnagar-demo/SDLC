@@ -17,3 +17,15 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-423 - Hospital Management System (HMS) Core Platform & Patient Portal
+
+### Feature Summary
+Provides a comprehensive platform for hospital administrators, clinical staff, and patients to manage registrations, appointments, EHRs, and lab results securely.
+
+### Key Features
+- Patient Registration & Profile Management
+- Appointment Scheduling & Provider Management
+- Electronic Health Records (EHR) & Clinical Management
+- Patient Portal Dashboard
+- Role-Based Access Control (RBAC) & Security Audit Logging

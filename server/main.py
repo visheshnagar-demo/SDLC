@@ -1,41 +1,66 @@
-import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from server.api.v1 import api_v1_router
-from server.database import init_db
+
 from server.config import settings
+from server.database import init_db
+from server.routers import (
+    auth,
+    patients,
+    doctors,
+    appointments,
+    ehr,
+    audit,
+)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Initialize schema and seed accounts
     init_db()
     yield
 
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
+    description="Backend REST API for Hospital Management System (HMS) Core Platform & Patient Portal",
+    version="1.0.0",
     lifespan=lifespan,
 )
 
-allowed_origins_raw = os.getenv(
-    "ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000"
-)
-allowed_origins = [
-    origin.strip() for origin in allowed_origins_raw.split(",") if origin.strip()
+# Mandatory CORS Middleware
+allowed_origins_list = [
+    origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",") if origin.strip()
 ]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=allowed_origins_list if allowed_origins_list else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(api_v1_router)
+# Register Routers
+app.include_router(auth.router)
+app.include_router(patients.router)
+app.include_router(doctors.router)
+app.include_router(appointments.router)
+app.include_router(ehr.router)
+app.include_router(audit.router)
 
 
-@app.get("/health")
+@app.get("/api/v1/health", tags=["Health"])
+@app.get("/health", tags=["Health"])
 def health_check():
-    return {"status": "ok", "service": "payment-gateway-service"}
+    return {
+        "status": "healthy",
+        "service": "Hospital Management System Core Platform",
+        "database": "connected",
+        "version": "1.0.0",
+    }
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("server.main.py:app", host="0.0.0.0", port=8000, reload=True)
