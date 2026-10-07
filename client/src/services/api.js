@@ -7,85 +7,112 @@ export const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Standardized error payload extractions
-    const message =
-      error.response?.data?.detail ||
-      error.message ||
-      "An unexpected network error occurred";
-    return Promise.reject(
-      new Error(
-        typeof message === "object" ? JSON.stringify(message) : message,
-      ),
-    );
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
   },
+  (error) => Promise.reject(error),
 );
 
-export const createCheckoutSession = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/checkout-session",
-    payload,
-  );
-  return response.data;
+export const authApi = {
+  login: async (credentials) => {
+    const response = await apiClient.post("/api/v1/auth/login", credentials);
+    return response.data;
+  },
+  register: async (userData) => {
+    const response = await apiClient.post("/api/v1/auth/register", userData);
+    return response.data;
+  },
+  getCurrentUser: async () => {
+    const response = await apiClient.get("/api/v1/auth/me");
+    return response.data;
+  },
 };
 
-export const payWithDigitalWallet = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/digital-wallet",
-    payload,
-  );
-  return response.data;
+export const patientsApi = {
+  getPatients: async (params = {}) => {
+    const response = await apiClient.get("/api/v1/patients", { params });
+    return response.data;
+  },
+  getPatientById: async (patientId) => {
+    const response = await apiClient.get(`/api/v1/patients/${patientId}`);
+    return response.data;
+  },
+  createPatient: async (patientData) => {
+    const response = await apiClient.post("/api/v1/patients", patientData);
+    return response.data;
+  },
 };
 
-export const getExchangeRates = async (baseCurrency = "USD") => {
-  const response = await apiClient.get("/api/v1/payments/rates", {
-    params: { base_currency: baseCurrency },
-  });
-  return response.data;
+export const doctorsApi = {
+  getDoctors: async (params = {}) => {
+    const response = await apiClient.get("/api/v1/doctors", { params });
+    return response.data;
+  },
 };
 
-export const listTransactions = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/payments/transactions", {
-    params,
-  });
-  return response.data;
+export const appointmentsApi = {
+  getSlots: async (params = {}) => {
+    const response = await apiClient.get("/api/v1/appointments/slots", {
+      params,
+    });
+    return response.data;
+  },
+  bookAppointment: async (appointmentData) => {
+    const response = await apiClient.post(
+      "/api/v1/appointments",
+      appointmentData,
+    );
+    return response.data;
+  },
+  getAppointments: async (params = {}) => {
+    const response = await apiClient.get("/api/v1/appointments", { params });
+    return response.data;
+  },
+  updateStatus: async (appointmentId, status) => {
+    const response = await apiClient.patch(
+      `/api/v1/appointments/${appointmentId}/status`,
+      { status },
+    );
+    return response.data;
+  },
 };
 
-export const getTransactionDetail = async (transactionId) => {
-  const response = await apiClient.get(
-    `/api/v1/payments/transactions/${transactionId}`,
-  );
-  return response.data;
+export const ehrApi = {
+  createRecord: async (recordData) => {
+    const response = await apiClient.post("/api/v1/ehr/records", recordData);
+    return response.data;
+  },
+  getPatientRecords: async (patientId) => {
+    const response = await apiClient.get(`/api/v1/ehr/patients/${patientId}`);
+    return response.data;
+  },
+  downloadPrescription: async (recordId) => {
+    const response = await apiClient.get(
+      `/api/v1/ehr/records/${recordId}/download-prescription`,
+    );
+    return response.data;
+  },
 };
 
-export const createRefund = async (payload) => {
-  const response = await apiClient.post("/api/v1/refunds", payload);
-  return response.data;
-};
-
-export const listRefunds = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/refunds", { params });
-  return response.data;
-};
-
-export const listAuditLogs = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/audit-logs", { params });
-  return response.data;
+export const auditApi = {
+  getLogs: async (params = {}) => {
+    const response = await apiClient.get("/api/v1/audit/logs", { params });
+    return response.data;
+  },
 };
 
 export default {
-  apiClient,
-  createCheckoutSession,
-  payWithDigitalWallet,
-  getExchangeRates,
-  listTransactions,
-  getTransactionDetail,
-  createRefund,
-  listRefunds,
-  listAuditLogs,
+  auth: authApi,
+  patients: patientsApi,
+  doctors: doctorsApi,
+  appointments: appointmentsApi,
+  ehr: ehrApi,
+  audit: auditApi,
 };
