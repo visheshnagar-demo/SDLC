@@ -5,35 +5,43 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import CheckoutPage from "./pages/CheckoutPage";
-import RefundPortalPage from "./pages/RefundPortalPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
+import { AuthProvider } from "./context/AuthContext";
+import AppHeader from "./components/layout/AppHeader";
+import SidebarNav from "./components/layout/SidebarNav";
+import PatientDashboardPage from "./pages/PatientDashboardPage";
+import AppointmentsPage from "./pages/AppointmentsPage";
+import DoctorEHRPage from "./pages/DoctorEHRPage";
+import AdminConsolePage from "./pages/AdminConsolePage";
+import LoginPage from "./pages/LoginPage";
 
 export function App() {
   return (
-    <Router>
-      <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-        <Navbar />
-        <main className="flex-1">
-          <Routes>
-            <Route path="/" element={<Navigate to="/checkout" replace />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/refunds" element={<RefundPortalPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="*" element={<Navigate to="/checkout" replace />} />
-          </Routes>
-        </main>
-        <footer className="bg-slate-900 text-slate-400 border-t border-slate-800 py-6 text-center text-xs">
-          <div className="max-w-7xl mx-auto px-4">
-            <p>
-              © {new Date().getFullYear()} PayGateway Service. PCI-DSS Level 1
-              Merchant Security.
-            </p>
+    <AuthProvider>
+      <Router>
+        <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+          <AppHeader />
+          <div className="flex flex-1">
+            <SidebarNav />
+            <main className="flex-1 overflow-y-auto bg-slate-50">
+              <Routes>
+                <Route path="/" element={<PatientDashboardPage />} />
+                <Route
+                  path="/patient-portal"
+                  element={<PatientDashboardPage />}
+                />
+                <Route path="/appointments" element={<AppointmentsPage />} />
+                <Route path="/doctor-ehr" element={<DoctorEHRPage />} />
+                <Route path="/clinical" element={<DoctorEHRPage />} />
+                <Route path="/admin" element={<AdminConsolePage />} />
+                <Route path="/audit" element={<AdminConsolePage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </main>
           </div>
-        </footer>
-      </div>
-    </Router>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 

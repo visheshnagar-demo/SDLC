@@ -2,11 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family:
-    "Inter",
-    system-ui,
-    -apple-system,
-    sans-serif;
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900;
+  }
 }
