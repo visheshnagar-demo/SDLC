@@ -1,113 +1,188 @@
-from typing import Any, Optional
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Optional, List
 from datetime import datetime
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
-class CartItem(BaseModel):
-    name: str
-    quantity: int = 1
+# ==================== User / Auth Schemas ====================
+class UserBase(BaseModel):
+    email: EmailStr
+    role: str = "staff"
+    is_active: bool = True
+    is_verified: bool = True
+
+
+class UserCreate(UserBase):
+    password: str
+
+
+class UserResponse(UserBase):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ==================== Room Schemas ====================
+class RoomBase(BaseModel):
+    room_number: str
+    room_category: str = "Standard"  # Standard, Deluxe, Suite
+    base_rate_per_night: float = Field(..., gt=0)
+    floor_number: int = 1
+    max_occupancy: int = 2
+    amenities: List[str] = []
+
+
+class RoomCreate(RoomBase):
+    pass
+
+
+class RoomUpdate(BaseModel):
+    room_number: Optional[str] = None
+    room_category: Optional[str] = None
+    base_rate_per_night: Optional[float] = Field(None, gt=0)
+    floor_number: Optional[int] = None
+    max_occupancy: Optional[int] = None
+    amenities: Optional[List[str]] = None
+    status: Optional[str] = None
+
+
+class RoomStatusUpdate(BaseModel):
+    status: str  # Available, Occupied, Under Maintenance, Reserved
+
+
+class RoomResponse(BaseModel):
+    id: str
+    room_number: str
+    room_category: str
+    base_rate_per_night: float
+    status: str
+    floor_number: int
+    max_occupancy: int
+    amenities: List[str] = []
+    created_at: datetime
+    updated_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ==================== Guest Schemas ====================
+class GuestBase(BaseModel):
+    full_name: str
+    email: EmailStr
+    phone_number: str
+    id_proof_type: str = "Passport"
+    id_proof_number: str
+    address: Optional[str] = None
+    vip_status: bool = False
+
+
+class GuestCreate(GuestBase):
+    pass
+
+
+class GuestUpdate(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
+    id_proof_type: Optional[str] = None
+    id_proof_number: Optional[str] = None
+    address: Optional[str] = None
+    vip_status: Optional[bool] = None
+
+
+class GuestResponse(GuestBase):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ==================== Booking Schemas ====================
+class BookingCreate(BaseModel):
+    guest_id: str
+    room_id: str
+    check_in_date: str  # YYYY-MM-DD
+    check_out_date: str  # YYYY-MM-DD
+    special_requests: Optional[str] = None
+
+
+class BookingUpdate(BaseModel):
+    check_in_date: Optional[str] = None
+    check_out_date: Optional[str] = None
+    special_requests: Optional[str] = None
+    booking_status: Optional[str] = None
+
+
+class BookingResponse(BaseModel):
+    id: str
+    booking_reference: str
+    room_id: str
+    guest_id: str
+    check_in_date: str
+    check_out_date: str
+    total_nights: int
+    total_amount: float
+    booking_status: str
+    actual_check_in: Optional[datetime] = None
+    actual_check_out: Optional[datetime] = None
+    special_requests: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    room: Optional[RoomResponse] = None
+    guest: Optional[GuestResponse] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ==================== Invoice Schemas ====================
+class InvoiceItemBase(BaseModel):
+    description: str
+    item_type: str = "Service"  # RoomFee, Service, Amenity, Dining, Spa
     unit_price: float
+    quantity: int = 1
 
 
-class CheckoutSessionRequest(BaseModel):
-    amount: float = Field(gt=0, description="Amount in base currency")
-    currency: str = Field(default="USD", description="Settlement/target currency")
-    customer_email: str
-    items: Optional[list[CartItem]] = Field(default_factory=list)
+class InvoiceItemCreate(InvoiceItemBase):
+    pass
 
 
-class CheckoutSessionResponse(BaseModel):
-    session_id: str
-    payment_intent_id: str
-    client_secret: str
-    base_amount: float
-    base_currency: str
-    target_amount: float
-    target_currency: str
-    exchange_rate: float
-
-
-class DigitalWalletPaymentRequest(BaseModel):
-    wallet_type: str = Field(description="apple_pay or google_pay")
-    payment_token: str
-    currency: str = "USD"
-    amount: float = Field(gt=0)
-    customer_email: Optional[str] = "customer@example.com"
-
-
-class DigitalWalletPaymentResponse(BaseModel):
-    transaction_id: str
-    payment_intent_id: str
-    wallet_type: str
-    amount: float
-    currency: str
-    status: str
-
-
-class ExchangeRatesResponse(BaseModel):
-    base_currency: str
-    rates: dict[str, float]
-    timestamp: str
-
-
-class RefundRequest(BaseModel):
-    transaction_id: str
-    amount: float = Field(gt=0)
-    reason: str
-    memo: Optional[str] = None
-
-
-class RefundSummary(BaseModel):
+class InvoiceItemResponse(InvoiceItemBase):
+    id: str
+    invoice_id: str
+    total_price: float
+    created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
+
+class PaymentRequest(BaseModel):
+    payment_method: str = "CreditCard"  # CreditCard, DebitCard, Cash, BankTransfer
+
+
+class InvoiceResponse(BaseModel):
     id: str
-    transaction_id: str
-    refund_amount: float
-    currency: str
-    reason: str
-    memo: Optional[str] = None
-    status: str
-    created_at: Optional[datetime] = None
-
-
-class TransactionSummary(BaseModel):
+    invoice_number: str
+    booking_id: str
+    guest_id: str
+    room_charges: float
+    service_charges: float
+    tax_amount: float
+    total_payable: float
+    payment_status: str
+    payment_method: Optional[str] = None
+    paid_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+    items: List[InvoiceItemResponse] = []
+    booking: Optional[BookingResponse] = None
+    guest: Optional[GuestResponse] = None
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    currency: str
-    status: str
-    created_at: Optional[datetime] = None
 
-
-class TransactionDetail(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    payment_intent_id: str
-    customer_email: str
-    payment_method: str
-    amount: float
-    base_currency: str
-    target_currency: str
-    converted_amount: float
-    exchange_rate: float
-    status: str
-    refunded_amount: float
-    remaining_refundable_balance: float
-    refunds: list[RefundSummary] = Field(default_factory=list)
-    created_at: Optional[datetime] = None
-
-
-class AuditLogEntry(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    transaction_id: Optional[str] = None
-    event_type: str
-    ip_address: str
-    masked_payload: dict[str, Any]
-    created_at: Optional[datetime] = None
+# ==================== Analytics Schemas ====================
+class AnalyticsDashboardResponse(BaseModel):
+    occupancy_rate_percentage: float
+    total_rooms: int
+    occupied_rooms: int
+    available_rooms: int
+    maintenance_rooms: int
+    today_revenue: float
+    pending_check_ins_today: int
+    pending_check_outs_today: int

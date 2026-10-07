@@ -1,9 +1,11 @@
 import uuid
 import datetime
+import json
 from sqlalchemy import (
     Column,
     String,
     Float,
+    Integer,
     Boolean,
     DateTime,
     ForeignKey,
@@ -27,7 +29,7 @@ class User(Base):
     id = Column(String, primary_key=True, default=generate_uuid)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    role = Column(String, default="user", nullable=False)
+    role = Column(String, default="staff", nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     is_verified = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=get_utc_now, nullable=False)
@@ -38,44 +40,20 @@ class User(Base):
         nullable=False,
     )
 
-    transactions = relationship("Transaction", back_populates="user")
-    refunds = relationship("Refund", back_populates="actor")
 
+class Room(Base):
+    __tablename__ = "rooms"
 
-class CheckoutSession(Base):
-    __tablename__ = "checkout_sessions"
-
-    id = Column(String, primary_key=True, default=lambda: f"cs_{uuid.uuid4().hex[:16]}")
-    session_id = Column(String, unique=True, index=True, nullable=False)
-    payment_intent_id = Column(String, index=True, nullable=False)
-    client_secret = Column(String, nullable=False)
-    customer_email = Column(String, index=True, nullable=False)
-    amount = Column(Float, nullable=False)
-    currency = Column(String, nullable=False)
-    target_amount = Column(Float, nullable=False)
-    target_currency = Column(String, nullable=False)
-    exchange_rate = Column(Float, default=1.0, nullable=False)
-    items_json = Column(Text, default="[]", nullable=False)
-    status = Column(String, default="PENDING", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
-
-
-class Transaction(Base):
-    __tablename__ = "transactions"
-
-    id = Column(String, primary_key=True, default=lambda: f"tx_{uuid.uuid4().hex[:12]}")
-    payment_intent_id = Column(String, index=True, nullable=False)
-    user_id = Column(String, ForeignKey("users.id"), nullable=True)
-    customer_email = Column(String, index=True, nullable=False)
-    payment_method = Column(String, default="card", nullable=False)
-    amount = Column(Float, nullable=False)
-    base_currency = Column(String, default="USD", nullable=False)
-    target_currency = Column(String, default="USD", nullable=False)
-    converted_amount = Column(Float, nullable=False)
-    exchange_rate = Column(Float, default=1.0, nullable=False)
-    status = Column(String, default="COMPLETED", nullable=False)
-    refunded_amount = Column(Float, default=0.0, nullable=False)
-    remaining_refundable_balance = Column(Float, nullable=False)
+    id = Column(String, primary_key=True, default=generate_uuid)
+    room_number = Column(String(20), unique=True, index=True, nullable=False)
+    room_category = Column(String(50), nullable=False)  # Standard, Deluxe, Suite
+    base_rate_per_night = Column(Float, nullable=False)
+    status = Column(
+        String(50), default="Available", nullable=False
+    )  # Available, Occupied, Under Maintenance, Reserved
+    floor_number = Column(Integer, nullable=False, default=1)
+    max_occupancy = Column(Integer, nullable=False, default=2)
+    amenities = Column(Text, default="[]", nullable=False)
     created_at = Column(DateTime, default=get_utc_now, nullable=False)
     updated_at = Column(
         DateTime,
@@ -84,60 +62,120 @@ class Transaction(Base):
         nullable=False,
     )
 
-    user = relationship("User", back_populates="transactions")
-    refunds = relationship(
-        "Refund", back_populates="transaction", cascade="all, delete-orphan"
-    )
-    audit_logs = relationship("AuditLog", back_populates="transaction")
+    bookings = relationship("Booking", back_populates="room")
+
+    def get_amenities_list(self) -> list[str]:
+        if not self.amenities:
+            return []
+        try:
+            return json.loads(self.amenities)
+        except Exception:
+            return [a.strip() for a in self.amenities.split(",") if a.strip()]
+
+    def set_amenities_list(self, items: list[str]):
+        self.amenities = json.dumps(items)
 
 
-class Refund(Base):
-    __tablename__ = "refunds"
-
-    id = Column(
-        String, primary_key=True, default=lambda: f"ref_{uuid.uuid4().hex[:12]}"
-    )
-    transaction_id = Column(String, ForeignKey("transactions.id"), nullable=False)
-    actor_id = Column(String, ForeignKey("users.id"), nullable=True)
-    refund_amount = Column(Float, nullable=False)
-    currency = Column(String, default="USD", nullable=False)
-    reason = Column(String, nullable=False)
-    memo = Column(String, nullable=True)
-    status = Column(String, default="COMPLETED", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
-
-    transaction = relationship("Transaction", back_populates="refunds")
-    actor = relationship("User", back_populates="refunds")
-
-
-class AuditLog(Base):
-    __tablename__ = "audit_logs"
-
-    id = Column(
-        String, primary_key=True, default=lambda: f"log_{uuid.uuid4().hex[:12]}"
-    )
-    transaction_id = Column(String, ForeignKey("transactions.id"), nullable=True)
-    event_type = Column(String, index=True, nullable=False)
-    ip_address = Column(String, default="127.0.0.1", nullable=False)
-    masked_payload = Column(Text, default="{}", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
-
-    transaction = relationship("Transaction", back_populates="audit_logs")
-
-
-class ExchangeRateCache(Base):
-    __tablename__ = "exchange_rate_caches"
+class Guest(Base):
+    __tablename__ = "guests"
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    base_currency = Column(String, index=True, nullable=False)
-    rates_json = Column(Text, nullable=False)
-    fetched_at = Column(DateTime, default=get_utc_now, nullable=False)
-    expires_at = Column(DateTime, nullable=False)
+    full_name = Column(String(150), nullable=False, index=True)
+    email = Column(String(150), nullable=False, index=True)
+    phone_number = Column(String(50), nullable=False)
+    id_proof_type = Column(String(50), nullable=False)  # Passport, Driver License, etc.
+    id_proof_number = Column(String(100), nullable=False)
+    address = Column(Text, nullable=True)
+    vip_status = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    updated_at = Column(
+        DateTime,
+        default=get_utc_now,
+        onupdate=get_utc_now,
+        nullable=False,
+    )
+
+    bookings = relationship("Booking", back_populates="guest")
+    invoices = relationship("Invoice", back_populates="guest")
 
 
-class WebhookEvent(Base):
-    __tablename__ = "webhook_events"
+class Booking(Base):
+    __tablename__ = "bookings"
 
-    id = Column(String, primary_key=True)
-    event_type = Column(String, nullable=False)
-    processed_at = Column(DateTime, default=get_utc_now, nullable=False)
+    id = Column(String, primary_key=True, default=generate_uuid)
+    booking_reference = Column(String(30), unique=True, index=True, nullable=False)
+    room_id = Column(String, ForeignKey("rooms.id"), nullable=False, index=True)
+    guest_id = Column(String, ForeignKey("guests.id"), nullable=False, index=True)
+    check_in_date = Column(String(10), nullable=False)  # YYYY-MM-DD
+    check_out_date = Column(String(10), nullable=False)  # YYYY-MM-DD
+    total_nights = Column(Integer, nullable=False)
+    total_amount = Column(Float, nullable=False)
+    booking_status = Column(
+        String(50), default="Reserved", nullable=False
+    )  # Reserved, Confirmed, CheckedIn, CheckedOut, Cancelled
+    actual_check_in = Column(DateTime, nullable=True)
+    actual_check_out = Column(DateTime, nullable=True)
+    special_requests = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    updated_at = Column(
+        DateTime,
+        default=get_utc_now,
+        onupdate=get_utc_now,
+        nullable=False,
+    )
+
+    room = relationship("Room", back_populates="bookings")
+    guest = relationship("Guest", back_populates="bookings")
+    invoice = relationship(
+        "Invoice", back_populates="booking", uselist=False, cascade="all, delete-orphan"
+    )
+
+
+class Invoice(Base):
+    __tablename__ = "invoices"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    invoice_number = Column(String(30), unique=True, index=True, nullable=False)
+    booking_id = Column(String, ForeignKey("bookings.id"), nullable=False, index=True)
+    guest_id = Column(String, ForeignKey("guests.id"), nullable=False, index=True)
+    room_charges = Column(Float, default=0.0, nullable=False)
+    service_charges = Column(Float, default=0.0, nullable=False)
+    tax_amount = Column(Float, default=0.0, nullable=False)
+    total_payable = Column(Float, default=0.0, nullable=False)
+    payment_status = Column(
+        String(50), default="Pending", nullable=False
+    )  # Pending, Paid, Refunded
+    payment_method = Column(
+        String(50), nullable=True
+    )  # CreditCard, DebitCard, Cash, etc.
+    paid_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    updated_at = Column(
+        DateTime,
+        default=get_utc_now,
+        onupdate=get_utc_now,
+        nullable=False,
+    )
+
+    booking = relationship("Booking", back_populates="invoice")
+    guest = relationship("Guest", back_populates="invoices")
+    items = relationship(
+        "InvoiceItem", back_populates="invoice", cascade="all, delete-orphan"
+    )
+
+
+class InvoiceItem(Base):
+    __tablename__ = "invoice_items"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    invoice_id = Column(String, ForeignKey("invoices.id"), nullable=False, index=True)
+    description = Column(String(255), nullable=False)
+    item_type = Column(
+        String(50), default="Service", nullable=False
+    )  # RoomFee, Service, Amenity, Dining, Spa
+    unit_price = Column(Float, nullable=False)
+    quantity = Column(Integer, default=1, nullable=False)
+    total_price = Column(Float, nullable=False)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+
+    invoice = relationship("Invoice", back_populates="items")
