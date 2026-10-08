@@ -1,0 +1,28 @@
+{
+  "columns": [
+    {
+      "source_name": "id",
+      "target_name": "id",
+      "target_type": "STRING",
+      "transform": "strip_whitespace"
+    },
+    {
+      "source_name": "payload_data",
+      "target_name": "payload_data",
+      "target_type": "STRING",
+      "transform": "clean_payload"
+    },
+    {
+      "source_name": "status",
+      "target_name": "status",
+      "target_type": "STRING",
+      "transform": "default_unknown"
+    },
+    {
+      "source_name": "source_created_at",
+      "target_name": "source_created_at",
+      "target_type": "TIMESTAMP",
+      "transform": "parse_timestamp"
+    }
+  ]
+}

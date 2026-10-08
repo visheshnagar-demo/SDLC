@@ -1,98 +1,69 @@
+"""Database connectivity module for Cloud SQL PostgreSQL.
+Strict adherence to IAM Authentication and Zero-SQLite policy.
+"""
 import os
-import uuid
-import datetime
-from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
-from sqlalchemy.exc import IntegrityError
-import bcrypt
+import logging
+from typing import Optional, Tuple
+import sqlalchemy
+from sqlalchemy.engine import Engine
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:////tmp/app.db")
-
-connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
-engine = create_engine(DATABASE_URL, connect_args=connect_args)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base = declarative_base()
+logger = logging.getLogger(__name__)
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+def get_db_engine() -> Tuple[Engine, Optional[object]]:
+    """Creates a SQLAlchemy engine for PostgreSQL.
+    
+    Uses Cloud SQL Python Connector with IAM auth if INSTANCE_CONNECTION_NAME is configured,
+    or direct connection via DATABASE_URL/POSTGRES_URL.
+    
+    Zero-SQLite policy: Never falls back to SQLite.
+    Zero-Mock policy: Fails fast if credentials are not configured.
+    """
+    instance_connection_name = (
+        os.getenv("INSTANCE_CONNECTION_NAME")
+        or os.getenv("POSTGRES_INSTANCE_CONNECTION_NAME")
+        or os.getenv("CLOUD_SQL_CONNECTION_NAME")
+        or ""
+    )
+    user = os.getenv("POSTGRES_USER") or os.getenv("DB_USER", "")
+    dbname = os.getenv("POSTGRES_DB") or os.getenv("DB_NAME", "postgres")
+    db_url = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL")
 
-
-def get_password_hash(password: str) -> str:
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
-
-
-def init_db():
-    from server import models  # noqa: F401
-
-    Base.metadata.create_all(bind=engine)
-    db = SessionLocal()
-    try:
-        seed_data(db)
-    finally:
-        db.close()
-
-
-def seed_data(db: Session):
-    from server.models import User, ExchangeRateCache
-
-    # Seed regular test user
-    try:
-        user = db.query(User).filter(User.email == "test@example.com").first()
-        if not user:
-            user = User(
-                id=str(uuid.uuid4()),
-                email="test@example.com",
-                hashed_password=get_password_hash("testpassword"),
-                role="user",
-                is_active=True,
-                is_verified=True,
+    if instance_connection_name and user:
+        try:
+            from google.cloud.sql.connector import Connector, IPTypes
+            logger.info(
+                "Initializing Cloud SQL Python Connector for %s with IAM auth (user=%s)",
+                instance_connection_name,
+                user,
             )
-            db.add(user)
-            db.commit()
-    except IntegrityError:
-        db.rollback()
+            connector = Connector()
+            ip_type_str = os.getenv("CLOUD_SQL_IP_TYPE", "PRIVATE").upper()
+            ip_type = IPTypes.PRIVATE if ip_type_str == "PRIVATE" else IPTypes.PUBLIC
 
-    # Seed admin user
-    try:
-        admin = db.query(User).filter(User.email == "admin@example.com").first()
-        if not admin:
-            admin = User(
-                id=str(uuid.uuid4()),
-                email="admin@example.com",
-                hashed_password=get_password_hash("adminpassword"),
-                role="admin",
-                is_active=True,
-                is_verified=True,
-            )
-            db.add(admin)
-            db.commit()
-    except IntegrityError:
-        db.rollback()
+            def getconn():
+                return connector.connect(
+                    instance_connection_name,
+                    "pg8000",
+                    user=user,
+                    db=dbname,
+                    enable_iam_auth=True,
+                    ip_type=ip_type,
+                )
 
-    # Seed initial exchange rates cache
-    try:
-        cache = (
-            db.query(ExchangeRateCache)
-            .filter(ExchangeRateCache.base_currency == "USD")
-            .first()
-        )
-        if not cache:
-            now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-            cache = ExchangeRateCache(
-                id=str(uuid.uuid4()),
-                base_currency="USD",
-                rates_json='{"USD": 1.0, "EUR": 0.925, "GBP": 0.79, "JPY": 155.0, "CAD": 1.36}',
-                fetched_at=now,
-                expires_at=now + datetime.timedelta(minutes=15),
-            )
-            db.add(cache)
-            db.commit()
-    except IntegrityError:
-        db.rollback()
+            engine = sqlalchemy.create_engine("postgresql+pg8000://", creator=getconn)
+            return engine, connector
+        except Exception as e:
+            logger.error("Failed to initialize Cloud SQL Python Connector: %s", e)
+            raise RuntimeError(f"Cloud SQL connector initialization failed: {e}") from e
+
+    if db_url:
+        logger.info("Connecting to PostgreSQL via DATABASE_URL")
+        engine = sqlalchemy.create_engine(db_url)
+        return engine, None
+
+    raise EnvironmentError(
+        "FATAL: Missing database configuration. "
+        "Provide INSTANCE_CONNECTION_NAME + POSTGRES_USER + POSTGRES_DB for Cloud SQL IAM auth, "
+        "or DATABASE_URL for direct connection. SQLite fallback is strictly prohibited."
+    )

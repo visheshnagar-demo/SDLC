@@ -1,88 +1,70 @@
-# Project
+# Cloud SQL PostgreSQL to BigQuery ETL Pipeline (SCRUM-430)
 
-## Server
+Production-grade ETL pipeline and microservice to extract raw data from Cloud SQL PostgreSQL, clean and normalize attributes, and load data into Google BigQuery.
 
-### Prerequisites
-- Python 3.9+
-- pip and venv
+## Architecture
 
-### Setup
+- **Source**: Google Cloud SQL PostgreSQL (`upbeat-repeater-477110-q6:us-central1:sdlc-etl-demo-db`, DB: `postgres`, Table: `test_data`)
+- **Authentication**: Google Cloud SQL Python Connector with IAM Database Authentication (`559906504681-compute@developer`) over Private IP.
+- **Transformations**: Whitespace trimming, null sanitization, ISO UTC timestamp parsing, status normalization, dead-letter quarantine, and circuit breaking.
+- **Target**: Google BigQuery (`analytics.postgres_test5`) with schema reconciliation and append/truncate write dispositions.
+- **Execution**: Standalone Cloud Run Job runner (`pipeline/run_postgres_to_bigquery_scrum_430.py`) and FastAPI service (`server/main.py`).
 
-1. Create and activate virtual environment:
-```bash
-python -m venv server/.venv
-# On Windows:
-server\.venv\Scripts\activate
-# On macOS/Linux:
-source server/.venv/bin/activate
+## File Structure
+
+```
+├── .env.example
+├── Dockerfile
+├── README.md
+├── requirements.txt
+├── env.deploy.json
+├── env.deploy.yaml
+├── transformation_spec.json
+├── dags/
+│   └── postgres_to_bigquery_scrum_430_dag.py
+├── schemas/
+│   └── postgres_test5_schema.json
+├── sql/
+│   └── ddl/
+│       └── postgres_test5.sql
+├── pipeline/
+│   ├── run_postgres_to_bigquery_scrum_430.py
+│   └── postgres_to_bigquery_scrum_430_README.md
+├── server/
+│   ├── __init__.py
+│   ├── database.py
+│   ├── extractor.py
+│   ├── loader.py
+│   ├── main.py
+│   ├── transformer.py
+│   ├── requirements.txt
+│   ├── schemas/
+│   │   ├── __init__.py
+│   │   └── etl_schemas.py
+│   └── tests/
+│       ├── __init__.py
+│       └── test_etl_pipeline.py
+└── tests/
+    └── test_postgres_to_bigquery_scrum_430_pipeline.py
 ```
 
-2. Install dependencies:
-```bash
-cd server
-pip install -r requirements.txt
-cd ..
-```
+## Local Development & Testing
 
-### Running Tests
-```bash
-cd server
-python -m pytest -v
-cd ..
-```
-
-### Starting the Development Server
-```bash
-# Run from the repo root so that `from server.X` imports resolve correctly
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-The API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-## Full-Stack Local Development
-
-To run both backend and frontend together locally:
-
-### 1. Environment Setup
-```bash
-# Copy the example environment file
-cp .env.example .env
-```
-
-### 2. Start the Backend (Terminal 1)
-```bash
-python -m venv server/.venv
-source server/.venv/bin/activate  # On Windows: server\.venv\Scripts\activate
-pip install -r server/requirements.txt
-python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
-```
-Backend API: `http://localhost:8000` | API Docs: `http://localhost:8000/docs`
-
-### 3. Start the Frontend (Terminal 2)
-```bash
-cd client
-npm install
-npm run dev
-```
-Frontend: `http://localhost:5173`
-
-The frontend connects to the backend API at `http://localhost:8000` by default via the `VITE_API_BASE_URL` environment variable.
-
-### 4. Test Credentials
-If the app has authentication, the backend seeds ready-to-use accounts on startup
-(idempotent). These are guaranteed logged-in-able — every activation/verification
-gate (`is_active`, `is_verified`, `email_verified`, `disabled`) is set to the
-permissive value, so no manual DB step is needed:
-- **Regular user** — Email: `test@example.com`, Password: `testpassword`
-- **Admin user** (only when the app has roles/RBAC) — Email: `admin@example.com`, Password: `adminpassword`, role: `admin`
-
-Passwords are stored hashed with the app's own hashing utility (never in plaintext).
-
-### Port Reference
-| Service  | Port | URL                        |
-|----------|------|----------------------------|
-| Backend  | 8000 | http://localhost:8000      |
-| Frontend | 5173 | http://localhost:5173      |
-| API Docs | 8000 | http://localhost:8000/docs |
-
+1. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. Run test suite:
+   ```bash
+   pytest
+   ```
+3. Run FastAPI server:
+   ```bash
+   python -m server.main
+   ```
+4. Execute batch run CLI:
+   ```bash
+   python -m server.main --run-etl
+   # Or via pipeline runner
+   python -m pipeline.run_postgres_to_bigquery_scrum_430
+   ```

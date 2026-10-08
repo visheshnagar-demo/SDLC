@@ -1,0 +1,26 @@
+[
+  {
+    "name": "id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Target field id"
+  },
+  {
+    "name": "payload_data",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Target field payload_data"
+  },
+  {
+    "name": "status",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Target field status"
+  },
+  {
+    "name": "source_created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Target field source_created_at"
+  }
+]
