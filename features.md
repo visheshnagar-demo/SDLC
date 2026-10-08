@@ -17,3 +17,14 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-426 - Open Fixed Deposit Account via Mobile Banking App
+
+### Feature Summary
+Enables verified mobile banking app users to select a savings account, choose Fixed Deposit tenure and interest options, preview maturity calculations, and instantly open a Fixed Deposit account through atomic funds transfer.
+
+### Key Features
+- User Authentication & Savings Account Selection
+- FD Plan Selection & Real-time Interest Calculation
+- Atomic Funds Debit & Instant Account Provisioning
+- Transaction Confirmation & Digital Advice Receipt Generation

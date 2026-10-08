@@ -548,6 +548,343 @@
         }
       }
     },
+    "/api/v1/savings-accounts": {
+      "get": {
+        "tags": [
+          "Savings Accounts"
+        ],
+        "summary": "List Savings Accounts",
+        "description": "Fetch eligible and active savings accounts for the authenticated customer.\nEvaluates minimum balance ($500.00) and status eligibility for Fixed Deposit opening.",
+        "operationId": "list_savings_accounts_api_v1_savings_accounts_get",
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional customer ID",
+              "title": "Customer Id"
+            },
+            "description": "Optional customer ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavingsAccountListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-deposits/rates": {
+      "get": {
+        "tags": [
+          "Fixed Deposits"
+        ],
+        "summary": "Get Interest Rates And Projections",
+        "description": "Retrieve available Fixed Deposit tenure slabs, interest rates,\nand dynamically calculate projected maturity returns.",
+        "operationId": "get_interest_rates_and_projections_api_v1_fixed_deposits_rates_get",
+        "parameters": [
+          {
+            "name": "deposit_amount",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Principal deposit amount in USD",
+              "title": "Deposit Amount"
+            },
+            "description": "Principal deposit amount in USD"
+          },
+          {
+            "name": "tenure_months",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Tenure in months (e.g. 6, 12, 24, 36)",
+              "title": "Tenure Months"
+            },
+            "description": "Tenure in months (e.g. 6, 12, 24, 36)"
+          },
+          {
+            "name": "payout_frequency",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Payout frequency",
+              "default": "AT_MATURITY",
+              "title": "Payout Frequency"
+            },
+            "description": "Payout frequency"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FDRatesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-deposits": {
+      "post": {
+        "tags": [
+          "Fixed Deposits"
+        ],
+        "summary": "Open Fixed Deposit",
+        "description": "Atomically provision a Fixed Deposit account, verify 4-digit PIN,\ndebit the selected savings account, and issue advice receipt.",
+        "operationId": "open_fixed_deposit_api_v1_fixed_deposits_post",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FDCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FDCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Fixed Deposits"
+        ],
+        "summary": "List Fixed Deposits",
+        "description": "List all Fixed Deposit accounts for customer.",
+        "operationId": "list_fixed_deposits_api_v1_fixed_deposits_get",
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Customer Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FDAccountSummary"
+                  },
+                  "title": "Response List Fixed Deposits Api V1 Fixed Deposits Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-deposits/{fd_id}/receipt": {
+      "get": {
+        "tags": [
+          "Fixed Deposits"
+        ],
+        "summary": "Download Fd Advice Receipt",
+        "description": "Generate and download the official Fixed Deposit Advice Certificate PDF.",
+        "operationId": "download_fd_advice_receipt_api_v1_fixed_deposits__fd_id__receipt_get",
+        "parameters": [
+          {
+            "name": "fd_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Fd Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-deposits/{fd_id}": {
+      "get": {
+        "tags": [
+          "Fixed Deposits"
+        ],
+        "summary": "Get Fixed Deposit Detail",
+        "description": "Get details of a specific Fixed Deposit account.",
+        "operationId": "get_fixed_deposit_detail_api_v1_fixed_deposits__fd_id__get",
+        "parameters": [
+          {
+            "name": "fd_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Fd Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FDAccountSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
@@ -836,6 +1173,249 @@
         ],
         "title": "ExchangeRatesResponse"
       },
+      "FDAccountSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "fd_account_number": {
+            "type": "string",
+            "title": "Fd Account Number"
+          },
+          "source_account_id": {
+            "type": "string",
+            "title": "Source Account Id"
+          },
+          "deposit_amount": {
+            "type": "number",
+            "title": "Deposit Amount"
+          },
+          "interest_rate": {
+            "type": "number",
+            "title": "Interest Rate"
+          },
+          "tenure_months": {
+            "type": "integer",
+            "title": "Tenure Months"
+          },
+          "payout_frequency": {
+            "type": "string",
+            "title": "Payout Frequency"
+          },
+          "maturity_amount": {
+            "type": "number",
+            "title": "Maturity Amount"
+          },
+          "maturity_date": {
+            "type": "string",
+            "title": "Maturity Date"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "fd_account_number",
+          "source_account_id",
+          "deposit_amount",
+          "interest_rate",
+          "tenure_months",
+          "payout_frequency",
+          "maturity_amount",
+          "maturity_date",
+          "status"
+        ],
+        "title": "FDAccountSummary"
+      },
+      "FDCreateRequest": {
+        "properties": {
+          "source_account_id": {
+            "type": "string",
+            "title": "Source Account Id"
+          },
+          "deposit_amount": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Deposit Amount",
+            "description": "Deposit amount in USD ($500.00 minimum)"
+          },
+          "tenure_months": {
+            "type": "integer",
+            "title": "Tenure Months",
+            "description": "Tenure duration in months (e.g. 6, 12, 24, 36)"
+          },
+          "payout_frequency": {
+            "type": "string",
+            "title": "Payout Frequency",
+            "description": "Payout frequency (e.g. AT_MATURITY, MONTHLY, QUARTERLY)",
+            "default": "AT_MATURITY"
+          },
+          "transaction_pin": {
+            "type": "string",
+            "title": "Transaction Pin",
+            "description": "4-digit transaction authorization PIN"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_account_id",
+          "deposit_amount",
+          "tenure_months",
+          "transaction_pin"
+        ],
+        "title": "FDCreateRequest"
+      },
+      "FDCreateResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "SUCCESS"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Fixed Deposit account opened successfully."
+          },
+          "fixed_deposit": {
+            "$ref": "#/components/schemas/FDAccountSummary"
+          },
+          "receipt": {
+            "$ref": "#/components/schemas/FDReceiptSummary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fixed_deposit",
+          "receipt"
+        ],
+        "title": "FDCreateResponse"
+      },
+      "FDProjection": {
+        "properties": {
+          "deposit_amount": {
+            "type": "number",
+            "title": "Deposit Amount"
+          },
+          "tenure_months": {
+            "type": "integer",
+            "title": "Tenure Months"
+          },
+          "interest_rate": {
+            "type": "number",
+            "title": "Interest Rate"
+          },
+          "payout_frequency": {
+            "type": "string",
+            "title": "Payout Frequency",
+            "default": "AT_MATURITY"
+          },
+          "total_interest_earned": {
+            "type": "number",
+            "title": "Total Interest Earned"
+          },
+          "maturity_amount": {
+            "type": "number",
+            "title": "Maturity Amount"
+          },
+          "maturity_date": {
+            "type": "string",
+            "title": "Maturity Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "deposit_amount",
+          "tenure_months",
+          "interest_rate",
+          "total_interest_earned",
+          "maturity_amount",
+          "maturity_date"
+        ],
+        "title": "FDProjection"
+      },
+      "FDRatePlan": {
+        "properties": {
+          "tenure_months": {
+            "type": "integer",
+            "title": "Tenure Months"
+          },
+          "interest_rate": {
+            "type": "number",
+            "title": "Interest Rate"
+          },
+          "min_deposit": {
+            "type": "number",
+            "title": "Min Deposit",
+            "default": 500.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "tenure_months",
+          "interest_rate"
+        ],
+        "title": "FDRatePlan"
+      },
+      "FDRatesResponse": {
+        "properties": {
+          "plans": {
+            "items": {
+              "$ref": "#/components/schemas/FDRatePlan"
+            },
+            "type": "array",
+            "title": "Plans"
+          },
+          "calculation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FDProjection"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "plans"
+        ],
+        "title": "FDRatesResponse"
+      },
+      "FDReceiptSummary": {
+        "properties": {
+          "receipt_number": {
+            "type": "string",
+            "title": "Receipt Number"
+          },
+          "download_url": {
+            "type": "string",
+            "title": "Download Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "receipt_number",
+          "download_url"
+        ],
+        "title": "FDReceiptSummary"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -944,6 +1524,76 @@
           "status"
         ],
         "title": "RefundSummary"
+      },
+      "SavingsAccountListResponse": {
+        "properties": {
+          "accounts": {
+            "items": {
+              "$ref": "#/components/schemas/SavingsAccountResponse"
+            },
+            "type": "array",
+            "title": "Accounts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "accounts"
+        ],
+        "title": "SavingsAccountListResponse"
+      },
+      "SavingsAccountResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "account_number": {
+            "type": "string",
+            "title": "Account Number"
+          },
+          "account_type": {
+            "type": "string",
+            "title": "Account Type",
+            "default": "SAVINGS"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "USD"
+          },
+          "available_balance": {
+            "type": "number",
+            "title": "Available Balance"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "is_eligible_for_fd": {
+            "type": "boolean",
+            "title": "Is Eligible For Fd"
+          },
+          "ineligibility_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ineligibility Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "account_number",
+          "available_balance",
+          "status",
+          "is_eligible_for_fd"
+        ],
+        "title": "SavingsAccountResponse"
       },
       "TransactionDetail": {
         "properties": {

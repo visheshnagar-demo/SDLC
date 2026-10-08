@@ -4,6 +4,7 @@ from sqlalchemy import (
     Column,
     String,
     Float,
+    Integer,
     Boolean,
     DateTime,
     ForeignKey,
@@ -28,6 +29,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     role = Column(String, default="user", nullable=False)
+    transaction_pin = Column(String, default="1234", nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     is_verified = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=get_utc_now, nullable=False)
@@ -40,6 +42,137 @@ class User(Base):
 
     transactions = relationship("Transaction", back_populates="user")
     refunds = relationship("Refund", back_populates="actor")
+    customer = relationship("Customer", back_populates="user", uselist=False)
+
+
+class Customer(Base):
+    __tablename__ = "customers"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=True)
+    full_name = Column(String, nullable=False, default="Verified Customer")
+    email = Column(String, unique=True, index=True, nullable=False)
+    kyc_status = Column(String, default="VERIFIED", nullable=False)
+    transaction_pin = Column(String, default="1234", nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    is_verified = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    updated_at = Column(
+        DateTime,
+        default=get_utc_now,
+        onupdate=get_utc_now,
+        nullable=False,
+    )
+
+    user = relationship("User", back_populates="customer")
+    savings_accounts = relationship("SavingsAccount", back_populates="customer")
+    fixed_deposits = relationship("FixedDepositAccount", back_populates="customer")
+
+
+class SavingsAccount(Base):
+    __tablename__ = "savings_accounts"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    customer_id = Column(String, ForeignKey("customers.id"), nullable=False)
+    account_number = Column(String, unique=True, index=True, nullable=False)
+    account_type = Column(String, default="SAVINGS", nullable=False)
+    currency = Column(String, default="USD", nullable=False)
+    balance = Column(Float, default=0.0, nullable=False)
+    status = Column(String, default="ACTIVE", nullable=False)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    updated_at = Column(
+        DateTime,
+        default=get_utc_now,
+        onupdate=get_utc_now,
+        nullable=False,
+    )
+
+    customer = relationship("Customer", back_populates="savings_accounts")
+    fixed_deposits = relationship("FixedDepositAccount", back_populates="source_account")
+    ledger_entries = relationship("TransactionLedger", back_populates="account")
+
+
+class FixedDepositPlan(Base):
+    __tablename__ = "fixed_deposit_plans"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    tenure_months = Column(Integer, unique=True, index=True, nullable=False)
+    interest_rate = Column(Float, nullable=False)
+    min_deposit_amount = Column(Float, default=500.0, nullable=False)
+    max_deposit_amount = Column(Float, default=1000000.0, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    updated_at = Column(
+        DateTime,
+        default=get_utc_now,
+        onupdate=get_utc_now,
+        nullable=False,
+    )
+
+
+class FixedDepositAccount(Base):
+    __tablename__ = "fixed_deposit_accounts"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    customer_id = Column(String, ForeignKey("customers.id"), nullable=False)
+    source_account_id = Column(String, ForeignKey("savings_accounts.id"), nullable=False)
+    fd_account_number = Column(String, unique=True, index=True, nullable=False)
+    deposit_amount = Column(Float, nullable=False)
+    interest_rate = Column(Float, nullable=False)
+    tenure_months = Column(Integer, nullable=False)
+    payout_frequency = Column(String, default="AT_MATURITY", nullable=False)
+    maturity_amount = Column(Float, nullable=False)
+    maturity_date = Column(DateTime, nullable=False)
+    status = Column(String, default="ACTIVE", nullable=False)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    updated_at = Column(
+        DateTime,
+        default=get_utc_now,
+        onupdate=get_utc_now,
+        nullable=False,
+    )
+
+    customer = relationship("Customer", back_populates="fixed_deposits")
+    source_account = relationship("SavingsAccount", back_populates="fixed_deposits")
+    receipts = relationship("FDAdviceReceipt", back_populates="fixed_deposit")
+
+
+class TransactionLedger(Base):
+    __tablename__ = "transaction_ledger"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    account_id = Column(String, ForeignKey("savings_accounts.id"), nullable=False)
+    transaction_type = Column(String, nullable=False)
+    amount = Column(Float, nullable=False)
+    balance_after = Column(Float, nullable=False)
+    reference_id = Column(String, nullable=True)
+    description = Column(String, nullable=True)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+
+    account = relationship("SavingsAccount", back_populates="ledger_entries")
+
+
+class IdempotencyRecord(Base):
+    __tablename__ = "idempotency_records"
+
+    idempotency_key = Column(String, primary_key=True)
+    customer_id = Column(String, nullable=False)
+    request_hash = Column(String, nullable=False)
+    response_status = Column(Integer, nullable=False)
+    response_body = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+
+
+class FDAdviceReceipt(Base):
+    __tablename__ = "fd_advice_receipts"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    fd_id = Column(String, ForeignKey("fixed_deposit_accounts.id"), nullable=False)
+    receipt_number = Column(String, unique=True, index=True, nullable=False)
+    storage_path = Column(String, nullable=True)
+    generated_at = Column(DateTime, default=get_utc_now, nullable=False)
+
+    fixed_deposit = relationship("FixedDepositAccount", back_populates="receipts")
 
 
 class CheckoutSession(Base):
