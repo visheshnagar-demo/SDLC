@@ -13,7 +13,6 @@ export const apiClient = axios.create({
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Standardized error payload extractions
     const message =
       error.response?.data?.detail ||
       error.message ||
@@ -26,6 +25,32 @@ apiClient.interceptors.response.use(
   },
 );
 
+// Fixed Deposit API Endpoints
+export const getSavingsAccounts = async () => {
+  const response = await apiClient.get("/api/v1/savings-accounts");
+  return response.data;
+};
+
+export const getFixedDepositRates = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/fixed-deposits/rates", {
+    params,
+  });
+  return response.data;
+};
+
+export const createFixedDeposit = async (payload) => {
+  const response = await apiClient.post("/api/v1/fixed-deposits", payload);
+  return response.data;
+};
+
+export const getFDReceipt = async (fdId) => {
+  const response = await apiClient.get(
+    `/api/v1/fixed-deposits/${fdId}/receipt`,
+  );
+  return response.data;
+};
+
+// Legacy / Payment Gateway Endpoints for backward compatibility
 export const createCheckoutSession = async (payload) => {
   const response = await apiClient.post(
     "/api/v1/payments/checkout-session",
@@ -80,6 +105,10 @@ export const listAuditLogs = async (params = {}) => {
 
 export default {
   apiClient,
+  getSavingsAccounts,
+  getFixedDepositRates,
+  createFixedDeposit,
+  getFDReceipt,
   createCheckoutSession,
   payWithDigitalWallet,
   getExchangeRates,
