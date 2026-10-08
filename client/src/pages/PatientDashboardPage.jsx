@@ -4,16 +4,7 @@ import KPICard from "../components/common/KPICard";
 import AppointmentBookingPanel from "../components/patient/AppointmentBookingPanel";
 import VisitHistoryTable from "../components/patient/VisitHistoryTable";
 import PatientRegistrationModal from "../components/patient/PatientRegistrationModal";
-import {
-  Calendar,
-  Pill,
-  FileText,
-  ShieldCheck,
-  UserPlus,
-  HeartPulse,
-  Activity,
-  Download,
-} from "lucide-react";
+import { Calendar, Pill, FileText, ShieldCheck, UserPlus } from "lucide-react";
 
 export const PatientDashboardPage = () => {
   const { user } = useAuth();
@@ -86,14 +77,14 @@ export const PatientDashboardPage = () => {
       </div>
 
       {/* Main Grid: Booking Panel & Consultation History */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-6 space-y-6">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        <div className="xl:col-span-5 space-y-6">
           <AppointmentBookingPanel
             onBookingSuccess={() => setRefreshTrigger((prev) => prev + 1)}
           />
         </div>
 
-        <div className="lg:col-span-6 space-y-6">
+        <div className="xl:col-span-7 space-y-6">
           <VisitHistoryTable refreshTrigger={refreshTrigger} />
         </div>
       </div>

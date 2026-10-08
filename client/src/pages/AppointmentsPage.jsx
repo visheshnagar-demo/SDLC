@@ -1,13 +1,7 @@
 import React, { useState } from "react";
 import AppointmentBookingPanel from "../components/patient/AppointmentBookingPanel";
 import VisitHistoryTable from "../components/patient/VisitHistoryTable";
-import {
-  Calendar,
-  Clock,
-  Stethoscope,
-  CheckCircle,
-  Shield,
-} from "lucide-react";
+import { Calendar } from "lucide-react";
 
 export const AppointmentsPage = () => {
   const [refreshKey, setRefreshKey] = useState(0);
@@ -16,7 +10,7 @@ export const AppointmentsPage = () => {
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-lg border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-primary-600 rounded-xl shadow-inner text-white">
+          <div className="p-3 bg-sky-600 rounded-xl shadow-inner text-white">
             <Calendar className="w-6 h-6" />
           </div>
           <div>
@@ -36,13 +30,13 @@ export const AppointmentsPage = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-6">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        <div className="xl:col-span-5 space-y-6">
           <AppointmentBookingPanel
             onBookingSuccess={() => setRefreshKey((k) => k + 1)}
           />
         </div>
-        <div className="lg:col-span-6">
+        <div className="xl:col-span-7 space-y-6">
           <VisitHistoryTable refreshTrigger={refreshKey} />
         </div>
       </div>

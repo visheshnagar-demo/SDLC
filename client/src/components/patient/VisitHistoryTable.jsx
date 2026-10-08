@@ -3,12 +3,8 @@ import { appointmentsApi, ehrApi } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import {
   Calendar,
-  Clock,
   Download,
-  FileText,
-  AlertTriangle,
   CheckCircle,
-  XCircle,
   RefreshCw,
   FileCheck,
 } from "lucide-react";
@@ -68,7 +64,7 @@ export const VisitHistoryTable = ({ refreshTrigger }) => {
       } else {
         setAppointments(defaultVisits);
       }
-    } catch (err) {
+    } catch {
       setAppointments(defaultVisits);
     } finally {
       setLoading(false);
@@ -89,7 +85,7 @@ export const VisitHistoryTable = ({ refreshTrigger }) => {
         type: "success",
         text: `Appointment ${aptId} cancelled successfully.`,
       });
-    } catch (err) {
+    } catch {
       // update state
       setAppointments((prev) =>
         prev.map((a) => (a.id === aptId ? { ...a, status: "CANCELLED" } : a)),
@@ -109,7 +105,7 @@ export const VisitHistoryTable = ({ refreshTrigger }) => {
         type: "success",
         text: `Prescription PDF (${prescriptionId}) generated and downloaded securely via signed HIPAA URL.`,
       });
-    } catch (err) {
+    } catch {
       setActionMessage({
         type: "success",
         text: `Prescription record (${prescriptionId}) exported. Signed URL validated.`,
@@ -135,7 +131,7 @@ export const VisitHistoryTable = ({ refreshTrigger }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden w-full">
       <div className="p-4 border-b border-slate-200 flex items-center justify-between">
         <div>
           <h3 className="text-sm font-bold text-slate-900">
@@ -168,16 +164,22 @@ export const VisitHistoryTable = ({ refreshTrigger }) => {
         </div>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs text-slate-600">
+      <div className="overflow-x-auto w-full">
+        <table className="min-w-full w-full text-left text-xs text-slate-600 table-auto">
           <thead className="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
             <tr>
-              <th className="p-3.5">Date &amp; Time</th>
-              <th className="p-3.5">Physician &amp; Specialty</th>
-              <th className="p-3.5">Reason for Visit</th>
-              <th className="p-3.5">Status</th>
-              <th className="p-3.5">Clinical Documents</th>
-              <th className="p-3.5 text-right">Actions</th>
+              <th className="px-3 py-3 whitespace-nowrap">Date &amp; Time</th>
+              <th className="px-3 py-3 whitespace-nowrap">Physician</th>
+              <th className="px-3 py-3 min-w-[120px]">Reason for Visit</th>
+              <th className="px-3 py-3 text-center whitespace-nowrap">
+                Status
+              </th>
+              <th className="px-3 py-3 whitespace-nowrap">
+                Clinical Documents
+              </th>
+              <th className="px-3 py-3 text-right whitespace-nowrap">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -197,34 +199,39 @@ export const VisitHistoryTable = ({ refreshTrigger }) => {
                   key={apt.id}
                   className="hover:bg-slate-50/80 transition-colors"
                 >
-                  <td className="p-3.5 font-medium text-slate-900 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                      {formattedDate}
+                  <td className="px-3 py-3 font-medium text-slate-900 whitespace-nowrap">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span>{formattedDate}</span>
                     </div>
                   </td>
-                  <td className="p-3.5 whitespace-nowrap">
+                  <td className="px-3 py-3 whitespace-nowrap">
                     <div className="font-semibold text-slate-800">
-                      {apt.doctor_name || "Assigned Physician"}
+                      {apt.doctor_name ||
+                        apt.doctor?.user?.full_name ||
+                        "Assigned Physician"}
                     </div>
                     <div className="text-[11px] text-slate-400">
-                      {apt.department || "General"}
+                      {apt.department || apt.doctor?.department || "General"}
                     </div>
                   </td>
-                  <td className="p-3.5 max-w-xs truncate text-slate-700">
+                  <td
+                    className="px-3 py-3 max-w-[160px] truncate text-slate-700"
+                    title={apt.reason}
+                  >
                     {apt.reason || "General Consultation"}
                   </td>
-                  <td className="p-3.5 whitespace-nowrap">
+                  <td className="px-3 py-3 text-center whitespace-nowrap">
                     {getStatusBadge(apt.status)}
                   </td>
-                  <td className="p-3.5 whitespace-nowrap space-y-1">
+                  <td className="px-3 py-3 whitespace-nowrap space-y-1">
                     {apt.prescription_id ? (
                       <button
                         onClick={() =>
                           handleDownloadPrescription(apt.prescription_id)
                         }
                         disabled={downloadingId === apt.prescription_id}
-                        className="inline-flex items-center gap-1.5 px-2 py-1 bg-sky-50 text-sky-700 hover:bg-sky-100 rounded text-[11px] font-medium border border-sky-200 transition-colors mr-1"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 bg-sky-50 text-sky-700 hover:bg-sky-100 rounded text-[11px] font-medium border border-sky-200 transition-colors mr-1"
                       >
                         <Download className="w-3 h-3" />
                         Rx PDF
@@ -241,7 +248,7 @@ export const VisitHistoryTable = ({ refreshTrigger }) => {
                       </span>
                     )}
                   </td>
-                  <td className="p-3.5 text-right whitespace-nowrap">
+                  <td className="px-3 py-3 text-right whitespace-nowrap">
                     {apt.status === "SCHEDULED" && (
                       <button
                         onClick={() => handleCancel(apt.id)}

@@ -9,9 +9,49 @@ import {
   CheckCircle,
   AlertCircle,
   Lock,
-  Search,
 } from "lucide-react";
 import Badge from "../common/Badge";
+
+export const formatSlotTime = (slotTime) => {
+  if (!slotTime) return "";
+
+  if (typeof slotTime === "string") {
+    // If ISO timestamp string (contains 'T')
+    if (slotTime.includes("T")) {
+      const date = new Date(slotTime);
+      if (!isNaN(date.getTime())) {
+        const hours = date.getUTCHours();
+        const minutes = date.getUTCMinutes();
+        const ampm = hours >= 12 ? "PM" : "AM";
+        const formattedHour = (hours % 12 || 12).toString().padStart(2, "0");
+        const formattedMinutes = minutes.toString().padStart(2, "0");
+        return `${formattedHour}:${formattedMinutes} ${ampm}`;
+      }
+    }
+
+    // If "HH:MM" or "HH:MM:SS" (e.g. "09:00" or "09:00:00")
+    const match = slotTime.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+    if (match) {
+      const hours = parseInt(match[1], 10);
+      const minutes = match[2];
+      const ampm = hours >= 12 ? "PM" : "AM";
+      const formattedHour = (hours % 12 || 12).toString().padStart(2, "0");
+      return `${formattedHour}:${minutes} ${ampm}`;
+    }
+  }
+
+  const d = new Date(slotTime);
+  if (!isNaN(d.getTime())) {
+    const hours = d.getHours();
+    const minutes = d.getMinutes();
+    const ampm = hours >= 12 ? "PM" : "AM";
+    const formattedHour = (hours % 12 || 12).toString().padStart(2, "0");
+    const formattedMinutes = minutes.toString().padStart(2, "0");
+    return `${formattedHour}:${formattedMinutes} ${ampm}`;
+  }
+
+  return String(slotTime);
+};
 
 export const AppointmentBookingPanel = ({ onBookingSuccess }) => {
   const { user } = useAuth();
@@ -104,7 +144,7 @@ export const AppointmentBookingPanel = ({ onBookingSuccess }) => {
           setDoctors(filtered);
           setSelectedDoctorId(filtered[0]?.id || "");
         }
-      } catch (err) {
+      } catch {
         const filtered =
           selectedDepartment !== "All Departments"
             ? defaultDoctors.filter((d) => d.department === selectedDepartment)
@@ -153,7 +193,7 @@ export const AppointmentBookingPanel = ({ onBookingSuccess }) => {
           ];
           setAvailableSlots(generatedSlots);
         }
-      } catch (err) {
+      } catch {
         const fallback = [
           { slot_start: "09:00", slot_end: "09:30", is_available: true },
           { slot_start: "09:30", slot_end: "10:00", is_available: true },
@@ -182,8 +222,19 @@ export const AppointmentBookingPanel = ({ onBookingSuccess }) => {
     setErrorMessage(null);
     setConfirmation(null);
 
-    const startDateTime = `${selectedDate}T${selectedSlot.slot_start}:00Z`;
-    const endDateTime = `${selectedDate}T${selectedSlot.slot_end}:00Z`;
+    let startDateTime = selectedSlot.slot_start;
+    let endDateTime = selectedSlot.slot_end;
+
+    if (typeof startDateTime === "string" && !startDateTime.includes("T")) {
+      const timePart =
+        startDateTime.length === 5 ? `${startDateTime}:00` : startDateTime;
+      startDateTime = `${selectedDate}T${timePart}Z`;
+    }
+    if (typeof endDateTime === "string" && !endDateTime.includes("T")) {
+      const timePart =
+        endDateTime.length === 5 ? `${endDateTime}:00` : endDateTime;
+      endDateTime = `${selectedDate}T${timePart}Z`;
+    }
 
     const payload = {
       patient_id: user?.id || "pat-001",
@@ -201,7 +252,7 @@ export const AppointmentBookingPanel = ({ onBookingSuccess }) => {
           doctors.find((d) => d.id === selectedDoctorId)?.full_name ||
           "Assigned Physician",
         date: selectedDate,
-        time: `${selectedSlot.slot_start} - ${selectedSlot.slot_end}`,
+        time: `${formatSlotTime(selectedSlot.slot_start)} - ${formatSlotTime(selectedSlot.slot_end)}`,
         reason: reason,
       });
 
@@ -337,6 +388,7 @@ export const AppointmentBookingPanel = ({ onBookingSuccess }) => {
               {availableSlots.map((slot) => {
                 const isSelected = selectedSlot?.slot_start === slot.slot_start;
                 const isAvailable = slot.is_available;
+                const displayTime = formatSlotTime(slot.slot_start);
 
                 return (
                   <button
@@ -352,7 +404,7 @@ export const AppointmentBookingPanel = ({ onBookingSuccess }) => {
                           : "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60"
                     }`}
                   >
-                    <div className="font-semibold">{slot.slot_start}</div>
+                    <div className="font-semibold">{displayTime}</div>
                     <div className="text-[10px] mt-0.5">
                       {isAvailable ? (
                         "Open"
@@ -426,7 +478,7 @@ export const AppointmentBookingPanel = ({ onBookingSuccess }) => {
             <button
               type="submit"
               disabled={bookingLoading || !selectedSlot}
-              className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+              className="px-6 py-2.5 bg-sky-600 hover:bg-sky-700 disabled:bg-slate-300 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
             >
               {bookingLoading ? (
                 "Confirming with Lock..."
