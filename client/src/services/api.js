@@ -7,85 +7,138 @@ export const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
 });
+
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("carepulse_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
 
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Standardized error payload extractions
-    const message =
-      error.response?.data?.detail ||
-      error.message ||
-      "An unexpected network error occurred";
-    return Promise.reject(
-      new Error(
-        typeof message === "object" ? JSON.stringify(message) : message,
-      ),
-    );
+    return Promise.reject(error);
   },
 );
 
-export const createCheckoutSession = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/checkout-session",
-    payload,
-  );
-  return response.data;
+export const authApi = {
+  login: async (credentials) => {
+    const response = await apiClient.post("/api/v1/auth/login", credentials);
+    if (response.data && response.data.access_token) {
+      localStorage.setItem("carepulse_token", response.data.access_token);
+      if (response.data.user) {
+        localStorage.setItem(
+          "carepulse_user",
+          JSON.stringify(response.data.user),
+        );
+      }
+    }
+    return response.data;
+  },
+  logout: () => {
+    localStorage.removeItem("carepulse_token");
+    localStorage.removeItem("carepulse_user");
+  },
+  getCurrentUser: () => {
+    const userStr = localStorage.getItem("carepulse_user");
+    if (!userStr) return null;
+    try {
+      return JSON.parse(userStr);
+    } catch {
+      return null;
+    }
+  },
 };
 
-export const payWithDigitalWallet = async (payload) => {
-  const response = await apiClient.post(
-    "/api/v1/payments/digital-wallet",
-    payload,
-  );
-  return response.data;
+export const patientsApi = {
+  list: async (params = {}) => {
+    const response = await apiClient.get("/api/v1/patients", { params });
+    return response.data;
+  },
+  getById: async (id) => {
+    const response = await apiClient.get(`/api/v1/patients/${id}`);
+    return response.data;
+  },
+  create: async (patientData) => {
+    const response = await apiClient.post("/api/v1/patients", patientData);
+    return response.data;
+  },
+  update: async (id, patientData) => {
+    const response = await apiClient.put(`/api/v1/patients/${id}`, patientData);
+    return response.data;
+  },
 };
 
-export const getExchangeRates = async (baseCurrency = "USD") => {
-  const response = await apiClient.get("/api/v1/payments/rates", {
-    params: { base_currency: baseCurrency },
-  });
-  return response.data;
+export const doctorsApi = {
+  list: async (params = {}) => {
+    const response = await apiClient.get("/api/v1/doctors", { params });
+    return response.data;
+  },
+  getAvailability: async (doctorId, date) => {
+    const response = await apiClient.get(
+      `/api/v1/doctors/${doctorId}/availability`,
+      {
+        params: { date },
+      },
+    );
+    return response.data;
+  },
+  saveSchedule: async (doctorId, scheduleData) => {
+    const response = await apiClient.post(
+      `/api/v1/doctors/${doctorId}/schedules`,
+      scheduleData,
+    );
+    return response.data;
+  },
 };
 
-export const listTransactions = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/payments/transactions", {
-    params,
-  });
-  return response.data;
+export const appointmentsApi = {
+  list: async (params = {}) => {
+    const response = await apiClient.get("/api/v1/appointments", { params });
+    return response.data;
+  },
+  create: async (appointmentData) => {
+    const response = await apiClient.post(
+      "/api/v1/appointments",
+      appointmentData,
+    );
+    return response.data;
+  },
+  updateStatus: async (id, status) => {
+    const response = await apiClient.patch(
+      `/api/v1/appointments/${id}/status`,
+      { status },
+    );
+    return response.data;
+  },
 };
 
-export const getTransactionDetail = async (transactionId) => {
-  const response = await apiClient.get(
-    `/api/v1/payments/transactions/${transactionId}`,
-  );
-  return response.data;
-};
-
-export const createRefund = async (payload) => {
-  const response = await apiClient.post("/api/v1/refunds", payload);
-  return response.data;
-};
-
-export const listRefunds = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/refunds", { params });
-  return response.data;
-};
-
-export const listAuditLogs = async (params = {}) => {
-  const response = await apiClient.get("/api/v1/audit-logs", { params });
-  return response.data;
+export const clinicalApi = {
+  getRecords: async (appointmentId) => {
+    const response = await apiClient.get(
+      `/api/v1/appointments/${appointmentId}/records`,
+    );
+    return response.data;
+  },
+  createRecord: async (appointmentId, recordData) => {
+    const response = await apiClient.post(
+      `/api/v1/appointments/${appointmentId}/records`,
+      recordData,
+    );
+    return response.data;
+  },
 };
 
 export default {
-  apiClient,
-  createCheckoutSession,
-  payWithDigitalWallet,
-  getExchangeRates,
-  listTransactions,
-  getTransactionDetail,
-  createRefund,
-  listRefunds,
-  listAuditLogs,
+  auth: authApi,
+  patients: patientsApi,
+  doctors: doctorsApi,
+  appointments: appointmentsApi,
+  clinical: clinicalApi,
 };
