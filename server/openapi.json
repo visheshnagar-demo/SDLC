@@ -1,22 +1,22 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Payment Gateway Service",
-    "version": "0.1.0"
+    "title": "Hospital Management System",
+    "version": "1.0.0"
   },
   "paths": {
-    "/api/v1/payments/checkout-session": {
+    "/api/v1/auth/login": {
       "post": {
         "tags": [
-          "payments"
+          "Authentication"
         ],
-        "summary": "Create Session",
-        "operationId": "create_session_api_v1_payments_checkout_session_post",
+        "summary": "Login",
+        "operationId": "login_api_v1_auth_login_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CheckoutSessionRequest"
+                "$ref": "#/components/schemas/LoginRequest"
               }
             }
           },
@@ -28,7 +28,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CheckoutSessionResponse"
+                  "$ref": "#/components/schemas/TokenResponse"
                 }
               }
             }
@@ -46,30 +46,30 @@
         }
       }
     },
-    "/api/v1/payments/digital-wallet": {
+    "/api/v1/auth/register": {
       "post": {
         "tags": [
-          "payments"
+          "Authentication"
         ],
-        "summary": "Pay Digital Wallet",
-        "operationId": "pay_digital_wallet_api_v1_payments_digital_wallet_post",
+        "summary": "Register",
+        "operationId": "register_api_v1_auth_register_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DigitalWalletPaymentRequest"
+                "$ref": "#/components/schemas/RegisterRequest"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DigitalWalletPaymentResponse"
+                  "$ref": "#/components/schemas/UserResponse"
                 }
               }
             }
@@ -87,231 +87,61 @@
         }
       }
     },
-    "/api/v1/payments/rates": {
+    "/api/v1/auth/me": {
       "get": {
         "tags": [
-          "payments"
+          "Authentication"
         ],
-        "summary": "Get Rates",
-        "operationId": "get_rates_api_v1_payments_rates_get",
-        "parameters": [
-          {
-            "name": "base_currency",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "Base currency code",
-              "default": "USD",
-              "title": "Base Currency"
-            },
-            "description": "Base currency code"
-          }
-        ],
+        "summary": "Get Me",
+        "operationId": "get_me_api_v1_auth_me_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ExchangeRatesResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/UserResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
-    "/api/v1/payments/transactions": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "List Transactions",
-        "operationId": "list_transactions_api_v1_payments_transactions_get",
-        "parameters": [
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Search transaction ID or email",
-              "title": "Search"
-            },
-            "description": "Search transaction ID or email"
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction status",
-              "title": "Status"
-            },
-            "description": "Filter by transaction status"
-          },
-          {
-            "name": "currency",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by currency",
-              "title": "Currency"
-            },
-            "description": "Filter by currency"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TransactionSummary"
-                  },
-                  "title": "Response List Transactions Api V1 Payments Transactions Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions/{transaction_id}": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Get Transaction",
-        "operationId": "get_transaction_api_v1_payments_transactions__transaction_id__get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Transaction Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TransactionDetail"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/refunds": {
+    "/api/v1/patients": {
       "post": {
         "tags": [
-          "refunds"
+          "Patients"
         ],
-        "summary": "Create Refund Endpoint",
-        "operationId": "create_refund_endpoint_api_v1_refunds_post",
+        "summary": "Register Patient",
+        "operationId": "register_patient_api_v1_patients_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RefundRequest"
+                "$ref": "#/components/schemas/PatientCreateRequest"
               }
             }
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RefundSummary"
+                  "$ref": "#/components/schemas/PatientResponse"
                 }
               }
             }
@@ -330,13 +160,41 @@
       },
       "get": {
         "tags": [
-          "refunds"
+          "Patients"
         ],
-        "summary": "List Refunds Endpoint",
-        "operationId": "list_refunds_endpoint_api_v1_refunds_get",
+        "summary": "Get Patients",
+        "operationId": "get_patients_api_v1_patients_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
-            "name": "transaction_id",
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "search",
             "in": "query",
             "required": false,
             "schema": {
@@ -348,10 +206,492 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
+              "title": "Search"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedPatients"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/patients/{id}": {
+      "get": {
+        "tags": [
+          "Patients"
+        ],
+        "summary": "Get Patient",
+        "operationId": "get_patient_api_v1_patients__id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Patients"
+        ],
+        "summary": "Update Patient Profile",
+        "operationId": "update_patient_profile_api_v1_patients__id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatientUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/doctors": {
+      "get": {
+        "tags": [
+          "Doctors"
+        ],
+        "summary": "Get Doctors",
+        "operationId": "get_doctors_api_v1_doctors_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "department",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Department"
+            }
+          },
+          {
+            "name": "is_available",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Is Available"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DoctorResponse"
+                  },
+                  "title": "Response Get Doctors Api V1 Doctors Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/doctors/{id}": {
+      "get": {
+        "tags": [
+          "Doctors"
+        ],
+        "summary": "Get Doctor",
+        "operationId": "get_doctor_api_v1_doctors__id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DoctorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/doctors/{id}/availability": {
+      "get": {
+        "tags": [
+          "Doctors"
+        ],
+        "summary": "Check Doctor Availability",
+        "operationId": "check_doctor_availability_api_v1_doctors__id__availability_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DoctorAvailabilityResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/doctors/{id}/schedules": {
+      "post": {
+        "tags": [
+          "Doctors"
+        ],
+        "summary": "Set Doctor Schedule",
+        "operationId": "set_doctor_schedule_api_v1_doctors__id__schedules_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/appointments": {
+      "post": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Create Appointment",
+        "operationId": "create_appointment_api_v1_appointments_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppointmentCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Get Appointments",
+        "operationId": "get_appointments_api_v1_appointments_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "doctor_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Doctor Id"
+            }
+          },
+          {
+            "name": "patient_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patient Id"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
           },
           {
             "name": "skip",
@@ -372,7 +712,7 @@
               "type": "integer",
               "maximum": 100,
               "minimum": 1,
-              "default": 50,
+              "default": 20,
               "title": "Limit"
             }
           }
@@ -383,11 +723,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RefundSummary"
-                  },
-                  "title": "Response List Refunds Endpoint Api V1 Refunds Get"
+                  "$ref": "#/components/schemas/PaginatedAppointments"
                 }
               }
             }
@@ -405,31 +741,216 @@
         }
       }
     },
-    "/api/v1/webhooks/stripe": {
-      "post": {
+    "/api/v1/appointments/{id}": {
+      "get": {
         "tags": [
-          "webhooks"
+          "Appointments"
         ],
-        "summary": "Handle Stripe Webhook",
-        "operationId": "handle_stripe_webhook_api_v1_webhooks_stripe_post",
+        "summary": "Get Appointment",
+        "operationId": "get_appointment_api_v1_appointments__id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
-            "name": "stripe-signature",
-            "in": "header",
-            "required": false,
+            "name": "id",
+            "in": "path",
+            "required": true,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Stripe-Signature"
+              "type": "string",
+              "title": "Id"
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/appointments/{id}/status": {
+      "patch": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Change Appointment Status",
+        "operationId": "change_appointment_status_api_v1_appointments__id__status_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppointmentStatusUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/appointments/{id}/records": {
+      "post": {
+        "tags": [
+          "Clinical Records"
+        ],
+        "summary": "Record Clinical Consultation",
+        "operationId": "record_clinical_consultation_api_v1_appointments__id__records_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClinicalRecordCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalRecordResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Clinical Records"
+        ],
+        "summary": "Get Appointment Clinical Record",
+        "operationId": "get_appointment_clinical_record_api_v1_appointments__id__records_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalRecordResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Root",
+        "operationId": "root__get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -438,110 +959,23 @@
                 "schema": {}
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
         }
       }
     },
-    "/api/v1/audit-logs": {
+    "/api/v1/health": {
       "get": {
         "tags": [
-          "audit-logs"
+          "Health"
         ],
-        "summary": "List Audit Logs",
-        "operationId": "list_audit_logs_api_v1_audit_logs_get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
-          },
-          {
-            "name": "event_type",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by event type",
-              "title": "Event Type"
-            },
-            "description": "Filter by event type"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
-          }
-        ],
+        "summary": "Health Check",
+        "operationId": "health_check_api_v1_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AuditLogEntry"
-                  },
-                  "title": "Response List Audit Logs Api V1 Audit Logs Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": {}
               }
             }
           }
@@ -550,6 +984,9 @@
     },
     "/health": {
       "get": {
+        "tags": [
+          "Health"
+        ],
         "summary": "Health Check",
         "operationId": "health_check_health_get",
         "responses": {
@@ -567,13 +1004,22 @@
   },
   "components": {
     "schemas": {
-      "AuditLogEntry": {
+      "AppointmentCreateRequest": {
         "properties": {
-          "id": {
+          "patient_id": {
             "type": "string",
-            "title": "Id"
+            "title": "Patient Id"
           },
-          "transaction_id": {
+          "doctor_id": {
+            "type": "string",
+            "title": "Doctor Id"
+          },
+          "scheduled_start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Scheduled Start"
+          },
+          "reason_for_visit": {
             "anyOf": [
               {
                 "type": "string"
@@ -582,20 +1028,400 @@
                 "type": "null"
               }
             ],
-            "title": "Transaction Id"
-          },
-          "event_type": {
+            "title": "Reason For Visit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_id",
+          "doctor_id",
+          "scheduled_start"
+        ],
+        "title": "AppointmentCreateRequest"
+      },
+      "AppointmentResponse": {
+        "properties": {
+          "id": {
             "type": "string",
-            "title": "Event Type"
+            "title": "Id"
           },
-          "ip_address": {
+          "appointment_code": {
             "type": "string",
-            "title": "Ip Address"
+            "title": "Appointment Code"
           },
-          "masked_payload": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Masked Payload"
+          "patient_id": {
+            "type": "string",
+            "title": "Patient Id"
+          },
+          "doctor_id": {
+            "type": "string",
+            "title": "Doctor Id"
+          },
+          "scheduled_start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Scheduled Start"
+          },
+          "scheduled_end": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Scheduled End"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "reason_for_visit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason For Visit"
+          },
+          "cancellation_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancellation Reason"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "patient": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PatientResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "doctor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DoctorResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "appointment_code",
+          "patient_id",
+          "doctor_id",
+          "scheduled_start",
+          "scheduled_end",
+          "status"
+        ],
+        "title": "AppointmentResponse"
+      },
+      "AppointmentStatusUpdate": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "cancellation_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancellation Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "AppointmentStatusUpdate"
+      },
+      "ClinicalRecordCreateRequest": {
+        "properties": {
+          "symptoms": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symptoms"
+          },
+          "diagnosis": {
+            "type": "string",
+            "title": "Diagnosis"
+          },
+          "prescription": {
+            "type": "string",
+            "title": "Prescription"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "follow_up_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Follow Up Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "diagnosis",
+          "prescription"
+        ],
+        "title": "ClinicalRecordCreateRequest"
+      },
+      "ClinicalRecordResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "appointment_id": {
+            "type": "string",
+            "title": "Appointment Id"
+          },
+          "patient_id": {
+            "type": "string",
+            "title": "Patient Id"
+          },
+          "doctor_id": {
+            "type": "string",
+            "title": "Doctor Id"
+          },
+          "symptoms": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symptoms"
+          },
+          "diagnosis": {
+            "type": "string",
+            "title": "Diagnosis"
+          },
+          "prescription": {
+            "type": "string",
+            "title": "Prescription"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "follow_up_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Follow Up Date"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "appointment_id",
+          "patient_id",
+          "doctor_id",
+          "diagnosis",
+          "prescription"
+        ],
+        "title": "ClinicalRecordResponse"
+      },
+      "DoctorAvailabilityResponse": {
+        "properties": {
+          "doctor_id": {
+            "type": "string",
+            "title": "Doctor Id"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "slot_duration_minutes": {
+            "type": "integer",
+            "title": "Slot Duration Minutes"
+          },
+          "available_slots": {
+            "items": {
+              "$ref": "#/components/schemas/TimeSlot"
+            },
+            "type": "array",
+            "title": "Available Slots"
+          }
+        },
+        "type": "object",
+        "required": [
+          "doctor_id",
+          "date",
+          "slot_duration_minutes",
+          "available_slots"
+        ],
+        "title": "DoctorAvailabilityResponse"
+      },
+      "DoctorResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "doctor_code": {
+            "type": "string",
+            "title": "Doctor Code"
+          },
+          "department": {
+            "type": "string",
+            "title": "Department"
+          },
+          "qualification": {
+            "type": "string",
+            "title": "Qualification"
+          },
+          "consultation_fee": {
+            "type": "string",
+            "title": "Consultation Fee"
+          },
+          "slot_duration_minutes": {
+            "type": "integer",
+            "title": "Slot Duration Minutes"
+          },
+          "is_available": {
+            "type": "boolean",
+            "title": "Is Available"
+          },
+          "user": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "schedules": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ScheduleResponse"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schedules"
           },
           "created_at": {
             "anyOf": [
@@ -613,228 +1439,15 @@
         "type": "object",
         "required": [
           "id",
-          "event_type",
-          "ip_address",
-          "masked_payload"
+          "user_id",
+          "doctor_code",
+          "department",
+          "qualification",
+          "consultation_fee",
+          "slot_duration_minutes",
+          "is_available"
         ],
-        "title": "AuditLogEntry"
-      },
-      "CartItem": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "quantity": {
-            "type": "integer",
-            "title": "Quantity",
-            "default": 1
-          },
-          "unit_price": {
-            "type": "number",
-            "title": "Unit Price"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "unit_price"
-        ],
-        "title": "CartItem"
-      },
-      "CheckoutSessionRequest": {
-        "properties": {
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount",
-            "description": "Amount in base currency"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "description": "Settlement/target currency",
-            "default": "USD"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "items": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/CartItem"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Items"
-          }
-        },
-        "type": "object",
-        "required": [
-          "amount",
-          "customer_email"
-        ],
-        "title": "CheckoutSessionRequest"
-      },
-      "CheckoutSessionResponse": {
-        "properties": {
-          "session_id": {
-            "type": "string",
-            "title": "Session Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "client_secret": {
-            "type": "string",
-            "title": "Client Secret"
-          },
-          "base_amount": {
-            "type": "number",
-            "title": "Base Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_amount": {
-            "type": "number",
-            "title": "Target Amount"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          }
-        },
-        "type": "object",
-        "required": [
-          "session_id",
-          "payment_intent_id",
-          "client_secret",
-          "base_amount",
-          "base_currency",
-          "target_amount",
-          "target_currency",
-          "exchange_rate"
-        ],
-        "title": "CheckoutSessionResponse"
-      },
-      "DigitalWalletPaymentRequest": {
-        "properties": {
-          "wallet_type": {
-            "type": "string",
-            "title": "Wallet Type",
-            "description": "apple_pay or google_pay"
-          },
-          "payment_token": {
-            "type": "string",
-            "title": "Payment Token"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "default": "USD"
-          },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
-          },
-          "customer_email": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Customer Email",
-            "default": "customer@example.com"
-          }
-        },
-        "type": "object",
-        "required": [
-          "wallet_type",
-          "payment_token",
-          "amount"
-        ],
-        "title": "DigitalWalletPaymentRequest"
-      },
-      "DigitalWalletPaymentResponse": {
-        "properties": {
-          "transaction_id": {
-            "type": "string",
-            "title": "Transaction Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "wallet_type": {
-            "type": "string",
-            "title": "Wallet Type"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          }
-        },
-        "type": "object",
-        "required": [
-          "transaction_id",
-          "payment_intent_id",
-          "wallet_type",
-          "amount",
-          "currency",
-          "status"
-        ],
-        "title": "DigitalWalletPaymentResponse"
-      },
-      "ExchangeRatesResponse": {
-        "properties": {
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "rates": {
-            "additionalProperties": {
-              "type": "number"
-            },
-            "type": "object",
-            "title": "Rates"
-          },
-          "timestamp": {
-            "type": "string",
-            "title": "Timestamp"
-          }
-        },
-        "type": "object",
-        "required": [
-          "base_currency",
-          "rates",
-          "timestamp"
-        ],
-        "title": "ExchangeRatesResponse"
+        "title": "DoctorResponse"
       },
       "HTTPValidationError": {
         "properties": {
@@ -849,218 +1462,617 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "RefundRequest": {
+      "LoginRequest": {
         "properties": {
-          "transaction_id": {
+          "email": {
             "type": "string",
-            "title": "Transaction Id"
+            "format": "email",
+            "title": "Email"
           },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
-          },
-          "reason": {
+          "password": {
             "type": "string",
-            "title": "Reason"
-          },
-          "memo": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Memo"
+            "title": "Password"
           }
         },
         "type": "object",
         "required": [
-          "transaction_id",
-          "amount",
-          "reason"
+          "email",
+          "password"
         ],
-        "title": "RefundRequest"
+        "title": "LoginRequest"
       },
-      "RefundSummary": {
+      "PaginatedAppointments": {
         "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "transaction_id": {
-            "type": "string",
-            "title": "Transaction Id"
-          },
-          "refund_amount": {
-            "type": "number",
-            "title": "Refund Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
-          "reason": {
-            "type": "string",
-            "title": "Reason"
-          },
-          "memo": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Memo"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "transaction_id",
-          "refund_amount",
-          "currency",
-          "reason",
-          "status"
-        ],
-        "title": "RefundSummary"
-      },
-      "TransactionDetail": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "payment_method": {
-            "type": "string",
-            "title": "Payment Method"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "converted_amount": {
-            "type": "number",
-            "title": "Converted Amount"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "refunded_amount": {
-            "type": "number",
-            "title": "Refunded Amount"
-          },
-          "remaining_refundable_balance": {
-            "type": "number",
-            "title": "Remaining Refundable Balance"
-          },
-          "refunds": {
+          "items": {
             "items": {
-              "$ref": "#/components/schemas/RefundSummary"
+              "$ref": "#/components/schemas/AppointmentResponse"
             },
             "type": "array",
-            "title": "Refunds"
+            "title": "Items"
           },
-          "created_at": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "skip": {
+            "type": "integer",
+            "title": "Skip"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "skip",
+          "limit"
+        ],
+        "title": "PaginatedAppointments"
+      },
+      "PaginatedPatients": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PatientResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "skip": {
+            "type": "integer",
+            "title": "Skip"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "skip",
+          "limit"
+        ],
+        "title": "PaginatedPatients"
+      },
+      "PatientCreateRequest": {
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "title": "First Name"
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Last Name"
+          },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date",
+            "title": "Date Of Birth"
+          },
+          "gender": {
+            "type": "string",
+            "title": "Gender"
+          },
+          "phone_number": {
+            "type": "string",
+            "title": "Phone Number"
+          },
+          "email": {
             "anyOf": [
               {
                 "type": "string",
-                "format": "date-time"
+                "format": "email"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Created At"
+            "title": "Email"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "emergency_contact_name": {
+            "type": "string",
+            "title": "Emergency Contact Name"
+          },
+          "emergency_contact_phone": {
+            "type": "string",
+            "title": "Emergency Contact Phone"
+          },
+          "insurance_provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insurance Provider"
+          },
+          "insurance_policy_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insurance Policy Number"
           }
         },
         "type": "object",
         "required": [
-          "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "base_currency",
-          "target_currency",
-          "converted_amount",
-          "exchange_rate",
-          "status",
-          "refunded_amount",
-          "remaining_refundable_balance"
+          "first_name",
+          "last_name",
+          "date_of_birth",
+          "gender",
+          "phone_number",
+          "emergency_contact_name",
+          "emergency_contact_phone"
         ],
-        "title": "TransactionDetail"
+        "title": "PatientCreateRequest"
       },
-      "TransactionSummary": {
+      "PatientResponse": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
           },
-          "customer_email": {
+          "patient_code": {
             "type": "string",
-            "title": "Customer Email"
+            "title": "Patient Code"
           },
-          "payment_method": {
+          "first_name": {
             "type": "string",
-            "title": "Payment Method"
+            "title": "First Name"
           },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "currency": {
+          "last_name": {
             "type": "string",
-            "title": "Currency"
+            "title": "Last Name"
           },
-          "status": {
+          "date_of_birth": {
             "type": "string",
-            "title": "Status"
+            "format": "date",
+            "title": "Date Of Birth"
+          },
+          "gender": {
+            "type": "string",
+            "title": "Gender"
+          },
+          "phone_number": {
+            "type": "string",
+            "title": "Phone Number"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "emergency_contact_name": {
+            "type": "string",
+            "title": "Emergency Contact Name"
+          },
+          "emergency_contact_phone": {
+            "type": "string",
+            "title": "Emergency Contact Phone"
+          },
+          "insurance_provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insurance Provider"
+          },
+          "insurance_policy_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insurance Policy Number"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "patient_code",
+          "first_name",
+          "last_name",
+          "date_of_birth",
+          "gender",
+          "phone_number",
+          "emergency_contact_name",
+          "emergency_contact_phone"
+        ],
+        "title": "PatientResponse"
+      },
+      "PatientUpdateRequest": {
+        "properties": {
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          },
+          "date_of_birth": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Birth"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "phone_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone Number"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "email"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "emergency_contact_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emergency Contact Name"
+          },
+          "emergency_contact_phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emergency Contact Phone"
+          },
+          "insurance_provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insurance Provider"
+          },
+          "insurance_policy_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insurance Policy Number"
+          }
+        },
+        "type": "object",
+        "title": "PatientUpdateRequest"
+      },
+      "RegisterRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role",
+            "default": "PATIENT"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "full_name"
+        ],
+        "title": "RegisterRequest"
+      },
+      "ScheduleCreateRequest": {
+        "properties": {
+          "day_of_week": {
+            "type": "integer",
+            "title": "Day Of Week"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "time",
+            "title": "Start Time"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "time",
+            "title": "End Time"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "day_of_week",
+          "start_time",
+          "end_time"
+        ],
+        "title": "ScheduleCreateRequest"
+      },
+      "ScheduleResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "doctor_id": {
+            "type": "string",
+            "title": "Doctor Id"
+          },
+          "day_of_week": {
+            "type": "integer",
+            "title": "Day Of Week"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "time",
+            "title": "Start Time"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "time",
+            "title": "End Time"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "doctor_id",
+          "day_of_week",
+          "start_time",
+          "end_time",
+          "is_active"
+        ],
+        "title": "ScheduleResponse"
+      },
+      "TimeSlot": {
+        "properties": {
+          "start_time": {
+            "type": "string",
+            "title": "Start Time"
+          },
+          "end_time": {
+            "type": "string",
+            "title": "End Time"
+          },
+          "is_available": {
+            "type": "boolean",
+            "title": "Is Available"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start_time",
+          "end_time",
+          "is_available"
+        ],
+        "title": "TimeSlot"
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "user"
+        ],
+        "title": "TokenResponse"
+      },
+      "UserResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
           },
           "created_at": {
             "anyOf": [
@@ -1078,14 +2090,12 @@
         "type": "object",
         "required": [
           "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "currency",
-          "status"
+          "email",
+          "full_name",
+          "role",
+          "is_active"
         ],
-        "title": "TransactionSummary"
+        "title": "UserResponse"
       },
       "ValidationError": {
         "properties": {
@@ -1126,6 +2136,12 @@
           "type"
         ],
         "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }
