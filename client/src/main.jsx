@@ -1,22 +1,19 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App";
+import App from "./App.jsx";
 import "./index.css";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false };
   }
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
+  static getDerivedStateFromError() {
+    return { hasError: true };
   }
-
-  componentDidCatch(_error, _errorInfo) {
-    // Error logged for boundary tracking
+  componentDidCatch() {
+    // Handled gracefully in UI
   }
-
   render() {
     if (this.state.hasError) {
       return (
@@ -24,23 +21,33 @@ class ErrorBoundary extends React.Component {
           style={{
             padding: "2rem",
             textAlign: "center",
-            fontFamily: "sans-serif",
+            color: "#F8FAFC",
+            backgroundColor: "#0B0F19",
+            minHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          <h2>Something went wrong.</h2>
-          <p style={{ color: "#666" }}>
-            {this.state.error?.message ||
-              "An unexpected rendering error occurred."}
+          <h2
+            style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#F59E0B" }}
+          >
+            Something went wrong.
+          </h2>
+          <p style={{ marginTop: "0.5rem", color: "#94A3B8" }}>
+            Please reload the page or contact the festival helpdesk.
           </p>
           <button
             onClick={() => window.location.reload()}
             style={{
               marginTop: "1rem",
               padding: "0.5rem 1rem",
-              backgroundColor: "#4F46E5",
-              color: "#fff",
+              backgroundColor: "#F59E0B",
+              color: "#0B0F19",
+              borderRadius: "0.5rem",
+              fontWeight: "bold",
               border: "none",
-              borderRadius: "0.375rem",
               cursor: "pointer",
             }}
           >
