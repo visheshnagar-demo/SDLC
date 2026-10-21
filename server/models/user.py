@@ -1,20 +1,15 @@
 import uuid
-from sqlalchemy import Boolean, Column, DateTime, String, func
-from server.models import Base
-
+from sqlalchemy import Column, String, Boolean, DateTime, func
+from server.database import Base
 
 class User(Base):
     __tablename__ = "users"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    email = Column(String(255), unique=True, nullable=False, index=True)
+    email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(255), nullable=False)
-    role = Column(
-        String(50), nullable=False, default="PATIENT"
-    )  # ADMIN, DOCTOR, NURSE, RECEPTIONIST, PATIENT
+    role = Column(String(50), nullable=False, default="RECEPTIONIST")  # ADMIN, DOCTOR, NURSE, RECEPTIONIST, PATIENT
     is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime, nullable=False, server_default=func.now())
-    updated_at = Column(
-        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
-    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

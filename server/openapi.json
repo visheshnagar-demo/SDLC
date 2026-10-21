@@ -2,6 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Hospital Management System",
+    "description": "Hospital Management System API - Patient Registration, Doctor Schedules, Appointments, EMR",
     "version": "1.0.0"
   },
   "paths": {
@@ -12,16 +13,6 @@
         ],
         "summary": "Login",
         "operationId": "login_api_v1_auth_login_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -29,57 +20,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TokenResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/auth/register": {
-      "post": {
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "Register",
-        "operationId": "register_api_v1_auth_register_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -94,6 +34,29 @@
         ],
         "summary": "Get Me",
         "operationId": "get_me_api_v1_auth_me_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -104,13 +67,18 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/patients": {
@@ -118,11 +86,29 @@
         "tags": [
           "Patients"
         ],
-        "summary": "Register Patient",
-        "operationId": "register_patient_api_v1_patients_post",
+        "summary": "Create Patient",
+        "operationId": "create_patient_api_v1_patients_post",
         "security": [
           {
-            "HTTPBearer": []
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
           }
         ],
         "requestBody": {
@@ -162,11 +148,11 @@
         "tags": [
           "Patients"
         ],
-        "summary": "Get Patients",
-        "operationId": "get_patients_api_v1_patients_get",
+        "summary": "List Patients",
+        "operationId": "list_patients_api_v1_patients_get",
         "security": [
           {
-            "HTTPBearer": []
+            "OAuth2PasswordBearer": []
           }
         ],
         "parameters": [
@@ -208,6 +194,22 @@
               ],
               "title": "Search"
             }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
           }
         ],
         "responses": {
@@ -216,7 +218,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedPatients"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PatientResponse"
+                  },
+                  "title": "Response List Patients Api V1 Patients Get"
                 }
               }
             }
@@ -234,26 +240,42 @@
         }
       }
     },
-    "/api/v1/patients/{id}": {
+    "/api/v1/patients/{patient_id}": {
       "get": {
         "tags": [
           "Patients"
         ],
         "summary": "Get Patient",
-        "operationId": "get_patient_api_v1_patients__id__get",
+        "operationId": "get_patient_api_v1_patients__patient_id__get",
         "security": [
           {
-            "HTTPBearer": []
+            "OAuth2PasswordBearer": []
           }
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "patient_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Patient Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
             }
           }
         ],
@@ -284,21 +306,37 @@
         "tags": [
           "Patients"
         ],
-        "summary": "Update Patient Profile",
-        "operationId": "update_patient_profile_api_v1_patients__id__put",
+        "summary": "Update Patient",
+        "operationId": "update_patient_api_v1_patients__patient_id__put",
         "security": [
           {
-            "HTTPBearer": []
+            "OAuth2PasswordBearer": []
           }
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "patient_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Patient Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
             }
           }
         ],
@@ -341,11 +379,11 @@
         "tags": [
           "Doctors"
         ],
-        "summary": "Get Doctors",
-        "operationId": "get_doctors_api_v1_doctors_get",
+        "summary": "List Doctors",
+        "operationId": "list_doctors_api_v1_doctors_get",
         "security": [
           {
-            "HTTPBearer": []
+            "OAuth2PasswordBearer": []
           }
         ],
         "parameters": [
@@ -366,19 +404,19 @@
             }
           },
           {
-            "name": "is_available",
-            "in": "query",
+            "name": "authorization",
+            "in": "header",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "type": "boolean"
+                  "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "title": "Is Available"
+              "title": "Authorization"
             }
           }
         ],
@@ -392,7 +430,7 @@
                   "items": {
                     "$ref": "#/components/schemas/DoctorResponse"
                   },
-                  "title": "Response Get Doctors Api V1 Doctors Get"
+                  "title": "Response List Doctors Api V1 Doctors Get"
                 }
               }
             }
@@ -410,73 +448,26 @@
         }
       }
     },
-    "/api/v1/doctors/{id}": {
+    "/api/v1/doctors/{doctor_id}/availability": {
       "get": {
         "tags": [
           "Doctors"
         ],
-        "summary": "Get Doctor",
-        "operationId": "get_doctor_api_v1_doctors__id__get",
+        "summary": "Get Doctor Availability",
+        "operationId": "get_doctor_availability_api_v1_doctors__doctor_id__availability_get",
         "security": [
           {
-            "HTTPBearer": []
+            "OAuth2PasswordBearer": []
           }
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "doctor_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DoctorResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/doctors/{id}/availability": {
-      "get": {
-        "tags": [
-          "Doctors"
-        ],
-        "summary": "Check Doctor Availability",
-        "operationId": "check_doctor_availability_api_v1_doctors__id__availability_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Id"
+              "title": "Doctor Id"
             }
           },
           {
@@ -485,8 +476,25 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "date",
+              "description": "Date in YYYY-MM-DD format",
               "title": "Date"
+            },
+            "description": "Date in YYYY-MM-DD format"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
             }
           }
         ],
@@ -514,26 +522,42 @@
         }
       }
     },
-    "/api/v1/doctors/{id}/schedules": {
+    "/api/v1/doctors/{doctor_id}/schedules": {
       "post": {
         "tags": [
           "Doctors"
         ],
-        "summary": "Set Doctor Schedule",
-        "operationId": "set_doctor_schedule_api_v1_doctors__id__schedules_post",
+        "summary": "Create Doctor Schedule",
+        "operationId": "create_doctor_schedule_api_v1_doctors__doctor_id__schedules_post",
         "security": [
           {
-            "HTTPBearer": []
+            "OAuth2PasswordBearer": []
           }
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "doctor_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Doctor Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
             }
           }
         ],
@@ -580,7 +604,25 @@
         "operationId": "create_appointment_api_v1_appointments_post",
         "security": [
           {
-            "HTTPBearer": []
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
           }
         ],
         "requestBody": {
@@ -620,11 +662,11 @@
         "tags": [
           "Appointments"
         ],
-        "summary": "Get Appointments",
-        "operationId": "get_appointments_api_v1_appointments_get",
+        "summary": "List Appointments",
+        "operationId": "list_appointments_api_v1_appointments_get",
         "security": [
           {
-            "HTTPBearer": []
+            "OAuth2PasswordBearer": []
           }
         ],
         "parameters": [
@@ -667,8 +709,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string",
-                  "format": "date"
+                  "type": "string"
                 },
                 {
                   "type": "null"
@@ -712,8 +753,24 @@
               "type": "integer",
               "maximum": 100,
               "minimum": 1,
-              "default": 20,
+              "default": 50,
               "title": "Limit"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
             }
           }
         ],
@@ -723,7 +780,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedAppointments"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AppointmentResponse"
+                  },
+                  "title": "Response List Appointments Api V1 Appointments Get"
                 }
               }
             }
@@ -741,26 +802,42 @@
         }
       }
     },
-    "/api/v1/appointments/{id}": {
+    "/api/v1/appointments/{appointment_id}": {
       "get": {
         "tags": [
           "Appointments"
         ],
         "summary": "Get Appointment",
-        "operationId": "get_appointment_api_v1_appointments__id__get",
+        "operationId": "get_appointment_api_v1_appointments__appointment_id__get",
         "security": [
           {
-            "HTTPBearer": []
+            "OAuth2PasswordBearer": []
           }
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "appointment_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Appointment Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
             }
           }
         ],
@@ -788,26 +865,42 @@
         }
       }
     },
-    "/api/v1/appointments/{id}/status": {
+    "/api/v1/appointments/{appointment_id}/status": {
       "patch": {
         "tags": [
           "Appointments"
         ],
-        "summary": "Change Appointment Status",
-        "operationId": "change_appointment_status_api_v1_appointments__id__status_patch",
+        "summary": "Update Appointment Status",
+        "operationId": "update_appointment_status_api_v1_appointments__appointment_id__status_patch",
         "security": [
           {
-            "HTTPBearer": []
+            "OAuth2PasswordBearer": []
           }
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "appointment_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Appointment Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
             }
           }
         ],
@@ -845,26 +938,176 @@
         }
       }
     },
-    "/api/v1/appointments/{id}/records": {
+    "/api/v1/appointments/{appointment_id}/records": {
       "post": {
         "tags": [
-          "Clinical Records"
+          "Appointments"
         ],
-        "summary": "Record Clinical Consultation",
-        "operationId": "record_clinical_consultation_api_v1_appointments__id__records_post",
+        "summary": "Create Clinical Record",
+        "operationId": "create_clinical_record_api_v1_appointments__appointment_id__records_post",
         "security": [
           {
-            "HTTPBearer": []
+            "OAuth2PasswordBearer": []
           }
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "appointment_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Appointment Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClinicalRecordCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalRecordResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Get Clinical Record",
+        "operationId": "get_clinical_record_api_v1_appointments__appointment_id__records_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "appointment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Appointment Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalRecordResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clinical-records/appointments/{appointment_id}": {
+      "post": {
+        "tags": [
+          "Clinical Records"
+        ],
+        "summary": "Create Record",
+        "operationId": "create_record_api_v1_clinical_records_appointments__appointment_id__post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "appointment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Appointment Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
             }
           }
         ],
@@ -905,21 +1148,37 @@
         "tags": [
           "Clinical Records"
         ],
-        "summary": "Get Appointment Clinical Record",
-        "operationId": "get_appointment_clinical_record_api_v1_appointments__id__records_get",
+        "summary": "Get Record",
+        "operationId": "get_record_api_v1_clinical_records_appointments__appointment_id__get",
         "security": [
           {
-            "HTTPBearer": []
+            "OAuth2PasswordBearer": []
           }
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "appointment_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Id"
+              "title": "Appointment Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
             }
           }
         ],
@@ -941,22 +1200,6 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/": {
-      "get": {
-        "summary": "Root",
-        "operationId": "root__get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
               }
             }
           }
@@ -1006,18 +1249,49 @@
     "schemas": {
       "AppointmentCreateRequest": {
         "properties": {
-          "patient_id": {
-            "type": "string",
-            "title": "Patient Id"
-          },
           "doctor_id": {
             "type": "string",
             "title": "Doctor Id"
           },
-          "scheduled_start": {
+          "patient_id": {
             "type": "string",
-            "format": "date-time",
+            "title": "Patient Id"
+          },
+          "scheduled_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Scheduled Start"
+          },
+          "scheduled_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduled Time"
+          },
+          "scheduled_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduled End"
           },
           "reason_for_visit": {
             "anyOf": [
@@ -1033,9 +1307,8 @@
         },
         "type": "object",
         "required": [
-          "patient_id",
           "doctor_id",
-          "scheduled_start"
+          "patient_id"
         ],
         "title": "AppointmentCreateRequest"
       },
@@ -1104,6 +1377,28 @@
             ],
             "title": "Created By"
           },
+          "patient_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient Name"
+          },
+          "doctor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doctor Name"
+          },
           "created_at": {
             "anyOf": [
               {
@@ -1127,26 +1422,6 @@
               }
             ],
             "title": "Updated At"
-          },
-          "patient": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/PatientResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "doctor": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/DoctorResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
           }
         },
         "type": "object",
@@ -1220,8 +1495,7 @@
           "follow_up_date": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -1288,8 +1562,7 @@
           "follow_up_date": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -1341,26 +1614,25 @@
           },
           "date": {
             "type": "string",
-            "format": "date",
             "title": "Date"
-          },
-          "slot_duration_minutes": {
-            "type": "integer",
-            "title": "Slot Duration Minutes"
           },
           "available_slots": {
             "items": {
-              "$ref": "#/components/schemas/TimeSlot"
+              "type": "string"
             },
             "type": "array",
             "title": "Available Slots"
+          },
+          "slot_duration_minutes": {
+            "type": "integer",
+            "title": "Slot Duration Minutes",
+            "default": 30
           }
         },
         "type": "object",
         "required": [
           "doctor_id",
           "date",
-          "slot_duration_minutes",
           "available_slots"
         ],
         "title": "DoctorAvailabilityResponse"
@@ -1388,7 +1660,7 @@
             "title": "Qualification"
           },
           "consultation_fee": {
-            "type": "string",
+            "type": "number",
             "title": "Consultation Fee"
           },
           "slot_duration_minutes": {
@@ -1399,29 +1671,27 @@
             "type": "boolean",
             "title": "Is Available"
           },
-          "user": {
+          "full_name": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/UserResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "schedules": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/ScheduleResponse"
-                },
-                "type": "array"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Schedules"
+            "title": "Full Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
           },
           "created_at": {
             "anyOf": [
@@ -1434,6 +1704,18 @@
               }
             ],
             "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
           }
         },
         "type": "object",
@@ -1462,87 +1744,6 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "LoginRequest": {
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email",
-            "title": "Email"
-          },
-          "password": {
-            "type": "string",
-            "title": "Password"
-          }
-        },
-        "type": "object",
-        "required": [
-          "email",
-          "password"
-        ],
-        "title": "LoginRequest"
-      },
-      "PaginatedAppointments": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/AppointmentResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "skip": {
-            "type": "integer",
-            "title": "Skip"
-          },
-          "limit": {
-            "type": "integer",
-            "title": "Limit"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "total",
-          "skip",
-          "limit"
-        ],
-        "title": "PaginatedAppointments"
-      },
-      "PaginatedPatients": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/PatientResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "skip": {
-            "type": "integer",
-            "title": "Skip"
-          },
-          "limit": {
-            "type": "integer",
-            "title": "Limit"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "total",
-          "skip",
-          "limit"
-        ],
-        "title": "PaginatedPatients"
-      },
       "PatientCreateRequest": {
         "properties": {
           "first_name": {
@@ -1555,7 +1756,6 @@
           },
           "date_of_birth": {
             "type": "string",
-            "format": "date",
             "title": "Date Of Birth"
           },
           "gender": {
@@ -1566,11 +1766,18 @@
             "type": "string",
             "title": "Phone Number"
           },
+          "emergency_contact_name": {
+            "type": "string",
+            "title": "Emergency Contact Name"
+          },
+          "emergency_contact_phone": {
+            "type": "string",
+            "title": "Emergency Contact Phone"
+          },
           "email": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "email"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -1588,14 +1795,6 @@
               }
             ],
             "title": "Address"
-          },
-          "emergency_contact_name": {
-            "type": "string",
-            "title": "Emergency Contact Name"
-          },
-          "emergency_contact_phone": {
-            "type": "string",
-            "title": "Emergency Contact Phone"
           },
           "insurance_provider": {
             "anyOf": [
@@ -1638,17 +1837,6 @@
             "type": "string",
             "title": "Id"
           },
-          "user_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "User Id"
-          },
           "patient_code": {
             "type": "string",
             "title": "Patient Code"
@@ -1663,7 +1851,6 @@
           },
           "date_of_birth": {
             "type": "string",
-            "format": "date",
             "title": "Date Of Birth"
           },
           "gender": {
@@ -1792,8 +1979,7 @@
           "date_of_birth": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -1823,29 +2009,6 @@
             ],
             "title": "Phone Number"
           },
-          "email": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "email"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Email"
-          },
-          "address": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Address"
-          },
           "emergency_contact_name": {
             "anyOf": [
               {
@@ -1867,6 +2030,28 @@
               }
             ],
             "title": "Emergency Contact Phone"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
           },
           "insurance_provider": {
             "anyOf": [
@@ -1894,42 +2079,6 @@
         "type": "object",
         "title": "PatientUpdateRequest"
       },
-      "RegisterRequest": {
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email",
-            "title": "Email"
-          },
-          "password": {
-            "type": "string",
-            "title": "Password"
-          },
-          "full_name": {
-            "type": "string",
-            "title": "Full Name"
-          },
-          "role": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Role",
-            "default": "PATIENT"
-          }
-        },
-        "type": "object",
-        "required": [
-          "email",
-          "password",
-          "full_name"
-        ],
-        "title": "RegisterRequest"
-      },
       "ScheduleCreateRequest": {
         "properties": {
           "day_of_week": {
@@ -1938,23 +2087,14 @@
           },
           "start_time": {
             "type": "string",
-            "format": "time",
             "title": "Start Time"
           },
           "end_time": {
             "type": "string",
-            "format": "time",
             "title": "End Time"
           },
           "is_active": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "boolean",
             "title": "Is Active",
             "default": true
           }
@@ -1983,12 +2123,10 @@
           },
           "start_time": {
             "type": "string",
-            "format": "time",
             "title": "Start Time"
           },
           "end_time": {
             "type": "string",
-            "format": "time",
             "title": "End Time"
           },
           "is_active": {
@@ -2006,29 +2144,6 @@
           "is_active"
         ],
         "title": "ScheduleResponse"
-      },
-      "TimeSlot": {
-        "properties": {
-          "start_time": {
-            "type": "string",
-            "title": "Start Time"
-          },
-          "end_time": {
-            "type": "string",
-            "title": "End Time"
-          },
-          "is_available": {
-            "type": "boolean",
-            "title": "Is Available"
-          }
-        },
-        "type": "object",
-        "required": [
-          "start_time",
-          "end_time",
-          "is_available"
-        ],
-        "title": "TimeSlot"
       },
       "TokenResponse": {
         "properties": {
@@ -2073,18 +2188,6 @@
           "is_active": {
             "type": "boolean",
             "title": "Is Active"
-          },
-          "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Created At"
           }
         },
         "type": "object",
@@ -2139,9 +2242,14 @@
       }
     },
     "securitySchemes": {
-      "HTTPBearer": {
-        "type": "http",
-        "scheme": "bearer"
+      "OAuth2PasswordBearer": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "/api/v1/auth/login"
+          }
+        }
       }
     }
   }

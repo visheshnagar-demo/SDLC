@@ -32,8 +32,6 @@ graph TD
 
 ## Backend Modules (server/)
 - server/__init__.py
-- server/api/__init__.py
-- server/api/v1/__init__.py
 - server/config.py
 - server/database.py
 - server/main.py
@@ -75,22 +73,32 @@ graph TD
 - client/eslint.config.js
 - client/postcss.config.js
 - client/src/App.jsx
-- client/src/components/AnalyticsDashboard.jsx
-- client/src/components/CheckoutPage.jsx
-- client/src/components/CurrencySelector.jsx
-- client/src/components/Navbar.jsx
-- client/src/components/RefundPortal.jsx
 - client/src/components/StatusBadge.jsx
-- client/src/components/WebhookLogViewer.jsx
+- client/src/components/appointments/AppointmentTable.jsx
+- client/src/components/appointments/SlotPickerGrid.jsx
+- client/src/components/common/AppShell.jsx
+- client/src/components/common/KPICard.jsx
+- client/src/components/common/StatusBadge.jsx
+- client/src/components/consultations/PrescriptionTable.jsx
+- client/src/components/consultations/VitalsCard.jsx
+- client/src/components/doctors/DoctorRosterList.jsx
+- client/src/components/doctors/ScheduleConfigurator.jsx
+- client/src/components/patients/PatientRegistrationModal.jsx
+- client/src/components/patients/PatientTable.jsx
 - client/src/main.jsx
-- client/src/pages/AnalyticsPage.jsx
-- client/src/pages/CheckoutPage.jsx
-- client/src/pages/RefundPortalPage.jsx
+- client/src/pages/AppointmentsPage.jsx
+- client/src/pages/ConsultationsPage.jsx
+- client/src/pages/DashboardPage.jsx
+- client/src/pages/DoctorsPage.jsx
+- client/src/pages/PatientsPage.jsx
 - client/src/services/api.js
 - client/src/setup.js
-- client/src/tests/AnalyticsDashboard.test.jsx
-- client/src/tests/CheckoutPage.test.jsx
-- client/src/tests/RefundPortal.test.jsx
+- client/src/tests/App.test.jsx
+- client/src/tests/Appointments.test.jsx
+- client/src/tests/Consultations.test.jsx
+- client/src/tests/Dashboard.test.jsx
+- client/src/tests/Doctors.test.jsx
+- client/src/tests/Patients.test.jsx
 - client/tailwind.config.js
 - client/vite.config.js
 

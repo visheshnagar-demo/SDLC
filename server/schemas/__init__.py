@@ -1,53 +1,23 @@
-from server.schemas.auth import (
-    LoginRequest,
-    RegisterRequest,
-    UserResponse,
-    TokenResponse,
-)
-from server.schemas.patient import (
-    PatientCreateRequest,
-    PatientUpdateRequest,
-    PatientResponse,
-    PaginatedPatients,
-)
-from server.schemas.doctor import (
-    DoctorCreateRequest,
-    DoctorResponse,
-    ScheduleCreateRequest,
-    ScheduleResponse,
-    TimeSlot,
-    DoctorAvailabilityResponse,
-)
-from server.schemas.appointment import (
-    AppointmentCreateRequest,
-    AppointmentStatusUpdate,
-    AppointmentResponse,
-    PaginatedAppointments,
-)
-from server.schemas.clinical_record import (
-    ClinicalRecordCreateRequest,
-    ClinicalRecordResponse,
-)
+from server.schemas.auth import LoginRequest, UserResponse, TokenResponse
+from server.schemas.patient import PatientCreateRequest, PatientUpdateRequest, PatientResponse
+from server.schemas.doctor import ScheduleCreateRequest, ScheduleResponse, DoctorResponse, DoctorAvailabilityResponse
+from server.schemas.appointment import AppointmentCreateRequest, AppointmentStatusUpdate, AppointmentResponse
+from server.schemas.clinical_record import ClinicalRecordCreateRequest, ClinicalRecordResponse
 
 __all__ = [
     "LoginRequest",
-    "RegisterRequest",
     "UserResponse",
     "TokenResponse",
     "PatientCreateRequest",
     "PatientUpdateRequest",
     "PatientResponse",
-    "PaginatedPatients",
-    "DoctorCreateRequest",
-    "DoctorResponse",
     "ScheduleCreateRequest",
     "ScheduleResponse",
-    "TimeSlot",
+    "DoctorResponse",
     "DoctorAvailabilityResponse",
     "AppointmentCreateRequest",
     "AppointmentStatusUpdate",
     "AppointmentResponse",
-    "PaginatedAppointments",
     "ClinicalRecordCreateRequest",
     "ClinicalRecordResponse",
 ]
