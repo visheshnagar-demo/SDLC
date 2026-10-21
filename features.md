@@ -17,3 +17,14 @@ Enables customers to purchase products using cards or digital wallets in their c
 - Refund Management Portal with transaction search, inspection modal, refund trigger, and audit trail
 - Transaction Analytics Dashboard with KPI cards, filterable ledger, currency indicators, and webhook log viewer
 - Full-Stack REST API Integration via Axios client using VITE_API_BASE_URL
+
+## SCRUM-459 - Garba Management System (Registration, Pass Generation, Entry Management & Admin Controls)
+
+### Feature Summary
+A comprehensive Garba Management System allowing attendees to register and receive HMAC SHA-256 encrypted digital QR passes, security personnel to scan and validate passes in real-time at entry gates, and administrators to control pass quotas, pricing, and live attendance metrics.
+
+### Key Features
+- Event Registration & Pass Booking
+- Pass Generation & Digital QR Security
+- Entry Management & Real-Time Gate Scanner
+- Admin Controls & Analytics Dashboard
