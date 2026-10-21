@@ -186,3 +186,7 @@ cypress/downloads/
 
 # Frontend build artifacts (auto-added by Frontend Agent)
 client/node_modules/
+
+# Frontend build artifacts (auto-added by Frontend Agent)
+frontend/node_modules/
+ui/node_modules/
