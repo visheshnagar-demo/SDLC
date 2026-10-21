@@ -1,14 +1,18 @@
+import os
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from fastapi.testclient import TestClient
+
+# Set TESTING environment variable before importing app
+os.environ["TESTING"] = "true"
 
 from server.database import Base, get_db, seed_data
-import server.models  # noqa: F401
 from server.main import app
+from server.services.auth_service import create_access_token
 
-# In-memory SQLite for testing with StaticPool
+# Shared test engine using SQLite in-memory with StaticPool
 TEST_DATABASE_URL = "sqlite:///:memory:"
 
 test_engine = create_engine(
@@ -16,11 +20,12 @@ test_engine = create_engine(
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
+
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup_database():
+def setup_test_database():
     Base.metadata.create_all(bind=test_engine)
     db = TestingSessionLocal()
     try:
@@ -31,7 +36,24 @@ def setup_database():
     Base.metadata.drop_all(bind=test_engine)
 
 
-@pytest.fixture
+def override_get_db():
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+app.dependency_overrides[get_db] = override_get_db
+
+
+@pytest.fixture(scope="session")
+def client():
+    with TestClient(app) as c:
+        yield c
+
+
+@pytest.fixture(scope="session")
 def db_session():
     db = TestingSessionLocal()
     try:
@@ -41,14 +63,48 @@ def db_session():
 
 
 @pytest.fixture
-def client(db_session):
-    def override_get_db():
-        try:
-            yield db_session
-        finally:
-            pass
+def admin_headers():
+    token = create_access_token(
+        data={
+            "sub": "admin@example.com",
+            "role": "ADMIN",
+            "full_name": "Hospital Administrator",
+        }
+    )
+    return {"Authorization": f"Bearer {token}"}
 
-    app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as test_client:
-        yield test_client
-    app.dependency_overrides.clear()
+
+@pytest.fixture
+def receptionist_headers():
+    token = create_access_token(
+        data={
+            "sub": "test@example.com",
+            "role": "RECEPTIONIST",
+            "full_name": "Test Staff",
+        }
+    )
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def doctor_headers():
+    token = create_access_token(
+        data={
+            "sub": "doctor@example.com",
+            "role": "DOCTOR",
+            "full_name": "Dr. Marcus Smith",
+        }
+    )
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def patient_headers():
+    token = create_access_token(
+        data={
+            "sub": "patient@example.com",
+            "role": "PATIENT",
+            "full_name": "Patient User",
+        }
+    )
+    return {"Authorization": f"Bearer {token}"}

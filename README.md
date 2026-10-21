@@ -1,4 +1,69 @@
-# Project
+# Hospital Management System (CarePulse OS) &mdash; SCRUM-458
+
+A unified, secure, and compliant Hospital Management System web application providing centralized patient registration, doctor schedule configuration, outpatient appointment booking with atomic slot reservation, electronic medical records (EMR), and strict Role-Based Access Control (RBAC).
+
+## Architecture & Tech Stack
+
+- **Backend**: Python 3.11, FastAPI, SQLAlchemy 2.x ORM, SQLite (local/test) / PostgreSQL (production)
+- **Frontend**: React 18, Vite, Tailwind CSS, Axios, Lucide React icons, React Router DOM
+- **Authentication**: JWT Bearer Tokens with discrete role scopes (`ADMIN`, `DOCTOR`, `NURSE`, `RECEPTIONIST`, `PATIENT`)
+- **Compliance**: HIPAA and GDPR Protected Health Information (PHI) audit logging
+
+---
+
+## Full-Stack Local Development
+
+### 1. Server Setup (Backend - FastAPI)
+```bash
+# Navigate to repository root
+cd server
+
+# Create and activate virtual environment
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run backend development server (Port 8000)
+uvicorn server.main:app --host 0.0.0.0 --port 8000 --reload
+```
+API Documentation will be accessible at: `http://localhost:8000/docs`
+
+### 2. Client Setup (Frontend - React + Vite)
+```bash
+# Navigate to client directory
+cd client
+
+# Install NPM dependencies
+npm install
+
+# Start Vite development server (Port 5173)
+npm run dev
+```
+Web application will be accessible at: `http://localhost:5173`
+
+---
+
+## Default Seeded Accounts & Credentials
+
+The system seeds ready-to-use accounts on startup with pre-configured role permissions:
+
+| Role | Email | Password | Description |
+| :--- | :--- | :--- | :--- |
+| **Administrator** | `admin@example.com` | `adminpassword` | Full system governance, all access scopes |
+| **Doctor** | `doctor@example.com` | `doctorpassword` | Clinical notes, prescriptions, schedule config (Dr. Marcus Smith) |
+| **Staff / Receptionist** | `test@example.com` | `testpassword` | Patient registration, appointment booking |
+| **Patient** | `patient@example.com` | `patientpassword` | Self-service appointment scheduling |
+
+---
+
+## Running Automated Backend Tests
+
+```bash
+# Run pytest with in-memory SQLite database
+TESTING=true pytest server/tests -v
+```
 
 ## Server
 
