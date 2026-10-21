@@ -1,0 +1,31 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: garba-management-system
+  datasource:
+    url: ${DATABASE_URL:jdbc:h2:mem:gmsdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL}
+    driver-class-name: ${DATABASE_DRIVER:org.h2.Driver}
+    username: ${DATABASE_USERNAME:sa}
+    password: ${DATABASE_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+gms:
+  jwt:
+    secret: ${JWT_SECRET_KEY:dGhpc2lzYXZlcnlzZWN1cmVrZXlmb3Jqd3RzaWduaW5naW5nYXJiYW1hbmFnZW1lbnRzeXN0ZW0yMDI2}
+    expiration: 86400000 # 24 hours in ms
+  hmac:
+    secret: ${HMAC_SECRET_KEY:GarbaFest2026MasterHmacSecretKeyForSignedQrCodes}
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
