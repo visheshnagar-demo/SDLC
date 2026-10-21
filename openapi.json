@@ -1,22 +1,66 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Payment Gateway Service",
-    "version": "0.1.0"
+    "title": "Garba Management System",
+    "description": "Full-stack Garba Management System API for pass booking, HMAC SHA-256 QR security, real-time gate entry validation, and organizer analytics.",
+    "version": "1.0.0"
   },
   "paths": {
-    "/api/v1/payments/checkout-session": {
+    "/api/v1/auth/register": {
       "post": {
         "tags": [
-          "payments"
+          "Authentication"
         ],
-        "summary": "Create Session",
-        "operationId": "create_session_api_v1_payments_checkout_session_post",
+        "summary": "Register",
+        "description": "Register a new user account.",
+        "operationId": "register_api_v1_auth_register_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CheckoutSessionRequest"
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Login",
+        "description": "Authenticate credentials and issue JWT bearer token.",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLogin"
               }
             }
           },
@@ -28,7 +72,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CheckoutSessionResponse"
+                  "$ref": "#/components/schemas/Token"
                 }
               }
             }
@@ -46,161 +90,48 @@
         }
       }
     },
-    "/api/v1/payments/digital-wallet": {
-      "post": {
+    "/api/v1/auth/me": {
+      "get": {
         "tags": [
-          "payments"
+          "Authentication"
         ],
-        "summary": "Pay Digital Wallet",
-        "operationId": "pay_digital_wallet_api_v1_payments_digital_wallet_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DigitalWalletPaymentRequest"
+        "summary": "Get Me",
+        "description": "Retrieve the currently authenticated user's profile.",
+        "operationId": "get_me_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
               }
             }
-          },
-          "required": true
+          }
         },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DigitalWalletPaymentResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
           }
-        }
+        ]
       }
     },
-    "/api/v1/payments/rates": {
+    "/api/v1/events": {
       "get": {
         "tags": [
-          "payments"
+          "Events"
         ],
-        "summary": "Get Rates",
-        "operationId": "get_rates_api_v1_payments_rates_get",
+        "summary": "List Events",
+        "description": "List all Garba events and dates.",
+        "operationId": "list_events_api_v1_events_get",
         "parameters": [
-          {
-            "name": "base_currency",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "Base currency code",
-              "default": "USD",
-              "title": "Base Currency"
-            },
-            "description": "Base currency code"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExchangeRatesResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "List Transactions",
-        "operationId": "list_transactions_api_v1_payments_transactions_get",
-        "parameters": [
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Search transaction ID or email",
-              "title": "Search"
-            },
-            "description": "Search transaction ID or email"
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction status",
-              "title": "Status"
-            },
-            "description": "Filter by transaction status"
-          },
-          {
-            "name": "currency",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by currency",
-              "title": "Currency"
-            },
-            "description": "Filter by currency"
-          },
           {
             "name": "skip",
             "in": "query",
             "required": false,
             "schema": {
               "type": "integer",
-              "minimum": 0,
               "default": 0,
               "title": "Skip"
             }
@@ -211,8 +142,6 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
               "default": 50,
               "title": "Limit"
             }
@@ -226,92 +155,9 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TransactionSummary"
+                    "$ref": "#/components/schemas/EventResponse"
                   },
-                  "title": "Response List Transactions Api V1 Payments Transactions Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/payments/transactions/{transaction_id}": {
-      "get": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Get Transaction",
-        "operationId": "get_transaction_api_v1_payments_transactions__transaction_id__get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Transaction Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TransactionDetail"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/refunds": {
-      "post": {
-        "tags": [
-          "refunds"
-        ],
-        "summary": "Create Refund Endpoint",
-        "operationId": "create_refund_endpoint_api_v1_refunds_post",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RefundRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RefundSummary"
+                  "title": "Response List Events Api V1 Events Get"
                 }
               }
             }
@@ -328,66 +174,35 @@
           }
         }
       },
-      "get": {
+      "post": {
         "tags": [
-          "refunds"
+          "Events"
         ],
-        "summary": "List Refunds Endpoint",
-        "operationId": "list_refunds_endpoint_api_v1_refunds_get",
-        "parameters": [
+        "summary": "Create Event",
+        "description": "Create a new Garba event.",
+        "operationId": "create_event_api_v1_events_post",
+        "security": [
           {
-            "name": "transaction_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
+            "OAuth2PasswordBearer": []
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventCreate"
+              }
+            }
+          }
+        },
         "responses": {
-          "200": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RefundSummary"
-                  },
-                  "title": "Response List Refunds Endpoint Api V1 Refunds Get"
+                  "$ref": "#/components/schemas/EventResponse"
                 }
               }
             }
@@ -405,31 +220,514 @@
         }
       }
     },
-    "/api/v1/webhooks/stripe": {
-      "post": {
+    "/api/v1/events/{id}": {
+      "get": {
         "tags": [
-          "webhooks"
+          "Events"
         ],
-        "summary": "Handle Stripe Webhook",
-        "operationId": "handle_stripe_webhook_api_v1_webhooks_stripe_post",
+        "summary": "Get Event",
+        "description": "Get single Garba event details.",
+        "operationId": "get_event_api_v1_events__id__get",
         "parameters": [
           {
-            "name": "stripe-signature",
-            "in": "header",
-            "required": false,
+            "name": "id",
+            "in": "path",
+            "required": true,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Stripe-Signature"
+              "type": "string",
+              "title": "Id"
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{id}/tiers": {
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "Get Event Pass Tiers",
+        "description": "List pass tiers (Single-Day, Season, VIP), pricing, and real-time quota for an event.",
+        "operationId": "get_event_pass_tiers_api_v1_events__id__tiers_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PassTierResponse"
+                  },
+                  "title": "Response Get Event Pass Tiers Api V1 Events  Id  Tiers Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "Create Event Pass Tier",
+        "description": "Create a new pass tier for an event.",
+        "operationId": "create_event_pass_tier_api_v1_events__id__tiers_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PassTierCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassTierResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/bookings": {
+      "post": {
+        "tags": [
+          "Bookings"
+        ],
+        "summary": "Create Booking",
+        "description": "Create a Garba pass booking and dynamically generate signed HMAC SHA-256 digital passes.",
+        "operationId": "create_booking_api_v1_bookings_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/{id}": {
+      "get": {
+        "tags": [
+          "Bookings"
+        ],
+        "summary": "Get Booking",
+        "description": "Retrieve booking by ID with digital pass records.",
+        "operationId": "get_booking_api_v1_bookings__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/passes/my-passes": {
+      "get": {
+        "tags": [
+          "Passes"
+        ],
+        "summary": "Get My Passes",
+        "description": "Retrieve all passes owned by the current authenticated user.",
+        "operationId": "get_my_passes_api_v1_passes_my_passes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PassResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Get My Passes Api V1 Passes My Passes Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/passes/{passId}": {
+      "get": {
+        "tags": [
+          "Passes"
+        ],
+        "summary": "Get Pass",
+        "description": "Retrieve a specific pass by ID including HMAC SHA-256 signed QR payload.",
+        "operationId": "get_pass_api_v1_passes__passId__get",
+        "parameters": [
+          {
+            "name": "passId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Passid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/passes": {
+      "get": {
+        "tags": [
+          "Passes"
+        ],
+        "summary": "List Passes",
+        "description": "List passes with pagination.",
+        "operationId": "list_passes_api_v1_passes_get",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PassResponse"
+                  },
+                  "title": "Response List Passes Api V1 Passes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gates/validate": {
+      "post": {
+        "tags": [
+          "Gate Scanner"
+        ],
+        "summary": "Validate Gate Pass",
+        "description": "Sub-second cryptographic validation of HMAC SHA-256 digital passes at venue entry gates.\nPrevents duplicate entries and logs check-in telemetry.",
+        "operationId": "validate_gate_pass_api_v1_gates_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GateScanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateScanResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/analytics/live": {
+      "get": {
+        "tags": [
+          "Admin Operations"
+        ],
+        "summary": "Get Live Analytics",
+        "description": "Retrieve real-time event analytics, gate throughput metrics, revenue, and venue occupancy.",
+        "operationId": "get_live_analytics_api_v1_admin_analytics_live_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAnalyticsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/pass-tiers/{id}": {
+      "put": {
+        "tags": [
+          "Admin Operations"
+        ],
+        "summary": "Update Pass Tier",
+        "description": "Update pass tier capacity quotas, dynamic pricing, and details (Admin Only).",
+        "operationId": "update_pass_tier_api_v1_admin_pass_tiers__id__put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PassTierUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassTierResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/attendees/export": {
+      "get": {
+        "tags": [
+          "Admin Operations"
+        ],
+        "summary": "Export Attendees Csv",
+        "description": "Export all registered attendees and pass check-in statuses as a downloadable CSV roster.",
+        "operationId": "export_attendees_csv_api_v1_admin_attendees_export_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -438,110 +736,25 @@
                 "schema": {}
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
-        }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
       }
     },
-    "/api/v1/audit-logs": {
+    "/": {
       "get": {
-        "tags": [
-          "audit-logs"
-        ],
-        "summary": "List Audit Logs",
-        "operationId": "list_audit_logs_api_v1_audit_logs_get",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by transaction ID",
-              "title": "Transaction Id"
-            },
-            "description": "Filter by transaction ID"
-          },
-          {
-            "name": "event_type",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by event type",
-              "title": "Event Type"
-            },
-            "description": "Filter by event type"
-          },
-          {
-            "name": "skip",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Skip"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
-          }
-        ],
+        "summary": "Root",
+        "operationId": "root__get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AuditLogEntry"
-                  },
-                  "title": "Response List Audit Logs Api V1 Audit Logs Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": {}
               }
             }
           }
@@ -567,191 +780,172 @@
   },
   "components": {
     "schemas": {
-      "AuditLogEntry": {
+      "AdminAnalyticsResponse": {
+        "properties": {
+          "totalPassesIssued": {
+            "type": "integer",
+            "title": "Totalpassesissued"
+          },
+          "totalCheckedIn": {
+            "type": "integer",
+            "title": "Totalcheckedin"
+          },
+          "scansPerMinute": {
+            "type": "number",
+            "title": "Scansperminute"
+          },
+          "liveOccupancy": {
+            "type": "integer",
+            "title": "Liveoccupancy"
+          },
+          "grossRevenue": {
+            "type": "number",
+            "title": "Grossrevenue"
+          },
+          "gateMetrics": {
+            "items": {
+              "$ref": "#/components/schemas/GateMetric"
+            },
+            "type": "array",
+            "title": "Gatemetrics",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "totalPassesIssued",
+          "totalCheckedIn",
+          "scansPerMinute",
+          "liveOccupancy",
+          "grossRevenue"
+        ],
+        "title": "AdminAnalyticsResponse"
+      },
+      "AttendeeInfo": {
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "title": "Fullname"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fullName"
+        ],
+        "title": "AttendeeInfo"
+      },
+      "BookingCreate": {
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "title": "Eventid"
+          },
+          "passTierId": {
+            "type": "string",
+            "title": "Passtierid"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "attendees": {
+            "items": {
+              "$ref": "#/components/schemas/AttendeeInfo"
+            },
+            "type": "array",
+            "title": "Attendees"
+          }
+        },
+        "type": "object",
+        "required": [
+          "eventId",
+          "passTierId",
+          "quantity",
+          "attendees"
+        ],
+        "title": "BookingCreate"
+      },
+      "BookingResponse": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "transaction_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Transaction Id"
-          },
-          "event_type": {
+          "booking_reference": {
             "type": "string",
-            "title": "Event Type"
+            "title": "Booking Reference"
           },
-          "ip_address": {
+          "user_id": {
             "type": "string",
-            "title": "Ip Address"
+            "title": "User Id"
           },
-          "masked_payload": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Masked Payload"
+          "event_id": {
+            "type": "string",
+            "title": "Event Id"
+          },
+          "total_amount": {
+            "type": "number",
+            "title": "Total Amount"
+          },
+          "booking_status": {
+            "type": "string",
+            "title": "Booking Status"
           },
           "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
+          },
+          "passes": {
+            "items": {
+              "$ref": "#/components/schemas/PassResponse"
+            },
+            "type": "array",
+            "title": "Passes",
+            "default": []
           }
         },
         "type": "object",
         "required": [
           "id",
-          "event_type",
-          "ip_address",
-          "masked_payload"
+          "booking_reference",
+          "user_id",
+          "event_id",
+          "total_amount",
+          "booking_status",
+          "created_at"
         ],
-        "title": "AuditLogEntry"
+        "title": "BookingResponse"
       },
-      "CartItem": {
+      "EventCreate": {
         "properties": {
-          "name": {
+          "title": {
             "type": "string",
-            "title": "Name"
+            "title": "Title"
           },
-          "quantity": {
-            "type": "integer",
-            "title": "Quantity",
-            "default": 1
-          },
-          "unit_price": {
-            "type": "number",
-            "title": "Unit Price"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "unit_price"
-        ],
-        "title": "CartItem"
-      },
-      "CheckoutSessionRequest": {
-        "properties": {
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount",
-            "description": "Amount in base currency"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "description": "Settlement/target currency",
-            "default": "USD"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "items": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/CartItem"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Items"
-          }
-        },
-        "type": "object",
-        "required": [
-          "amount",
-          "customer_email"
-        ],
-        "title": "CheckoutSessionRequest"
-      },
-      "CheckoutSessionResponse": {
-        "properties": {
-          "session_id": {
-            "type": "string",
-            "title": "Session Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "client_secret": {
-            "type": "string",
-            "title": "Client Secret"
-          },
-          "base_amount": {
-            "type": "number",
-            "title": "Base Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_amount": {
-            "type": "number",
-            "title": "Target Amount"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          }
-        },
-        "type": "object",
-        "required": [
-          "session_id",
-          "payment_intent_id",
-          "client_secret",
-          "base_amount",
-          "base_currency",
-          "target_amount",
-          "target_currency",
-          "exchange_rate"
-        ],
-        "title": "CheckoutSessionResponse"
-      },
-      "DigitalWalletPaymentRequest": {
-        "properties": {
-          "wallet_type": {
-            "type": "string",
-            "title": "Wallet Type",
-            "description": "apple_pay or google_pay"
-          },
-          "payment_token": {
-            "type": "string",
-            "title": "Payment Token"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency",
-            "default": "USD"
-          },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
-          },
-          "customer_email": {
+          "description": {
             "anyOf": [
               {
                 "type": "string"
@@ -760,81 +954,261 @@
                 "type": "null"
               }
             ],
-            "title": "Customer Email",
-            "default": "customer@example.com"
+            "title": "Description"
+          },
+          "venue_name": {
+            "type": "string",
+            "title": "Venue Name"
+          },
+          "start_date": {
+            "type": "string",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "type": "string",
+            "title": "End Date"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status",
+            "default": "ACTIVE"
           }
         },
         "type": "object",
         "required": [
-          "wallet_type",
-          "payment_token",
-          "amount"
+          "title",
+          "venue_name",
+          "start_date",
+          "end_date"
         ],
-        "title": "DigitalWalletPaymentRequest"
+        "title": "EventCreate"
       },
-      "DigitalWalletPaymentResponse": {
+      "EventResponse": {
         "properties": {
-          "transaction_id": {
+          "title": {
             "type": "string",
-            "title": "Transaction Id"
+            "title": "Title"
           },
-          "payment_intent_id": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "venue_name": {
             "type": "string",
-            "title": "Payment Intent Id"
+            "title": "Venue Name"
           },
-          "wallet_type": {
+          "start_date": {
             "type": "string",
-            "title": "Wallet Type"
+            "title": "Start Date"
           },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "currency": {
+          "end_date": {
             "type": "string",
-            "title": "Currency"
+            "title": "End Date"
           },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status",
+            "default": "ACTIVE"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "venue_name",
+          "start_date",
+          "end_date",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "EventResponse"
+      },
+      "GateMetric": {
+        "properties": {
+          "gateIdentifier": {
+            "type": "string",
+            "title": "Gateidentifier"
+          },
+          "totalScans": {
+            "type": "integer",
+            "title": "Totalscans"
+          },
+          "successfulScans": {
+            "type": "integer",
+            "title": "Successfulscans"
+          },
+          "blockedScans": {
+            "type": "integer",
+            "title": "Blockedscans"
+          }
+        },
+        "type": "object",
+        "required": [
+          "gateIdentifier",
+          "totalScans",
+          "successfulScans",
+          "blockedScans"
+        ],
+        "title": "GateMetric"
+      },
+      "GateScanRequest": {
+        "properties": {
+          "gateIdentifier": {
+            "type": "string",
+            "title": "Gateidentifier"
+          },
+          "qrPayload": {
+            "type": "string",
+            "title": "Qrpayload"
+          }
+        },
+        "type": "object",
+        "required": [
+          "gateIdentifier",
+          "qrPayload"
+        ],
+        "title": "GateScanRequest"
+      },
+      "GateScanResponse": {
+        "properties": {
           "status": {
             "type": "string",
             "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "passId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passid"
+          },
+          "passNumber": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passnumber"
+          },
+          "attendeeName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attendeename"
+          },
+          "tierName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tiername"
+          },
+          "checkedInAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checkedinat"
+          },
+          "firstCheckedInAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Firstcheckedinat"
+          },
+          "entryCount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entrycount"
+          },
+          "maxEntries": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maxentries"
           }
         },
         "type": "object",
         "required": [
-          "transaction_id",
-          "payment_intent_id",
-          "wallet_type",
-          "amount",
-          "currency",
-          "status"
+          "status",
+          "message"
         ],
-        "title": "DigitalWalletPaymentResponse"
-      },
-      "ExchangeRatesResponse": {
-        "properties": {
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "rates": {
-            "additionalProperties": {
-              "type": "number"
-            },
-            "type": "object",
-            "title": "Rates"
-          },
-          "timestamp": {
-            "type": "string",
-            "title": "Timestamp"
-          }
-        },
-        "type": "object",
-        "required": [
-          "base_currency",
-          "rates",
-          "timestamp"
-        ],
-        "title": "ExchangeRatesResponse"
+        "title": "GateScanResponse"
       },
       "HTTPValidationError": {
         "properties": {
@@ -849,64 +1223,29 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "RefundRequest": {
-        "properties": {
-          "transaction_id": {
-            "type": "string",
-            "title": "Transaction Id"
-          },
-          "amount": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Amount"
-          },
-          "reason": {
-            "type": "string",
-            "title": "Reason"
-          },
-          "memo": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Memo"
-          }
-        },
-        "type": "object",
-        "required": [
-          "transaction_id",
-          "amount",
-          "reason"
-        ],
-        "title": "RefundRequest"
-      },
-      "RefundSummary": {
+      "PassResponse": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "transaction_id": {
+          "pass_number": {
             "type": "string",
-            "title": "Transaction Id"
+            "title": "Pass Number"
           },
-          "refund_amount": {
-            "type": "number",
-            "title": "Refund Amount"
-          },
-          "currency": {
+          "booking_id": {
             "type": "string",
-            "title": "Currency"
+            "title": "Booking Id"
           },
-          "reason": {
+          "pass_tier_id": {
             "type": "string",
-            "title": "Reason"
+            "title": "Pass Tier Id"
           },
-          "memo": {
+          "attendee_name": {
+            "type": "string",
+            "title": "Attendee Name"
+          },
+          "attendee_email": {
             "anyOf": [
               {
                 "type": "string"
@@ -915,13 +1254,40 @@
                 "type": "null"
               }
             ],
-            "title": "Memo"
+            "title": "Attendee Email"
+          },
+          "attendee_phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attendee Phone"
+          },
+          "qr_signature_hash": {
+            "type": "string",
+            "title": "Qr Signature Hash"
+          },
+          "qr_payload": {
+            "type": "string",
+            "title": "Qr Payload"
           },
           "status": {
             "type": "string",
             "title": "Status"
           },
-          "created_at": {
+          "entry_count": {
+            "type": "integer",
+            "title": "Entry Count"
+          },
+          "max_entries": {
+            "type": "integer",
+            "title": "Max Entries"
+          },
+          "last_scanned_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -931,161 +1297,357 @@
                 "type": "null"
               }
             ],
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "transaction_id",
-          "refund_amount",
-          "currency",
-          "reason",
-          "status"
-        ],
-        "title": "RefundSummary"
-      },
-      "TransactionDetail": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "payment_method": {
-            "type": "string",
-            "title": "Payment Method"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "base_currency": {
-            "type": "string",
-            "title": "Base Currency"
-          },
-          "target_currency": {
-            "type": "string",
-            "title": "Target Currency"
-          },
-          "converted_amount": {
-            "type": "number",
-            "title": "Converted Amount"
-          },
-          "exchange_rate": {
-            "type": "number",
-            "title": "Exchange Rate"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "refunded_amount": {
-            "type": "number",
-            "title": "Refunded Amount"
-          },
-          "remaining_refundable_balance": {
-            "type": "number",
-            "title": "Remaining Refundable Balance"
-          },
-          "refunds": {
-            "items": {
-              "$ref": "#/components/schemas/RefundSummary"
-            },
-            "type": "array",
-            "title": "Refunds"
+            "title": "Last Scanned At"
           },
           "created_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "base_currency",
-          "target_currency",
-          "converted_amount",
-          "exchange_rate",
+          "pass_number",
+          "booking_id",
+          "pass_tier_id",
+          "attendee_name",
+          "qr_signature_hash",
+          "qr_payload",
           "status",
-          "refunded_amount",
-          "remaining_refundable_balance"
+          "entry_count",
+          "max_entries",
+          "created_at"
         ],
-        "title": "TransactionDetail"
+        "title": "PassResponse"
       },
-      "TransactionSummary": {
+      "PassTierCreate": {
         "properties": {
-          "id": {
+          "tier_name": {
             "type": "string",
-            "title": "Id"
+            "title": "Tier Name"
           },
-          "payment_intent_id": {
-            "type": "string",
-            "title": "Payment Intent Id"
-          },
-          "customer_email": {
-            "type": "string",
-            "title": "Customer Email"
-          },
-          "payment_method": {
-            "type": "string",
-            "title": "Payment Method"
-          },
-          "amount": {
-            "type": "number",
-            "title": "Amount"
-          },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "created_at": {
+          "description": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
+            "title": "Description"
+          },
+          "price": {
+            "type": "number",
+            "title": "Price"
+          },
+          "total_quota": {
+            "type": "integer",
+            "title": "Total Quota"
+          },
+          "available_quota": {
+            "type": "integer",
+            "title": "Available Quota"
+          },
+          "valid_from": {
+            "type": "string",
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "type": "string",
+            "title": "Valid To"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tier_name",
+          "price",
+          "total_quota",
+          "available_quota",
+          "valid_from",
+          "valid_to"
+        ],
+        "title": "PassTierCreate"
+      },
+      "PassTierResponse": {
+        "properties": {
+          "tier_name": {
+            "type": "string",
+            "title": "Tier Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "price": {
+            "type": "number",
+            "title": "Price"
+          },
+          "total_quota": {
+            "type": "integer",
+            "title": "Total Quota"
+          },
+          "available_quota": {
+            "type": "integer",
+            "title": "Available Quota"
+          },
+          "valid_from": {
+            "type": "string",
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "type": "string",
+            "title": "Valid To"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "event_id": {
+            "type": "string",
+            "title": "Event Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tier_name",
+          "price",
+          "total_quota",
+          "available_quota",
+          "valid_from",
+          "valid_to",
+          "id",
+          "event_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "PassTierResponse"
+      },
+      "PassTierUpdate": {
+        "properties": {
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "total_quota": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Quota"
+          },
+          "available_quota": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available Quota"
+          },
+          "tier_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tier Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "title": "PassTierUpdate"
+      },
+      "Token": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "user"
+        ],
+        "title": "Token"
+      },
+      "UserCreate": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role",
+            "default": "ATTENDEE"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "full_name",
+          "password"
+        ],
+        "title": "UserCreate"
+      },
+      "UserLogin": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "UserLogin"
+      },
+      "UserResponse": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
             "title": "Created At"
           }
         },
         "type": "object",
         "required": [
+          "email",
+          "full_name",
           "id",
-          "payment_intent_id",
-          "customer_email",
-          "payment_method",
-          "amount",
-          "currency",
-          "status"
+          "role",
+          "is_active",
+          "created_at"
         ],
-        "title": "TransactionSummary"
+        "title": "UserResponse"
       },
       "ValidationError": {
         "properties": {
@@ -1126,6 +1688,17 @@
           "type"
         ],
         "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "OAuth2PasswordBearer": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "/api/v1/auth/login"
+          }
+        }
       }
     }
   }

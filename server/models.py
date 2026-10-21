@@ -1,143 +1,126 @@
+"""SQLAlchemy database models for Garba Management System."""
 import uuid
-import datetime
+from datetime import datetime
 from sqlalchemy import (
     Column,
     String,
     Float,
+    Integer,
     Boolean,
+    Text,
     DateTime,
     ForeignKey,
-    Text,
+    Date,
 )
 from sqlalchemy.orm import relationship
 from server.database import Base
 
 
-def generate_uuid() -> str:
-    return str(uuid.uuid4())
-
-
-def get_utc_now() -> datetime.datetime:
-    return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-
-
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(String, primary_key=True, default=generate_uuid)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    role = Column(String, default="user", nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False)
-    is_verified = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
-    updated_at = Column(
-        DateTime,
-        default=get_utc_now,
-        onupdate=get_utc_now,
-        nullable=False,
-    )
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    full_name = Column(String(150), nullable=False)
+    phone = Column(String(30), nullable=True)
+    role = Column(String(50), nullable=False, default="ATTENDEE")  # ATTENDEE, GATE_SECURITY, EVENT_ADMIN
+    is_active = Column(Boolean, nullable=False, default=True)
+    is_verified = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
-    transactions = relationship("Transaction", back_populates="user")
-    refunds = relationship("Refund", back_populates="actor")
+    bookings = relationship("Booking", back_populates="user", cascade="all, delete-orphan")
+    scans = relationship("GateCheckin", back_populates="scanned_by_user")
 
 
-class CheckoutSession(Base):
-    __tablename__ = "checkout_sessions"
+class Event(Base):
+    __tablename__ = "events"
 
-    id = Column(String, primary_key=True, default=lambda: f"cs_{uuid.uuid4().hex[:16]}")
-    session_id = Column(String, unique=True, index=True, nullable=False)
-    payment_intent_id = Column(String, index=True, nullable=False)
-    client_secret = Column(String, nullable=False)
-    customer_email = Column(String, index=True, nullable=False)
-    amount = Column(Float, nullable=False)
-    currency = Column(String, nullable=False)
-    target_amount = Column(Float, nullable=False)
-    target_currency = Column(String, nullable=False)
-    exchange_rate = Column(Float, default=1.0, nullable=False)
-    items_json = Column(Text, default="[]", nullable=False)
-    status = Column(String, default="PENDING", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    venue_name = Column(String(200), nullable=False)
+    start_date = Column(String(50), nullable=False)
+    end_date = Column(String(50), nullable=False)
+    status = Column(String(50), nullable=False, default="ACTIVE")  # DRAFT, ACTIVE, COMPLETED, CANCELLED
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
-
-class Transaction(Base):
-    __tablename__ = "transactions"
-
-    id = Column(String, primary_key=True, default=lambda: f"tx_{uuid.uuid4().hex[:12]}")
-    payment_intent_id = Column(String, index=True, nullable=False)
-    user_id = Column(String, ForeignKey("users.id"), nullable=True)
-    customer_email = Column(String, index=True, nullable=False)
-    payment_method = Column(String, default="card", nullable=False)
-    amount = Column(Float, nullable=False)
-    base_currency = Column(String, default="USD", nullable=False)
-    target_currency = Column(String, default="USD", nullable=False)
-    converted_amount = Column(Float, nullable=False)
-    exchange_rate = Column(Float, default=1.0, nullable=False)
-    status = Column(String, default="COMPLETED", nullable=False)
-    refunded_amount = Column(Float, default=0.0, nullable=False)
-    remaining_refundable_balance = Column(Float, nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
-    updated_at = Column(
-        DateTime,
-        default=get_utc_now,
-        onupdate=get_utc_now,
-        nullable=False,
-    )
-
-    user = relationship("User", back_populates="transactions")
-    refunds = relationship(
-        "Refund", back_populates="transaction", cascade="all, delete-orphan"
-    )
-    audit_logs = relationship("AuditLog", back_populates="transaction")
+    pass_tiers = relationship("PassTier", back_populates="event", cascade="all, delete-orphan")
+    bookings = relationship("Booking", back_populates="event", cascade="all, delete-orphan")
 
 
-class Refund(Base):
-    __tablename__ = "refunds"
+class PassTier(Base):
+    __tablename__ = "pass_tiers"
 
-    id = Column(
-        String, primary_key=True, default=lambda: f"ref_{uuid.uuid4().hex[:12]}"
-    )
-    transaction_id = Column(String, ForeignKey("transactions.id"), nullable=False)
-    actor_id = Column(String, ForeignKey("users.id"), nullable=True)
-    refund_amount = Column(Float, nullable=False)
-    currency = Column(String, default="USD", nullable=False)
-    reason = Column(String, nullable=False)
-    memo = Column(String, nullable=True)
-    status = Column(String, default="COMPLETED", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    event_id = Column(String(36), ForeignKey("events.id"), nullable=False, index=True)
+    tier_name = Column(String(100), nullable=False)  # Single-Day Pass, Season Pass, VIP Pass
+    description = Column(String(255), nullable=True)
+    price = Column(Float, nullable=False)
+    total_quota = Column(Integer, nullable=False)
+    available_quota = Column(Integer, nullable=False)
+    valid_from = Column(String(50), nullable=False)
+    valid_to = Column(String(50), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
-    transaction = relationship("Transaction", back_populates="refunds")
-    actor = relationship("User", back_populates="refunds")
-
-
-class AuditLog(Base):
-    __tablename__ = "audit_logs"
-
-    id = Column(
-        String, primary_key=True, default=lambda: f"log_{uuid.uuid4().hex[:12]}"
-    )
-    transaction_id = Column(String, ForeignKey("transactions.id"), nullable=True)
-    event_type = Column(String, index=True, nullable=False)
-    ip_address = Column(String, default="127.0.0.1", nullable=False)
-    masked_payload = Column(Text, default="{}", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False)
-
-    transaction = relationship("Transaction", back_populates="audit_logs")
+    event = relationship("Event", back_populates="pass_tiers")
+    passes = relationship("Pass", back_populates="pass_tier")
 
 
-class ExchangeRateCache(Base):
-    __tablename__ = "exchange_rate_caches"
+class Booking(Base):
+    __tablename__ = "bookings"
 
-    id = Column(String, primary_key=True, default=generate_uuid)
-    base_currency = Column(String, index=True, nullable=False)
-    rates_json = Column(Text, nullable=False)
-    fetched_at = Column(DateTime, default=get_utc_now, nullable=False)
-    expires_at = Column(DateTime, nullable=False)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    booking_reference = Column(String(50), unique=True, index=True, nullable=False)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
+    event_id = Column(String(36), ForeignKey("events.id"), nullable=False, index=True)
+    total_amount = Column(Float, nullable=False)
+    booking_status = Column(String(50), nullable=False, default="CONFIRMED")  # PENDING, CONFIRMED, CANCELLED
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    user = relationship("User", back_populates="bookings")
+    event = relationship("Event", back_populates="bookings")
+    passes = relationship("Pass", back_populates="booking", cascade="all, delete-orphan")
 
 
-class WebhookEvent(Base):
-    __tablename__ = "webhook_events"
+class Pass(Base):
+    __tablename__ = "passes"
 
-    id = Column(String, primary_key=True)
-    event_type = Column(String, nullable=False)
-    processed_at = Column(DateTime, default=get_utc_now, nullable=False)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    pass_number = Column(String(50), unique=True, index=True, nullable=False)
+    booking_id = Column(String(36), ForeignKey("bookings.id"), nullable=False, index=True)
+    pass_tier_id = Column(String(36), ForeignKey("pass_tiers.id"), nullable=False, index=True)
+    attendee_name = Column(String(150), nullable=False)
+    attendee_email = Column(String(255), nullable=True)
+    attendee_phone = Column(String(30), nullable=True)
+    qr_signature_hash = Column(String(255), nullable=False, index=True)
+    qr_payload = Column(Text, nullable=False)
+    status = Column(String(50), nullable=False, default="ACTIVE")  # ACTIVE, USED, REVOKED
+    entry_count = Column(Integer, nullable=False, default=0)
+    max_entries = Column(Integer, nullable=False, default=1)
+    last_scanned_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    booking = relationship("Booking", back_populates="passes")
+    pass_tier = relationship("PassTier", back_populates="passes")
+    checkins = relationship("GateCheckin", back_populates="pass_rel", cascade="all, delete-orphan")
+
+
+class GateCheckin(Base):
+    __tablename__ = "gate_checkins"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    pass_id = Column(String(36), ForeignKey("passes.id"), nullable=False, index=True)
+    gate_identifier = Column(String(100), nullable=False)
+    scanned_by_user_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    scan_result = Column(String(50), nullable=False)  # SUCCESS, DUPLICATE_BLOCKED, EXPIRED, INVALID_SIGNATURE
+    scan_timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    notes = Column(String(255), nullable=True)
+
+    pass_rel = relationship("Pass", back_populates="checkins")
+    scanned_by_user = relationship("User", back_populates="scans")
