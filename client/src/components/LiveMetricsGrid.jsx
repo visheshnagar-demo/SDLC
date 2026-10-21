@@ -1,90 +1,106 @@
 import React from "react";
-import { Ticket, Users, DollarSign, Activity, TrendingUp } from "lucide-react";
+import {
+  Ticket,
+  Users,
+  DollarSign,
+  Activity,
+  Zap,
+  TrendingUp,
+} from "lucide-react";
 
-export function LiveMetricsGrid({ metrics }) {
+export const LiveMetricsGrid = ({ analytics }) => {
+  const passesIssued = analytics?.totalPassesIssued ?? 0;
+  const checkedIn = analytics?.totalCheckedIn ?? 0;
+  const scansPerMin = analytics?.scansPerMinute ?? 0;
+  const grossRevenue = analytics?.grossRevenue ?? 0;
+  const occupancyRate =
+    passesIssued > 0
+      ? Math.min(100, Math.round((checkedIn / passesIssued) * 100))
+      : 0;
+
   const cards = [
     {
-      title: "Passes Sold",
-      value: `${metrics?.totalPassesIssued || metrics?.total_passes_sold || "4,850"}`,
-      subtitle: "of 5,000 Arena Capacity",
+      title: "Passes Issued",
+      value: Number(passesIssued).toLocaleString(),
+      subtext: "Across all Garba categories",
       icon: Ticket,
-      color: "from-amber-500 to-amber-600",
-      textColor: "text-amber-400",
-      bgGlow: "border-amber-500/30",
-      change: "+14% vs yesterday",
+      color: "from-[#F59E0B] to-[#FBBF24]",
+      textColor: "text-[#F59E0B]",
+      bgColor: "bg-[#F59E0B]/10",
+      borderColor: "border-[#F59E0B]/20",
     },
     {
       title: "Live Arena Occupancy",
-      value: `${metrics?.totalCheckedIn || metrics?.live_occupancy || "1,250"} Live`,
-      subtitle: "Active inside event gates",
+      value: `${Number(checkedIn).toLocaleString()}`,
+      subtext: `${occupancyRate}% of issued passes inside venue`,
       icon: Users,
-      color: "from-emerald-500 to-emerald-600",
+      color: "from-emerald-500 to-teal-400",
       textColor: "text-emerald-400",
-      bgGlow: "border-emerald-500/30",
-      change: "98.4% Scan Verification Rate",
+      bgColor: "bg-emerald-500/10",
+      borderColor: "border-emerald-500/20",
+      badge: "LIVE",
     },
     {
       title: "Gross Revenue",
-      value: metrics?.gross_revenue
-        ? `$${Number(metrics.gross_revenue).toLocaleString()}`
-        : "$214,800",
-      subtitle: "Combined Passes & VIP Bookings",
+      value: `$${Number(grossRevenue).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      subtext: "Ticket sales & registration dues",
       icon: DollarSign,
-      color: "from-rose-500 to-rose-600",
-      textColor: "text-rose-400",
-      bgGlow: "border-rose-500/30",
-      change: "+28.5% YoY Growth",
+      color: "from-[#BE185D] to-rose-400",
+      textColor: "text-[#F43F5E]",
+      bgColor: "bg-[#BE185D]/10",
+      borderColor: "border-[#BE185D]/20",
     },
     {
-      title: "Gate Throughput Velocity",
-      value: `${metrics?.scansPerMinute || metrics?.scans_per_minute || "42"} scans/min`,
-      subtitle: "Sub-200ms verification latency",
-      icon: Activity,
-      color: "from-blue-500 to-indigo-600",
-      textColor: "text-indigo-400",
-      bgGlow: "border-indigo-500/30",
-      change: "Peak Gate Flow: Normal",
+      title: "Scan Velocity",
+      value: `${Number(scansPerMin).toFixed(1)}/min`,
+      subtext: "Real-time entry gate throughput",
+      icon: Zap,
+      color: "from-blue-500 to-indigo-400",
+      textColor: "text-blue-400",
+      bgColor: "bg-blue-500/10",
+      borderColor: "border-blue-500/20",
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-      {cards.map((c, idx) => {
-        const Icon = c.icon;
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {cards.map((card, idx) => {
+        const IconComponent = card.icon;
         return (
           <div
             key={idx}
-            className={`bg-[#0f172a] border ${c.bgGlow} rounded-2xl p-5 shadow-xl transition-all hover:scale-[1.01]`}
+            className={`bg-[#0F172A] border ${card.borderColor} rounded-2xl p-5 shadow-xl transition-all duration-200 hover:scale-[1.01]`}
           >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                {c.title}
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-400">
+                {card.title}
               </span>
               <div
-                className={`p-2 rounded-xl bg-gradient-to-br ${c.color} text-slate-950 font-bold`}
+                className={`w-8 h-8 rounded-xl ${card.bgColor} flex items-center justify-center ${card.textColor}`}
               >
-                <Icon className="w-4 h-4" />
+                <IconComponent className="w-4 h-4" />
               </div>
             </div>
 
-            <div className="space-y-1">
+            <div className="mt-3 flex items-baseline gap-2">
               <h3
-                className={`text-2xl sm:text-3xl font-extrabold font-["Syne"] ${c.textColor}`}
+                className={`text-2xl sm:text-3xl font-extrabold font-display ${card.textColor}`}
               >
-                {c.value}
+                {card.value}
               </h3>
-              <p className="text-xs text-slate-400">{c.subtitle}</p>
+              {card.badge && (
+                <span className="animate-pulse bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  {card.badge}
+                </span>
+              )}
             </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-800 flex items-center gap-1.5 text-[11px] text-slate-300">
-              <TrendingUp className="w-3 h-3 text-emerald-400" />
-              <span>{c.change}</span>
-            </div>
+            <p className="text-xs text-slate-400 mt-1">{card.subtext}</p>
           </div>
         );
       })}
     </div>
   );
-}
+};
 
 export default LiveMetricsGrid;

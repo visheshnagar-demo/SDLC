@@ -7,28 +7,35 @@ export const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
 });
 
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("garba_auth_token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// Attach JWT token from localStorage if available
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("garba_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
 
-// Auth API
-export const loginUser = async (credentials) => {
-  const response = await apiClient.post("/api/v1/auth/login", credentials);
-  if (response.data?.token) {
-    localStorage.setItem("garba_auth_token", response.data.token);
-  }
+// Authentication
+export const registerUser = async (userData) => {
+  const response = await apiClient.post("/api/v1/auth/register", userData);
   return response.data;
 };
 
-export const registerUser = async (userData) => {
-  const response = await apiClient.post("/api/v1/auth/register", userData);
+export const loginUser = async (credentials) => {
+  const response = await apiClient.post("/api/v1/auth/login", credentials);
+  return response.data;
+};
+
+export const getCurrentUser = async () => {
+  const response = await apiClient.get("/api/v1/auth/me");
   return response.data;
 };
 
@@ -38,24 +45,42 @@ export const getEvents = async () => {
   return response.data;
 };
 
+export const getEventById = async (eventId) => {
+  const response = await apiClient.get(`/api/v1/events/${eventId}`);
+  return response.data;
+};
+
 export const getEventTiers = async (eventId) => {
   const response = await apiClient.get(`/api/v1/events/${eventId}/tiers`);
   return response.data;
 };
 
-// Bookings & Passes
+// Bookings
 export const createBooking = async (bookingData) => {
   const response = await apiClient.post("/api/v1/bookings", bookingData);
   return response.data;
 };
 
-export const getPass = async (passId) => {
+export const getBookingById = async (bookingId) => {
+  const response = await apiClient.get(`/api/v1/bookings/${bookingId}`);
+  return response.data;
+};
+
+// Passes
+export const getMyPasses = async () => {
+  const response = await apiClient.get("/api/v1/passes/my-passes");
+  return response.data;
+};
+
+export const getPassById = async (passId) => {
   const response = await apiClient.get(`/api/v1/passes/${passId}`);
   return response.data;
 };
 
-export const getUserPasses = async () => {
-  const response = await apiClient.get("/api/v1/passes");
+export const listAllPasses = async (skip = 0, limit = 50) => {
+  const response = await apiClient.get(
+    `/api/v1/passes?skip=${skip}&limit=${limit}`,
+  );
   return response.data;
 };
 
@@ -65,37 +90,25 @@ export const validateGatePass = async (scanPayload) => {
   return response.data;
 };
 
-// Admin Endpoints
+// Admin
 export const getLiveAnalytics = async () => {
   const response = await apiClient.get("/api/v1/admin/analytics/live");
   return response.data;
 };
 
-export const updatePassTier = async (tierId, tierData) => {
+export const updatePassTier = async (tierId, updateData) => {
   const response = await apiClient.put(
     `/api/v1/admin/pass-tiers/${tierId}`,
-    tierData,
+    updateData,
   );
   return response.data;
 };
 
-export const exportAttendees = async () => {
+export const exportAttendeesCsv = async () => {
   const response = await apiClient.get("/api/v1/admin/attendees/export", {
     responseType: "blob",
   });
   return response.data;
 };
 
-export default {
-  loginUser,
-  registerUser,
-  getEvents,
-  getEventTiers,
-  createBooking,
-  getPass,
-  getUserPasses,
-  validateGatePass,
-  getLiveAnalytics,
-  updatePassTier,
-  exportAttendees,
-};
+export default apiClient;

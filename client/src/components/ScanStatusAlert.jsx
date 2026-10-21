@@ -1,168 +1,184 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   CheckCircle2,
-  XCircle,
   AlertTriangle,
-  ShieldCheck,
+  XCircle,
+  ShieldAlert,
   Clock,
   User,
   Ticket,
-  MapPin,
 } from "lucide-react";
 
-export function ScanStatusAlert({ result, onDismiss }) {
-  if (!result) {
+// Web Audio API synth beep
+const playFeedbackTone = (status) => {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (status === "VALID" || status === "SUCCESS") {
+      // High pitch double beep
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.15);
+    } else if (status === "ALREADY_USED") {
+      // Low buzz
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(220, ctx.currentTime); // A3
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.35);
+    } else {
+      // Harsh error buzz
+      osc.type = "square";
+      osc.frequency.setValueAtTime(150, ctx.currentTime);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.4);
+    }
+  } catch (e) {
+    // Audio context may be restricted before user gesture
+  }
+};
+
+export const ScanStatusAlert = ({ scanResult }) => {
+  useEffect(() => {
+    if (scanResult?.status) {
+      playFeedbackTone(scanResult.status);
+    }
+  }, [scanResult]);
+
+  if (!scanResult) {
     return (
-      <div className="bg-[#0f172a] border border-slate-800 rounded-3xl p-8 shadow-xl text-center space-y-4">
-        <div className="w-16 h-16 bg-slate-800/80 rounded-2xl flex items-center justify-center mx-auto text-slate-400">
-          <ShieldCheck className="w-8 h-8" />
+      <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-8 text-center flex flex-col items-center justify-center space-y-3 min-h-[300px]">
+        <div className="w-16 h-16 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center">
+          <Ticket className="w-8 h-8 text-slate-500" />
         </div>
-        <div>
-          <h3 className='text-lg font-bold text-slate-200 font-["Syne"]'>
-            Awaiting Pass Scan
-          </h3>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1">
-            Point the camera viewfinder at an attendee's digital QR pass or
-            trigger a test payload.
-          </p>
-        </div>
+        <h3 className="font-display font-bold text-base text-slate-300">
+          Awaiting Gate Scan
+        </h3>
+        <p className="text-xs text-slate-500 max-w-xs">
+          Point the optical viewfinder towards the attendee's pass QR code or
+          input the token manually.
+        </p>
       </div>
     );
   }
 
-  const status = (result.status || "").toUpperCase();
+  const status = scanResult.status || "UNKNOWN";
   const isValid = status === "VALID" || status === "SUCCESS";
-  const isUsed =
-    status === "ALREADY_USED" || status === "DUPLICATE" || status === "USED";
+  const isDuplicate = status === "ALREADY_USED" || status === "DUPLICATE_SCAN";
+  const isInvalid = !isValid && !isDuplicate;
 
   return (
     <div
-      className={`rounded-3xl p-6 sm:p-8 border-2 shadow-2xl transition-all animate-in fade-in zoom-in duration-300 ${
+      className={`rounded-2xl p-6 sm:p-8 border-2 transition-all duration-300 ${
         isValid
-          ? "bg-emerald-950/40 border-emerald-500 shadow-emerald-500/20"
-          : isUsed
-            ? "bg-rose-950/40 border-rose-500 shadow-rose-500/20"
-            : "bg-amber-950/40 border-amber-500 shadow-amber-500/20"
+          ? "bg-emerald-950/40 border-emerald-500 shadow-2xl shadow-emerald-500/20"
+          : isDuplicate
+            ? "bg-rose-950/40 border-rose-500 shadow-2xl shadow-rose-500/20 animate-shake"
+            : "bg-amber-950/40 border-amber-500 shadow-2xl shadow-amber-500/20"
       }`}
     >
-      <div className="flex items-start justify-between gap-4 pb-4 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div
-            className={`p-3 rounded-2xl ${
+      {/* Alert Header */}
+      <div className="flex items-center gap-3 pb-5 border-b border-white/10">
+        {isValid && (
+          <CheckCircle2 className="w-8 h-8 text-emerald-400 flex-shrink-0" />
+        )}
+        {isDuplicate && (
+          <XCircle className="w-8 h-8 text-rose-400 flex-shrink-0" />
+        )}
+        {isInvalid && (
+          <AlertTriangle className="w-8 h-8 text-amber-400 flex-shrink-0" />
+        )}
+
+        <div>
+          <h2
+            className={`font-display font-extrabold text-xl sm:text-2xl tracking-tight ${
               isValid
-                ? "bg-emerald-500 text-slate-950"
-                : isUsed
-                  ? "bg-rose-500 text-white animate-bounce"
-                  : "bg-amber-500 text-slate-950"
+                ? "text-emerald-400"
+                : isDuplicate
+                  ? "text-rose-400"
+                  : "text-amber-400"
             }`}
           >
-            {isValid ? (
-              <CheckCircle2 className="w-8 h-8" />
-            ) : isUsed ? (
-              <XCircle className="w-8 h-8" />
-            ) : (
-              <AlertTriangle className="w-8 h-8" />
-            )}
-          </div>
-
-          <div>
-            <span
-              className={`text-xs font-extrabold uppercase tracking-widest block ${
-                isValid
-                  ? "text-emerald-400"
-                  : isUsed
-                    ? "text-rose-400"
-                    : "text-amber-400"
-              }`}
-            >
-              {isValid
-                ? "ACCESS GRANTED"
-                : isUsed
-                  ? "ACCESS DENIED • DUPLICATE ENTRY"
-                  : "VERIFICATION FAILED"}
-            </span>
-            <h2 className='text-2xl font-black font-["Syne"] text-white'>
-              {isValid
-                ? "VALID ENTRY"
-                : isUsed
-                  ? "ALREADY USED"
-                  : "INVALID / TAMPERED PASS"}
-            </h2>
-          </div>
+            {isValid
+              ? "VALID ENTRY - ACCESS GRANTED"
+              : isDuplicate
+                ? "ALREADY USED - DUPLICATE ENTRY"
+                : "INVALID / FORGED PASS TOKEN"}
+          </h2>
+          <p className="text-xs text-slate-300 mt-0.5">
+            {scanResult.message ||
+              (isValid
+                ? "Pass successfully checked in."
+                : "Gate entry denied.")}
+          </p>
         </div>
+      </div>
 
-        {onDismiss && (
-          <button
-            type="button"
-            onClick={onDismiss}
-            className="text-xs text-slate-400 hover:text-white px-2 py-1 bg-white/5 rounded-lg"
-          >
-            Clear
-          </button>
+      {/* Pass Metadata Grid */}
+      <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+        {scanResult.attendeeName && (
+          <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 space-y-1">
+            <span className="text-[11px] text-slate-400 flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5 text-[#F59E0B]" /> Attendee Name
+            </span>
+            <span className="font-bold text-slate-100 text-sm block">
+              {scanResult.attendeeName}
+            </span>
+          </div>
         )}
-      </div>
 
-      {/* Message and Audit Details */}
-      <div className="mt-5 space-y-4">
-        <p className="text-sm text-slate-200 font-medium">
-          {result.message ||
-            (isValid
-              ? "Pass authenticated successfully via HMAC SHA-256 signature."
-              : "Security warning: Pass verification failed.")}
-        </p>
-
-        <div className="grid grid-cols-2 gap-3 bg-black/40 rounded-2xl p-4 border border-white/10 text-xs">
-          <div>
-            <span className="text-slate-400 text-[10px] uppercase tracking-wider block mb-0.5">
-              Attendee
+        {scanResult.tierName && (
+          <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 space-y-1">
+            <span className="text-[11px] text-slate-400 flex items-center gap-1.5">
+              <Ticket className="w-3.5 h-3.5 text-[#BE185D]" /> Pass Category
             </span>
-            <div className="flex items-center gap-1.5 font-bold text-white">
-              <User className="w-3.5 h-3.5 text-amber-400" />
-              <span>
-                {result.attendeeName || result.attendee_name || "Aarav Patel"}
-              </span>
-            </div>
-          </div>
-
-          <div>
-            <span className="text-slate-400 text-[10px] uppercase tracking-wider block mb-0.5">
-              Pass Tier
+            <span className="font-bold text-[#F59E0B] text-sm block">
+              {scanResult.tierName}
             </span>
-            <div className="flex items-center gap-1.5 font-bold text-amber-300">
-              <Ticket className="w-3.5 h-3.5 text-amber-400" />
-              <span>
-                {result.tierName || result.tier_name || "Season VIP Pass"}
-              </span>
-            </div>
           </div>
+        )}
 
-          <div>
-            <span className="text-slate-400 text-[10px] uppercase tracking-wider block mb-0.5">
-              Gate
+        {scanResult.passNumber && (
+          <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 space-y-1">
+            <span className="text-[11px] text-slate-400 block font-mono">
+              Pass Number
             </span>
-            <div className="flex items-center gap-1 text-slate-300">
-              <MapPin className="w-3.5 h-3.5 text-rose-400" />
-              <span>
-                {result.gateIdentifier || result.gate || "Gate 1 North"}
-              </span>
-            </div>
+            <span className="font-mono font-bold text-slate-200 block">
+              {scanResult.passNumber}
+            </span>
           </div>
+        )}
 
-          <div>
-            <span className="text-slate-400 text-[10px] uppercase tracking-wider block mb-0.5">
-              Timestamp
-            </span>
-            <div className="flex items-center gap-1 text-slate-300">
-              <Clock className="w-3.5 h-3.5 text-slate-400" />
-              <span>
-                {result.checkedInAt || result.timestamp || "Just now"}
-              </span>
-            </div>
-          </div>
+        <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 space-y-1">
+          <span className="text-[11px] text-slate-400 flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-blue-400" /> Scan Timestamp
+          </span>
+          <span className="font-semibold text-slate-200 block">
+            {scanResult.checkedInAt
+              ? new Date(scanResult.checkedInAt).toLocaleTimeString()
+              : new Date().toLocaleTimeString()}
+          </span>
         </div>
       </div>
+
+      {isDuplicate && scanResult.firstCheckedInAt && (
+        <div className="mt-4 p-3 bg-rose-900/30 border border-rose-700/50 rounded-xl text-xs text-rose-300">
+          ⚠️ <strong>Prior Check-in:</strong> This pass was already scanned at{" "}
+          {new Date(scanResult.firstCheckedInAt).toLocaleTimeString()}. Prevent
+          duplicate access.
+        </div>
+      )}
     </div>
   );
-}
+};
 
 export default ScanStatusAlert;

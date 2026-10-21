@@ -1,125 +1,156 @@
-import React, { useState } from "react";
-import { NavLink, Link } from "react-router-dom";
+import React from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import {
-  Sparkles,
   Ticket,
-  QrCode,
-  ShieldAlert,
+  ShieldCheck,
   BarChart3,
-  Menu,
-  X,
+  Calendar,
+  LogIn,
+  UserPlus,
+  LogOut,
   User,
 } from "lucide-react";
 
-export function Navbar() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+export const Navbar = () => {
+  const { user, isAuthenticated, isAdmin, isSecurity, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const navItems = [
-    { name: "Browse Events", path: "/events", icon: Sparkles },
-    { name: "My Passes", path: "/my-passes", icon: Ticket },
-    { name: "Gate Scanner", path: "/scanner", icon: QrCode },
-    { name: "Admin Console", path: "/admin", icon: BarChart3 },
-  ];
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  const isActive = (path) => location.pathname === path;
 
   return (
-    <header className="bg-[#0f172a] border-b border-[#f59e0b]/20 sticky top-0 z-50 shadow-lg backdrop-blur-md bg-opacity-95">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Brand Logo */}
-          <Link to="/events" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#f59e0b] to-[#be185d] flex items-center justify-center shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
-              <Sparkles className="w-6 h-6 text-white animate-pulse" />
+    <header className="sticky top-0 z-50 bg-[#0F172A]/90 backdrop-blur-md border-b border-[#F59E0B]/20 px-4 sm:px-8 py-3.5 transition-all">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
+        {/* Brand Logo */}
+        <Link to="/events" className="flex items-center gap-3 group">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#BE185D] to-[#F59E0B] p-0.5 shadow-lg shadow-[#F59E0B]/20">
+            <div className="w-full h-full bg-[#0B0F19] rounded-[10px] flex items-center justify-center group-hover:bg-transparent transition-colors">
+              <span className="text-xl">🪔</span>
             </div>
-            <div>
-              <span className='font-["Syne"] text-xl font-bold bg-gradient-to-r from-[#f59e0b] via-[#ffc174] to-[#f43f5e] bg-clip-text text-transparent'>
-                GarbaFest 2026
-              </span>
-              <p className="text-[10px] text-slate-400 font-medium tracking-wider uppercase -mt-1">
-                Pass & Gate Management
-              </p>
+          </div>
+          <div>
+            <div className="font-display font-extrabold text-xl tracking-tight bg-gradient-to-r from-[#F59E0B] via-[#FBBF24] to-[#BE185D] bg-clip-text text-transparent">
+              GarbaFest
             </div>
+            <div className="text-[10px] text-slate-400 font-medium tracking-widest uppercase">
+              Management Portal
+            </div>
+          </div>
+        </Link>
+
+        {/* Navigation Links */}
+        <nav className="hidden md:flex items-center gap-1 sm:gap-2">
+          <Link
+            to="/events"
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all ${
+              isActive("/events") || isActive("/")
+                ? "bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/30"
+                : "text-slate-300 hover:text-white hover:bg-slate-800/50"
+            }`}
+          >
+            <Calendar className="w-4 h-4" />
+            <span>Browse Events</span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1 sm:gap-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  className={({ isActive }) =>
-                    `flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all ${
-                      isActive
-                        ? "bg-[#f59e0b]/15 text-[#f59e0b] border border-[#f59e0b]/30 shadow-sm"
-                        : "text-slate-300 hover:text-white hover:bg-slate-800/60"
-                    }`
-                  }
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{item.name}</span>
-                </NavLink>
-              );
-            })}
-          </nav>
-
-          {/* Right side test info & status */}
-          <div className="hidden sm:flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-[#0b1326] border border-amber-500/20 px-3 py-1.5 rounded-full text-xs text-amber-200/90">
-              <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
-              <span>HMAC SHA-256 Secured</span>
-            </div>
-            <div className="flex items-center gap-2 bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-full text-xs text-slate-300">
-              <User className="w-3.5 h-3.5 text-slate-400" />
-              <span className="font-mono">test@example.com</span>
-            </div>
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="flex md:hidden">
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none"
-              aria-label="Toggle menu"
+          {isAuthenticated && (
+            <Link
+              to="/my-passes"
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all ${
+                isActive("/my-passes")
+                  ? "bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/30"
+                  : "text-slate-300 hover:text-white hover:bg-slate-800/50"
+              }`}
             >
-              {mobileMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
-            </button>
-          </div>
+              <Ticket className="w-4 h-4" />
+              <span>My Passes</span>
+            </Link>
+          )}
+
+          {isSecurity && (
+            <Link
+              to="/scanner"
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all ${
+                isActive("/scanner")
+                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                  : "text-slate-300 hover:text-white hover:bg-slate-800/50"
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Gate Scanner</span>
+            </Link>
+          )}
+
+          {isAdmin && (
+            <Link
+              to="/admin/dashboard"
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all ${
+                isActive("/admin/dashboard") || isActive("/admin")
+                  ? "bg-[#BE185D]/10 text-[#F43F5E] border border-[#BE185D]/30"
+                  : "text-slate-300 hover:text-white hover:bg-slate-800/50"
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span>Admin Console</span>
+            </Link>
+          )}
+        </nav>
+
+        {/* User Profile / Auth Actions */}
+        <div className="flex items-center gap-3">
+          {isAuthenticated ? (
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2.5 bg-slate-900 border border-slate-700/60 rounded-full py-1.5 px-3">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#F59E0B] to-[#BE185D] flex items-center justify-center text-xs font-bold text-white">
+                  {user?.full_name
+                    ? user.full_name.charAt(0).toUpperCase()
+                    : "U"}
+                </div>
+                <div className="text-xs">
+                  <span className="font-semibold text-slate-200 block leading-none">
+                    {user?.full_name || user?.email}
+                  </span>
+                  <span className="text-[10px] text-[#F59E0B] font-mono leading-none">
+                    {user?.role || "ATTENDEE"}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-1.5 bg-slate-800/80 hover:bg-rose-950/40 text-slate-300 hover:text-rose-400 border border-slate-700 hover:border-rose-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                title="Log Out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Logout</span>
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                to="/login"
+                className="flex items-center gap-1.5 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-800/60 transition-all"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Login</span>
+              </Link>
+              <Link
+                to="/register"
+                className="flex items-center gap-1.5 bg-gradient-to-r from-[#F59E0B] to-[#BE185D] hover:opacity-95 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold shadow-md shadow-[#F59E0B]/20 transition-all"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Register</span>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Mobile menu dropdown */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-[#0f172a] border-b border-slate-800 px-4 pt-2 pb-4 space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                onClick={() => setMobileMenuOpen(false)}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium ${
-                    isActive
-                      ? "bg-[#f59e0b]/20 text-[#f59e0b]"
-                      : "text-slate-300 hover:text-white hover:bg-slate-800"
-                  }`
-                }
-              >
-                <Icon className="w-5 h-5" />
-                <span>{item.name}</span>
-              </NavLink>
-            );
-          })}
-        </div>
-      )}
     </header>
   );
-}
+};
 
 export default Navbar;

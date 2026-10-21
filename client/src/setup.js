@@ -1,23 +1,12 @@
 import "@testing-library/jest-dom";
 
-global.ResizeObserver = class ResizeObserver {
+global.ResizeObserver = class {
   observe() {}
   unobserve() {}
   disconnect() {}
 };
 
-if (typeof window !== "undefined") {
-  Object.defineProperty(window, "matchMedia", {
-    writable: true,
-    value: (query) => ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addListener: () => {},
-      removeListener: () => {},
-      addEventListener: () => {},
-      removeEventListener: () => {},
-      dispatchEvent: () => false,
-    }),
-  });
-}
+// Mock HTMLMediaElement & Audio for tests if any
+window.HTMLMediaElement.prototype.load = () => {};
+window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+window.HTMLMediaElement.prototype.pause = () => {};

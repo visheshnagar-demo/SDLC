@@ -1,191 +1,201 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   User,
   Mail,
   Phone,
   Users,
-  Shield,
   Plus,
-  Minus,
-  AlertCircle,
-  Info,
+  Trash2,
+  CheckSquare,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
-export function BookingForm({
-  quantity,
-  setQuantity,
-  attendees,
-  setAttendees,
-  maxAvailable,
-  termsAgreed,
-  setTermsAgreed,
-  errors,
-}) {
-  const handleAttendeeChange = (index, field, value) => {
+export const BookingForm = ({
+  selectedTier,
+  onSubmitBooking,
+  isSubmitting,
+  errorMessage,
+}) => {
+  const { user } = useAuth();
+  const [quantity, setQuantity] = useState(1);
+  const [attendees, setAttendees] = useState([
+    {
+      fullName: user?.full_name || "",
+      email: user?.email || "",
+      phone: user?.phone || "",
+    },
+  ]);
+  const [agreedToTerms, setAgreedToTerms] = useState(true);
+
+  // Sync initial user details if user logs in later
+  useEffect(() => {
+    if (user && attendees[0]?.fullName === "") {
+      setAttendees([
+        {
+          fullName: user.full_name || "",
+          email: user.email || "",
+          phone: user.phone || "",
+        },
+      ]);
+    }
+  }, [user]);
+
+  const handleQuantityChange = (newQty) => {
+    const qty = Math.max(1, Math.min(10, parseInt(newQty, 10) || 1));
+    setQuantity(qty);
+
     const updated = [...attendees];
-    updated[index] = {
-      ...updated[index],
-      [field]: value,
-    };
+    if (qty > updated.length) {
+      for (let i = updated.length; i < qty; i++) {
+        updated.push({ fullName: "", email: "", phone: "" });
+      }
+    } else if (qty < updated.length) {
+      updated.splice(qty);
+    }
     setAttendees(updated);
   };
 
-  const handleQuantityChange = (newQty) => {
-    const validQty = Math.max(
-      1,
-      Math.min(newQty, Math.min(10, maxAvailable || 10)),
-    );
-    setQuantity(validQty);
+  const handleAttendeeChange = (index, field, value) => {
+    const updated = [...attendees];
+    updated[index] = { ...updated[index], [field]: value };
+    setAttendees(updated);
+  };
 
-    const currentLength = attendees.length;
-    if (validQty > currentLength) {
-      const added = Array.from(
-        { length: validQty - currentLength },
-        (_, i) => ({
-          fullName: "",
-          email: "",
-          phone: "",
-        }),
-      );
-      setAttendees([...attendees, ...added]);
-    } else if (validQty < currentLength) {
-      setAttendees(attendees.slice(0, validQty));
-    }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!agreedToTerms) return;
+
+    // Build payload according to BookingCreate schema: { eventId, passTierId, quantity, attendees }
+    onSubmitBooking({
+      quantity,
+      attendees,
+    });
   };
 
   return (
-    <div className="bg-[#0f172a] border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+    <form
+      onSubmit={handleSubmit}
+      className="bg-[#0F172A] border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6"
+    >
       <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-amber-500/20 text-amber-400 rounded-xl">
-            <Users className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className='text-lg font-bold text-white font-["Syne"]'>
-              Attendee Details
-            </h2>
-            <p className="text-xs text-slate-400">
-              Enter attendee information for digital pass issuance.
-            </p>
-          </div>
+        <div>
+          <h2 className="text-xl font-bold font-display text-slate-100 flex items-center gap-2">
+            <Users className="w-5 h-5 text-[#F59E0B]" />
+            <span>Attendee Information</span>
+          </h2>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Each attendee receives an HMAC SHA-256 encrypted digital QR pass.
+          </p>
         </div>
 
-        {/* Quantity Controls */}
-        <div className="flex items-center gap-2 bg-slate-900 border border-slate-700/80 px-3 py-1.5 rounded-xl">
-          <span className="text-xs text-slate-400 mr-1">Qty:</span>
-          <button
-            type="button"
-            onClick={() => handleQuantityChange(quantity - 1)}
-            disabled={quantity <= 1}
-            className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed"
-            aria-label="Decrease quantity"
+        {/* Quantity Selector */}
+        <div className="flex items-center gap-2">
+          <label
+            htmlFor="qty-select"
+            className="text-xs font-semibold text-slate-300"
           >
-            <Minus className="w-3.5 h-3.5" />
-          </button>
-          <span className="font-mono font-bold text-white w-6 text-center text-sm">
-            {quantity}
-          </span>
-          <button
-            type="button"
-            onClick={() => handleQuantityChange(quantity + 1)}
-            disabled={quantity >= Math.min(10, maxAvailable || 10)}
-            className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed"
-            aria-label="Increase quantity"
+            Quantity:
+          </label>
+          <select
+            id="qty-select"
+            value={quantity}
+            onChange={(e) => handleQuantityChange(e.target.value)}
+            className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-bold text-[#F59E0B] focus:outline-none focus:ring-2 focus:ring-[#F59E0B]"
           >
-            <Plus className="w-3.5 h-3.5" />
-          </button>
+            {[1, 2, 3, 4, 5, 6, 8, 10].map((num) => (
+              <option key={num} value={num}>
+                {num} {num === 1 ? "Pass" : "Passes"}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* Test Account Notification Banner */}
-      <div className="bg-[#0b1326] border border-amber-500/30 rounded-xl p-3.5 flex items-start gap-3">
-        <Info className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-        <div className="text-xs text-amber-200/90 leading-relaxed">
-          <strong className="font-semibold text-amber-300">
-            Test Credentials:
-          </strong>{" "}
-          Primary attendee auto-populated for test convenience (
-          <span className="font-mono">test@example.com</span> /{" "}
-          <span className="font-mono">testpassword</span>).
+      {errorMessage && (
+        <div
+          className="p-3.5 bg-rose-950/40 border border-rose-800/60 rounded-xl text-rose-300 text-xs font-medium"
+          role="alert"
+        >
+          {errorMessage}
         </div>
-      </div>
+      )}
 
-      {/* Dynamic Attendee Cards */}
+      {/* Attendee Form Rows */}
       <div className="space-y-4">
-        {attendees.map((attendee, index) => (
+        {attendees.map((attendee, idx) => (
           <div
-            key={index}
-            className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/80 space-y-3"
+            key={idx}
+            className="p-4 bg-slate-900/80 border border-slate-800 rounded-xl space-y-3"
           >
-            <div className="flex items-center justify-between text-xs font-bold text-amber-400 uppercase tracking-wider">
-              <span>
-                Attendee #{index + 1} {index === 0 && "(Primary Contact)"}
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#F59E0B] uppercase tracking-wider flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5" /> Pass #{idx + 1} Attendee
               </span>
-              {index > 0 && (
+              {attendees.length > 1 && idx > 0 && (
                 <button
                   type="button"
                   onClick={() => handleQuantityChange(quantity - 1)}
-                  className="text-slate-400 hover:text-rose-400"
+                  className="text-slate-400 hover:text-rose-400 text-xs flex items-center gap-1"
                 >
-                  Remove
+                  <Trash2 className="w-3 h-3" /> Remove
                 </button>
               )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs text-slate-400 mb-1">
+                <label className="block text-[11px] font-medium text-slate-400 mb-1">
                   Full Name *
                 </label>
                 <div className="relative">
                   <User className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
                   <input
                     type="text"
+                    required
                     value={attendee.fullName}
                     onChange={(e) =>
-                      handleAttendeeChange(index, "fullName", e.target.value)
+                      handleAttendeeChange(idx, "fullName", e.target.value)
                     }
-                    placeholder="Aarav Patel"
-                    className="w-full bg-[#0b0f19] border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
-                    required
+                    placeholder="e.g. Aarav Patel"
+                    className="w-full bg-[#0B0F19] border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-[#F59E0B]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs text-slate-400 mb-1">
+                <label className="block text-[11px] font-medium text-slate-400 mb-1">
                   Email Address *
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
                   <input
                     type="email"
+                    required
                     value={attendee.email}
                     onChange={(e) =>
-                      handleAttendeeChange(index, "email", e.target.value)
+                      handleAttendeeChange(idx, "email", e.target.value)
                     }
-                    placeholder="test@example.com"
-                    className="w-full bg-[#0b0f19] border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
-                    required
+                    placeholder="e.g. aarav@example.com"
+                    className="w-full bg-[#0B0F19] border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-[#F59E0B]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs text-slate-400 mb-1">
-                  Mobile Phone *
+                <label className="block text-[11px] font-medium text-slate-400 mb-1">
+                  Mobile Number *
                 </label>
                 <div className="relative">
                   <Phone className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
                   <input
                     type="tel"
+                    required
                     value={attendee.phone}
                     onChange={(e) =>
-                      handleAttendeeChange(index, "phone", e.target.value)
+                      handleAttendeeChange(idx, "phone", e.target.value)
                     }
-                    placeholder="+1 (555) 382-9912"
-                    className="w-full bg-[#0b0f19] border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
-                    required
+                    placeholder="e.g. +1 555-0199"
+                    className="w-full bg-[#0B0F19] border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-[#F59E0B]"
                   />
                 </div>
               </div>
@@ -194,34 +204,34 @@ export function BookingForm({
         ))}
       </div>
 
-      {/* Emergency Contact & Guidelines */}
-      <div className="space-y-3 pt-2">
-        <label className="flex items-start gap-3 cursor-pointer select-none text-xs text-slate-300">
+      {/* Guidelines Agreement */}
+      <div className="pt-2">
+        <label className="flex items-start gap-2.5 cursor-pointer">
           <input
             type="checkbox"
-            checked={termsAgreed}
-            onChange={(e) => setTermsAgreed(e.target.checked)}
-            className="mt-0.5 rounded border-slate-700 bg-slate-900 text-amber-500 focus:ring-amber-400 focus:ring-offset-slate-900"
+            checked={agreedToTerms}
+            onChange={(e) => setAgreedToTerms(e.target.checked)}
+            className="mt-0.5 rounded border-slate-700 text-[#F59E0B] focus:ring-[#F59E0B]"
           />
-          <span>
-            I agree to the venue guidelines, security protocols, and acknowledge
-            that all passes will be issued with tamper-proof HMAC SHA-256
-            digital QR codes.
+          <span className="text-xs text-slate-300">
+            I agree to the Garba venue safety guidelines, traditional attire
+            code, and non-transferable pass terms.
           </span>
         </label>
-
-        {errors && (
-          <div
-            className="flex items-center gap-2 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-xs"
-            role="alert"
-          >
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            <span>{errors}</span>
-          </div>
-        )}
       </div>
-    </div>
+
+      {/* Submit Button */}
+      <button
+        type="submit"
+        disabled={isSubmitting || !selectedTier || !agreedToTerms}
+        className="w-full py-3 px-6 rounded-xl font-display font-extrabold text-base bg-gradient-to-r from-[#F59E0B] via-[#FBBF24] to-[#BE185D] hover:opacity-95 text-slate-950 shadow-lg shadow-[#F59E0B]/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+      >
+        {isSubmitting
+          ? "Generating Digital Passes..."
+          : `Confirm & Issue ${quantity} Pass${quantity > 1 ? "es" : ""}`}
+      </button>
+    </form>
   );
-}
+};
 
 export default BookingForm;

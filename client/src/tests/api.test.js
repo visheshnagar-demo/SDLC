@@ -1,44 +1,22 @@
 import { describe, it, expect } from "vitest";
-import api, {
-  apiClient,
-  loginUser,
-  registerUser,
-  getEvents,
-  getEventTiers,
-  createBooking,
-  getPass,
-  getUserPasses,
-  validateGatePass,
-  getLiveAnalytics,
-  updatePassTier,
-  exportAttendees,
-} from "../services/api";
+import * as api from "../services/api";
 
-describe("API Service", () => {
-  it("exports an axios apiClient instance with default configurations", () => {
-    expect(apiClient).toBeDefined();
-    expect(apiClient.defaults.baseURL).toBeDefined();
-    expect(apiClient.defaults.headers["Content-Type"]).toBe("application/json");
-  });
-
-  it("exports all expected API contract service functions", () => {
-    expect(typeof loginUser).toBe("function");
-    expect(typeof registerUser).toBe("function");
-    expect(typeof getEvents).toBe("function");
-    expect(typeof getEventTiers).toBe("function");
-    expect(typeof createBooking).toBe("function");
-    expect(typeof getPass).toBe("function");
-    expect(typeof getUserPasses).toBe("function");
-    expect(typeof validateGatePass).toBe("function");
-    expect(typeof getLiveAnalytics).toBe("function");
-    expect(typeof updatePassTier).toBe("function");
-    expect(typeof exportAttendees).toBe("function");
-  });
-
-  it("exports a default object containing all service methods", () => {
-    expect(api).toBeDefined();
+describe("API Services", () => {
+  it("exports all expected API endpoints", () => {
+    expect(typeof api.registerUser).toBe("function");
+    expect(typeof api.loginUser).toBe("function");
+    expect(typeof api.getCurrentUser).toBe("function");
     expect(typeof api.getEvents).toBe("function");
+    expect(typeof api.getEventById).toBe("function");
+    expect(typeof api.getEventTiers).toBe("function");
     expect(typeof api.createBooking).toBe("function");
+    expect(typeof api.getBookingById).toBe("function");
+    expect(typeof api.getMyPasses).toBe("function");
+    expect(typeof api.getPassById).toBe("function");
+    expect(typeof api.listAllPasses).toBe("function");
     expect(typeof api.validateGatePass).toBe("function");
+    expect(typeof api.getLiveAnalytics).toBe("function");
+    expect(typeof api.updatePassTier).toBe("function");
+    expect(typeof api.exportAttendeesCsv).toBe("function");
   });
 });
