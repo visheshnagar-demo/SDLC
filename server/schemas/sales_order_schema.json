@@ -1,58 +1,8 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "SalesOrderRecord",
+  "description": "Schema definition for sales order record loaded into BigQuery",
   "type": "object",
-  "properties": {
-    "order_id": {
-      "type": "string",
-      "description": "Unique sales order identifier"
-    },
-    "customer_id": {
-      "type": "string",
-      "description": "Unique customer identifier"
-    },
-    "product_id": {
-      "type": "string",
-      "description": "Unique product identifier"
-    },
-    "product_category": {
-      "type": ["string", "null"],
-      "description": "Product category"
-    },
-    "quantity": {
-      "type": "integer",
-      "minimum": 1,
-      "description": "Quantity ordered"
-    },
-    "unit_price": {
-      "type": "number",
-      "minimum": 0.0,
-      "description": "Unit price of the product"
-    },
-    "total_amount": {
-      "type": "number",
-      "minimum": 0.0,
-      "description": "Total order amount"
-    },
-    "order_status": {
-      "type": "string",
-      "description": "Order processing status"
-    },
-    "created_at": {
-      "type": "string",
-      "format": "date-time",
-      "description": "Order creation timestamp in ISO 8601"
-    },
-    "ingested_at": {
-      "type": "string",
-      "format": "date-time",
-      "description": "Pipeline ingestion timestamp in ISO 8601"
-    },
-    "batch_id": {
-      "type": "string",
-      "description": "ETL batch run identifier UUID"
-    }
-  },
   "required": [
     "order_id",
     "customer_id",
@@ -64,5 +14,56 @@
     "created_at",
     "ingested_at",
     "batch_id"
-  ]
+  ],
+  "properties": {
+    "order_id": {
+      "type": "string",
+      "description": "Unique sales order identifier"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Unique customer identifier"
+    },
+    "product_id": {
+      "type": "string",
+      "description": "Product SKU/identifier"
+    },
+    "product_category": {
+      "type": ["string", "null"],
+      "description": "Product category taxonomy name"
+    },
+    "quantity": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Purchased item quantity"
+    },
+    "unit_price": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Unit price per item"
+    },
+    "total_amount": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Total order monetary amount"
+    },
+    "order_status": {
+      "type": "string",
+      "description": "Order fulfillment status"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Order placement timestamp"
+    },
+    "ingested_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Pipeline processing timestamp"
+    },
+    "batch_id": {
+      "type": "string",
+      "description": "ETL batch run UUID identifier"
+    }
+  }
 }

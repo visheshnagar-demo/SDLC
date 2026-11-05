@@ -1,16 +1,19 @@
-# Cloud Run Job Dockerfile for Daily Batch Sales ETL Pipeline
+# Multi-stage Dockerfile for Cloud Run Job Execution
 FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY server/ ./server/
+COPY README.md .
 
-# Cloud Run Job entrypoint
 ENTRYPOINT ["python", "-m", "server.main"]

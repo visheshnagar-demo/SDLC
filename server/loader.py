@@ -1,137 +1,173 @@
+"""BigQuery partitioned table loader module."""
+
 import logging
-from typing import Optional
-import pandas as pd
+from typing import List, Optional
 from google.cloud import bigquery
-from google.cloud.exceptions import NotFound
+from google.cloud.exceptions import GoogleCloudError
+import pandas as pd
+from server.config import settings
 
 logger = logging.getLogger(__name__)
 
 
-def get_bigquery_schema() -> list[bigquery.SchemaField]:
-    """Return the BigQuery schema definition for analytics.new_sales_orders."""
+def get_bigquery_schema() -> List[bigquery.SchemaField]:
+    """Define the BigQuery schema matching SalesOrderRecord."""
     return [
         bigquery.SchemaField(
-            "order_id", "STRING", mode="REQUIRED", description="Unique order identifier"
+            "order_id",
+            "STRING",
+            mode="REQUIRED",
+            description="Unique sales order identifier",
         ),
         bigquery.SchemaField(
-            "customer_id", "STRING", mode="REQUIRED", description="Customer identifier"
+            "customer_id",
+            "STRING",
+            mode="REQUIRED",
+            description="Unique customer identifier",
         ),
         bigquery.SchemaField(
-            "product_id", "STRING", mode="REQUIRED", description="Product identifier"
+            "product_id",
+            "STRING",
+            mode="REQUIRED",
+            description="Product SKU/identifier",
         ),
         bigquery.SchemaField(
             "product_category",
             "STRING",
             mode="NULLABLE",
-            description="Product category",
+            description="Product category name",
         ),
         bigquery.SchemaField(
-            "quantity", "INTEGER", mode="REQUIRED", description="Quantity ordered"
+            "quantity", "INT64", mode="REQUIRED", description="Purchased item quantity"
         ),
         bigquery.SchemaField(
-            "unit_price", "FLOAT", mode="REQUIRED", description="Unit price"
+            "unit_price", "NUMERIC", mode="REQUIRED", description="Unit price per item"
         ),
         bigquery.SchemaField(
-            "total_amount", "FLOAT", mode="REQUIRED", description="Total order amount"
+            "total_amount", "NUMERIC", mode="REQUIRED", description="Total order amount"
         ),
         bigquery.SchemaField(
-            "order_status", "STRING", mode="REQUIRED", description="Order status"
+            "order_status",
+            "STRING",
+            mode="REQUIRED",
+            description="Order fulfillment status",
         ),
         bigquery.SchemaField(
-            "created_at", "TIMESTAMP", mode="REQUIRED", description="Order timestamp"
+            "created_at",
+            "TIMESTAMP",
+            mode="REQUIRED",
+            description="Order placement timestamp",
         ),
         bigquery.SchemaField(
             "ingested_at",
             "TIMESTAMP",
             mode="REQUIRED",
-            description="Ingestion timestamp",
+            description="Pipeline ingestion timestamp",
         ),
         bigquery.SchemaField(
-            "batch_id", "STRING", mode="REQUIRED", description="Batch run UUID"
+            "batch_id", "STRING", mode="REQUIRED", description="ETL batch UUID"
         ),
     ]
 
 
-def ensure_dataset_and_table(
-    client: bigquery.Client,
-    project_id: str,
-    dataset_id: str,
-    table_id: str,
-    partition_field: str = "created_at",
-) -> bigquery.Table:
-    """Ensure dataset and partitioned table exist in BigQuery."""
-    dataset_ref = bigquery.DatasetReference(project_id, dataset_id)
-    try:
-        client.get_dataset(dataset_ref)
-        logger.info("Dataset %s already exists.", dataset_id)
-    except NotFound:
-        logger.info("Dataset %s not found. Creating dataset...", dataset_id)
-        dataset = bigquery.Dataset(dataset_ref)
-        dataset.location = "US"
-        client.create_dataset(dataset, exists_ok=True)
-        logger.info("Dataset %s created successfully.", dataset_id)
+class Loader:
+    """Handles loading clean sales order records into partitioned BigQuery tables."""
 
-    table_ref = dataset_ref.table(table_id)
-    schema = get_bigquery_schema()
-    try:
-        table = client.get_table(table_ref)
-        logger.info("Table %s.%s already exists.", dataset_id, table_id)
-        return table
-    except NotFound:
+    def __init__(self, bq_client: Optional[bigquery.Client] = None):
+        self._bq_client = bq_client
+
+    @property
+    def client(self) -> bigquery.Client:
+        """Lazily initialize Google BigQuery client."""
+        if self._bq_client is None:
+            self._bq_client = bigquery.Client(project=settings.GCP_PROJECT)
+        return self._bq_client
+
+    def ensure_dataset_exists(self, dataset_id: str) -> None:
+        """Create BigQuery dataset if it does not already exist."""
+        full_dataset_id = (
+            dataset_id if "." in dataset_id else f"{settings.GCP_PROJECT}.{dataset_id}"
+        )
+        try:
+            dataset = bigquery.Dataset(full_dataset_id)
+            dataset.location = "US"
+            self.client.create_dataset(dataset, exists_ok=True)
+            logger.info("Ensured BigQuery dataset exists: %s", full_dataset_id)
+        except Exception as e:
+            logger.warning(
+                "Could not create/verify dataset '%s': %s", full_dataset_id, e
+            )
+
+    def load_records(
+        self,
+        df: pd.DataFrame,
+        destination_table_id: Optional[str] = None,
+    ) -> int:
+        """Load DataFrame into partitioned BigQuery table.
+
+        Args:
+            df: Cleaned Pandas DataFrame to load.
+            destination_table_id: Target BigQuery table ID. Defaults to settings.bq_table_id.
+
+        Returns:
+            Count of loaded rows.
+        """
+        table_id = destination_table_id or settings.bq_table_id
+        if df is None or df.empty:
+            logger.info("No records to load into BigQuery table '%s'.", table_id)
+            return 0
+
         logger.info(
-            "Table %s.%s not found. Creating partitioned table...", dataset_id, table_id
+            "Loading %d clean records into BigQuery table: %s", len(df), table_id
         )
-        table = bigquery.Table(table_ref, schema=schema)
-        table.time_partitioning = bigquery.TimePartitioning(
-            type_=bigquery.TimePartitioningType.DAY,
-            field=partition_field,
+
+        # Ensure dataset exists before loading
+        dataset_name = (
+            table_id.split(".")[-2] if "." in table_id else settings.BQ_DATASET
         )
-        created_table = client.create_table(table)
-        logger.info(
-            "Partitioned table %s.%s created successfully.", dataset_id, table_id
+        self.ensure_dataset_exists(dataset_name)
+
+        job_config = bigquery.LoadJobConfig(
+            schema=get_bigquery_schema(),
+            write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
+            time_partitioning=bigquery.TimePartitioning(
+                type_=bigquery.TimePartitioningType.DAY,
+                field="created_at",
+            ),
+            clustering_fields=["customer_id", "product_id"],
         )
-        return created_table
 
+        try:
+            # Load DataFrame to BigQuery
+            load_job = self.client.load_table_from_dataframe(
+                df,
+                table_id,
+                job_config=job_config,
+            )
+            # Wait for job to complete
+            load_job.result()
 
-def load_to_bigquery(
-    df: pd.DataFrame,
-    project_id: str,
-    dataset_id: str,
-    table_id: str,
-    partition_field: str = "created_at",
-    client: Optional[bigquery.Client] = None,
-) -> int:
-    """
-    Load cleaned sales order records into partitioned BigQuery table.
+            logger.info(
+                "Successfully loaded %d records into BigQuery table %s (Job ID: %s)",
+                len(df),
+                table_id,
+                load_job.job_id,
+            )
+            return len(df)
 
-    Returns:
-        Number of rows loaded.
-    """
-    if df is None or df.empty:
-        logger.info("No records to load into BigQuery.")
-        return 0
-
-    bq_client = client or bigquery.Client(project=project_id)
-    ensure_dataset_and_table(
-        client=bq_client,
-        project_id=project_id,
-        dataset_id=dataset_id,
-        table_id=table_id,
-        partition_field=partition_field,
-    )
-
-    table_ref = f"{project_id}.{dataset_id}.{table_id}"
-    job_config = bigquery.LoadJobConfig(
-        schema=get_bigquery_schema(),
-        write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
-        time_partitioning=bigquery.TimePartitioning(
-            type_=bigquery.TimePartitioningType.DAY,
-            field=partition_field,
-        ),
-    )
-
-    logger.info("Submitting BigQuery load job for %d rows into %s", len(df), table_ref)
-    load_job = bq_client.load_table_from_dataframe(df, table_ref, job_config=job_config)
-    load_job.result()  # Wait for job to complete
-    logger.info("BigQuery load job %s completed successfully.", load_job.job_id)
-    return len(df)
+        except GoogleCloudError as e:
+            logger.error(
+                "BigQuery load job failed for table '%s': %s",
+                table_id,
+                e,
+                exc_info=True,
+            )
+            raise
+        except Exception as e:
+            logger.error(
+                "Unexpected error loading data to BigQuery '%s': %s",
+                table_id,
+                e,
+                exc_info=True,
+            )
+            raise

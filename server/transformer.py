@@ -1,191 +1,245 @@
-import logging
-import uuid
+"""Data cleaning, validation, and deduplication module for the ETL pipeline."""
+
 from datetime import datetime, timezone
-from typing import Tuple, List, Dict, Any, Optional
+import logging
+from typing import Optional, Tuple
+import uuid
+import numpy as np
 import pandas as pd
 from server.models import ETLBatchMetrics
 
 logger = logging.getLogger(__name__)
 
 
-def clean_string_field(val: Any) -> Optional[str]:
-    """Trim whitespace and return clean string or None."""
-    if pd.isna(val) or val is None:
-        return None
-    val_str = str(val).strip()
-    return val_str if val_str else None
+class Transformer:
+    """Transforms raw sales order data into clean, validated, and deduplicated records."""
 
+    def __init__(self, batch_id: Optional[str] = None):
+        self.batch_id = batch_id or str(uuid.uuid4())
 
-def parse_datetime_field(val: Any) -> Optional[datetime]:
-    """Parse string or timestamp to UTC datetime, returning None on failure."""
-    if pd.isna(val) or val is None:
-        return None
-    try:
-        dt = pd.to_datetime(val, utc=True)
-        if pd.isna(dt):
-            return None
-        return dt.to_pydatetime()
-    except Exception:
-        return None
+    def transform(
+        self, df: pd.DataFrame, batch_id: Optional[str] = None
+    ) -> Tuple[pd.DataFrame, ETLBatchMetrics]:
+        """Clean, validate, and deduplicate raw sales order records.
 
+        Args:
+            df: Raw input DataFrame from extractor.
+            batch_id: Optional batch UUID override.
 
-def transform_sales_data(
-    raw_df: pd.DataFrame,
-    batch_id: Optional[str] = None,
-) -> Tuple[pd.DataFrame, pd.DataFrame, ETLBatchMetrics]:
-    """
-    Clean, validate, quarantine, and deduplicate raw sales order records.
+        Returns:
+            Tuple of (cleaned_df, metrics).
+        """
+        current_batch_id = batch_id or self.batch_id
+        if df is None or df.empty:
+            logger.info("Empty DataFrame received for transformation.")
+            metrics = ETLBatchMetrics(
+                batch_id=current_batch_id,
+                raw_records=0,
+                quarantined_records=0,
+                deduplicated_records=0,
+                clean_records_to_load=0,
+            )
+            empty_df = pd.DataFrame(
+                columns=[
+                    "order_id",
+                    "customer_id",
+                    "product_id",
+                    "product_category",
+                    "quantity",
+                    "unit_price",
+                    "total_amount",
+                    "order_status",
+                    "created_at",
+                    "ingested_at",
+                    "batch_id",
+                ]
+            )
+            return empty_df, metrics
 
-    Returns:
-        (clean_df, quarantined_df, metrics)
-    """
-    active_batch_id = batch_id or str(uuid.uuid4())
-    raw_count = len(raw_df) if raw_df is not None else 0
-    now_utc = datetime.now(timezone.utc)
+        raw_count = len(df)
+        logger.info(
+            "Starting transformation for %d raw records (batch_id=%s)",
+            raw_count,
+            current_batch_id,
+        )
 
-    if raw_df is None or raw_df.empty:
-        logger.info("Empty raw dataframe passed to transformer.")
+        df_work = df.copy()
+
+        # Normalize column names (strip whitespace and convert to lowercase)
+        df_work.columns = [str(c).strip().lower() for c in df_work.columns]
+
+        # Ensure expected columns exist
+        expected_cols = [
+            "order_id",
+            "customer_id",
+            "product_id",
+            "quantity",
+            "unit_price",
+            "created_at",
+        ]
+        missing_required = [c for c in expected_cols if c not in df_work.columns]
+        if missing_required:
+            logger.error("Required columns missing from dataset: %s", missing_required)
+            # Quarantine all rows if essential schema is missing
+            metrics = ETLBatchMetrics(
+                batch_id=current_batch_id,
+                raw_records=raw_count,
+                quarantined_records=raw_count,
+                deduplicated_records=0,
+                clean_records_to_load=0,
+            )
+            return pd.DataFrame(), metrics
+
+        if "product_category" not in df_work.columns:
+            df_work["product_category"] = None
+        if "total_amount" not in df_work.columns:
+            df_work["total_amount"] = np.nan
+        if "order_status" not in df_work.columns:
+            df_work["order_status"] = "COMPLETED"
+
+        # 1. Clean whitespace on string columns
+        string_cols = [
+            "order_id",
+            "customer_id",
+            "product_id",
+            "product_category",
+            "order_status",
+        ]
+        for col in string_cols:
+            if col in df_work.columns:
+                df_work[col] = df_work[col].apply(
+                    lambda v: v.strip() if isinstance(v, str) and pd.notna(v) else v
+                )
+
+        # 2. Validation & Quarantining
+        valid_mask = pd.Series(True, index=df_work.index)
+
+        # Validate non-empty required string identifiers
+        for col in ["order_id", "customer_id", "product_id"]:
+            col_valid = (
+                df_work[col].notna()
+                & (df_work[col].astype(str).str.strip() != "")
+                & (df_work[col].astype(str).str.lower() != "nan")
+            )
+            valid_mask = valid_mask & col_valid
+
+        # Validate and coerce quantity
+        quantity_numeric = pd.to_numeric(df_work["quantity"], errors="coerce")
+        quantity_valid = (
+            quantity_numeric.notna()
+            & (quantity_numeric > 0)
+            & (quantity_numeric == quantity_numeric.round())
+        )
+        valid_mask = valid_mask & quantity_valid
+
+        # Validate and coerce unit_price
+        unit_price_numeric = pd.to_numeric(df_work["unit_price"], errors="coerce")
+        unit_price_valid = unit_price_numeric.notna() & (unit_price_numeric >= 0)
+        valid_mask = valid_mask & unit_price_valid
+
+        # Validate and coerce created_at timestamp with mixed ISO formats support
+        created_at_dt = pd.to_datetime(
+            df_work["created_at"], errors="coerce", utc=True, format="mixed"
+        )
+        created_at_valid = created_at_dt.notna()
+        valid_mask = valid_mask & created_at_valid
+
+        # Validate and coerce total_amount
+        total_amount_numeric = pd.to_numeric(df_work["total_amount"], errors="coerce")
+
+        quarantined_count = int((~valid_mask).sum())
+        if quarantined_count > 0:
+            logger.warning(
+                "Quarantined %d invalid records failing data quality checks.",
+                quarantined_count,
+            )
+
+        df_valid = df_work[valid_mask].copy()
+
+        if df_valid.empty:
+            metrics = ETLBatchMetrics(
+                batch_id=current_batch_id,
+                raw_records=raw_count,
+                quarantined_records=quarantined_count,
+                deduplicated_records=0,
+                clean_records_to_load=0,
+            )
+            return pd.DataFrame(), metrics
+
+        # Apply coerced clean types
+        df_valid["quantity"] = quantity_numeric[valid_mask].astype(int)
+        df_valid["unit_price"] = unit_price_numeric[valid_mask].astype(float)
+
+        # Calculate or fill total_amount if missing or invalid
+        calculated_total = (df_valid["quantity"] * df_valid["unit_price"]).round(2)
+        valid_totals = total_amount_numeric[valid_mask]
+        df_valid["total_amount"] = np.where(
+            valid_totals.notna() & (valid_totals >= 0),
+            valid_totals.astype(float),
+            calculated_total,
+        )
+
+        df_valid["created_at"] = created_at_dt[valid_mask]
+
+        # Normalize default order status if empty/null
+        df_valid["order_status"] = df_valid["order_status"].apply(
+            lambda s: str(s).strip()
+            if pd.notna(s) and str(s).strip() != ""
+            else "COMPLETED"
+        )
+
+        # Normalize product_category: convert nan/None to None cleanly
+        df_valid["product_category"] = df_valid["product_category"].apply(
+            lambda c: str(c).strip()
+            if pd.notna(c) and str(c).strip() != "" and str(c).lower() != "nan"
+            else None
+        )
+
+        # 3. Deduplication on order_id
+        valid_before_dedup = len(df_valid)
+        df_dedup = df_valid.drop_duplicates(subset=["order_id"], keep="first").copy()
+        deduplicated_count = valid_before_dedup - len(df_dedup)
+        if deduplicated_count > 0:
+            logger.info(
+                "Deduplicated %d duplicate records on unique order_id",
+                deduplicated_count,
+            )
+
+        # 4. Add pipeline metadata
+        ingestion_time = datetime.now(timezone.utc)
+        df_dedup["ingested_at"] = ingestion_time
+        df_dedup["batch_id"] = current_batch_id
+
+        # Reorder columns to match canonical schema
+        final_columns = [
+            "order_id",
+            "customer_id",
+            "product_id",
+            "product_category",
+            "quantity",
+            "unit_price",
+            "total_amount",
+            "order_status",
+            "created_at",
+            "ingested_at",
+            "batch_id",
+        ]
+        clean_df = df_dedup[final_columns].reset_index(drop=True)
+        clean_count = len(clean_df)
+
         metrics = ETLBatchMetrics(
-            batch_id=active_batch_id,
-            raw_records=0,
-            quarantined_records=0,
-            deduplicated_records=0,
-            clean_records_to_load=0,
-        )
-        empty_clean = pd.DataFrame(
-            columns=[
-                "order_id",
-                "customer_id",
-                "product_id",
-                "product_category",
-                "quantity",
-                "unit_price",
-                "total_amount",
-                "order_status",
-                "created_at",
-                "ingested_at",
-                "batch_id",
-            ]
-        )
-        return empty_clean, pd.DataFrame(), metrics
-
-    clean_records: List[Dict[str, Any]] = []
-    quarantined_records: List[Dict[str, Any]] = []
-
-    for idx, row in raw_df.iterrows():
-        raw_dict = row.to_dict()
-        order_id = clean_string_field(row.get("order_id"))
-        customer_id = clean_string_field(row.get("customer_id"))
-        product_id = clean_string_field(row.get("product_id"))
-        product_category = clean_string_field(row.get("product_category"))
-        order_status = clean_string_field(row.get("order_status")) or "COMPLETED"
-
-        # Validate mandatory string IDs
-        if not order_id or not customer_id or not product_id:
-            raw_dict["quarantine_reason"] = (
-                "Missing required identifier (order_id, customer_id, or product_id)"
-            )
-            quarantined_records.append(raw_dict)
-            continue
-
-        # Validate & parse quantity
-        try:
-            quantity_val = row.get("quantity")
-            if pd.isna(quantity_val):
-                raise ValueError("Null quantity")
-            quantity = int(float(quantity_val))
-            if quantity <= 0:
-                raise ValueError("Quantity must be greater than zero")
-        except Exception as e:
-            raw_dict["quarantine_reason"] = f"Invalid quantity: {e}"
-            quarantined_records.append(raw_dict)
-            continue
-
-        # Validate & parse unit_price
-        try:
-            price_val = row.get("unit_price")
-            if pd.isna(price_val):
-                raise ValueError("Null unit_price")
-            unit_price = float(price_val)
-            if unit_price < 0.0:
-                raise ValueError("Unit price cannot be negative")
-        except Exception as e:
-            raw_dict["quarantine_reason"] = f"Invalid unit_price: {e}"
-            quarantined_records.append(raw_dict)
-            continue
-
-        # Validate total_amount or calculate from quantity * unit_price
-        try:
-            total_val = row.get("total_amount")
-            if pd.isna(total_val) or total_val is None:
-                total_amount = round(quantity * unit_price, 2)
-            else:
-                total_amount = round(float(total_val), 2)
-                if total_amount < 0.0:
-                    raise ValueError("Total amount cannot be negative")
-        except Exception as e:
-            raw_dict["quarantine_reason"] = f"Invalid total_amount: {e}"
-            quarantined_records.append(raw_dict)
-            continue
-
-        # Validate & parse created_at timestamp
-        created_at_dt = parse_datetime_field(row.get("created_at"))
-        if created_at_dt is None:
-            raw_dict["quarantine_reason"] = (
-                "Invalid or unparseable created_at timestamp"
-            )
-            quarantined_records.append(raw_dict)
-            continue
-
-        clean_records.append(
-            {
-                "order_id": order_id,
-                "customer_id": customer_id,
-                "product_id": product_id,
-                "product_category": product_category,
-                "quantity": quantity,
-                "unit_price": unit_price,
-                "total_amount": total_amount,
-                "order_status": order_status,
-                "created_at": created_at_dt,
-                "ingested_at": now_utc,
-                "batch_id": active_batch_id,
-            }
+            batch_id=current_batch_id,
+            raw_records=raw_count,
+            quarantined_records=quarantined_count,
+            deduplicated_records=deduplicated_count,
+            clean_records_to_load=clean_count,
         )
 
-    # Convert to DataFrame
-    intermediate_clean_df = pd.DataFrame(clean_records)
-    quarantined_df = pd.DataFrame(quarantined_records)
-    quarantine_count = len(quarantined_records)
-
-    # Deduplication on order_id
-    dedup_count = 0
-    if not intermediate_clean_df.empty:
-        before_dedup_count = len(intermediate_clean_df)
-        final_clean_df = intermediate_clean_df.drop_duplicates(
-            subset=["order_id"], keep="last"
-        ).copy()
-        dedup_count = before_dedup_count - len(final_clean_df)
-    else:
-        final_clean_df = intermediate_clean_df
-
-    clean_count = len(final_clean_df)
-
-    metrics = ETLBatchMetrics(
-        batch_id=active_batch_id,
-        raw_records=raw_count,
-        quarantined_records=quarantine_count,
-        deduplicated_records=dedup_count,
-        clean_records_to_load=clean_count,
-    )
-
-    logger.info(
-        "Transformation completed for batch %s: raw=%d, quarantined=%d, deduplicated=%d, clean=%d",
-        active_batch_id,
-        raw_count,
-        quarantine_count,
-        dedup_count,
-        clean_count,
-    )
-
-    return final_clean_df, quarantined_df, metrics
+        logger.info(
+            "Transformation complete: raw=%d, quarantined=%d, deduped=%d, clean=%d",
+            raw_count,
+            quarantined_count,
+            deduplicated_count,
+            clean_count,
+        )
+        return clean_df, metrics

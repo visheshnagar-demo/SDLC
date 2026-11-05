@@ -1,37 +1,45 @@
+"""Data models and schemas for the Sales Order ETL Pipeline."""
+
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class SalesOrderRecord(BaseModel):
+    """Pydantic model representing a clean, validated sales order record."""
+
+    model_config = ConfigDict(from_attributes=True)
+
     order_id: str = Field(..., description="Unique sales order identifier")
     customer_id: str = Field(..., description="Unique customer identifier")
-    product_id: str = Field(..., description="Unique product identifier")
+    product_id: str = Field(..., description="Unique product SKU/identifier")
     product_category: Optional[str] = Field(
         default=None, description="Product category"
     )
-    quantity: int = Field(..., description="Quantity ordered")
-    unit_price: float = Field(..., description="Unit price of the product")
-    total_amount: float = Field(..., description="Total order amount")
-    order_status: str = Field(..., description="Order processing status")
-    created_at: datetime = Field(..., description="Order creation timestamp")
-    ingested_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Pipeline ingestion timestamp"
+    quantity: int = Field(..., ge=1, description="Quantity of items purchased")
+    unit_price: float = Field(..., ge=0.0, description="Unit price per item")
+    total_amount: float = Field(..., ge=0.0, description="Total order amount")
+    order_status: str = Field(..., description="Order lifecycle status")
+    created_at: datetime = Field(
+        ..., description="Timestamp when order was originally placed"
     )
-    batch_id: str = Field(..., description="ETL batch run UUID")
+    ingested_at: datetime = Field(
+        ..., description="Timestamp when record was ingested into pipeline"
+    )
+    batch_id: str = Field(..., description="UUID identifier for ETL execution batch")
 
 
 class ETLBatchMetrics(BaseModel):
-    batch_id: str = Field(..., description="ETL batch run identifier")
-    raw_records: int = Field(
-        default=0, description="Total raw records read from source"
-    )
+    """Execution metrics and audit summary for a batch ETL run."""
+
+    batch_id: str = Field(..., description="Unique batch run identifier")
+    raw_records: int = Field(default=0, description="Total raw rows extracted")
     quarantined_records: int = Field(
-        default=0, description="Records failed validation / quarantined"
+        default=0, description="Corrupt/invalid rows quarantined"
     )
     deduplicated_records: int = Field(
-        default=0, description="Duplicate records eliminated"
+        default=0, description="Duplicate rows removed based on order_id"
     )
     clean_records_to_load: int = Field(
-        default=0, description="Valid deduplicated records loaded into BigQuery"
+        default=0, description="Clean validated rows prepared for BigQuery load"
     )

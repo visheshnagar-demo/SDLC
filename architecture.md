@@ -31,6 +31,9 @@ graph TD
 - server/loader.py
 - server/main.py
 - server/models.py
+- server/schemas/__init__.py
+- server/sql/__init__.py
+- server/sql/ddl/__init__.py
 - server/transformer.py
 
 ## Frontend Modules (client/)

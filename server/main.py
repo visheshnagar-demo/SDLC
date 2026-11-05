@@ -1,122 +1,139 @@
+"""Main entrypoint for the Daily Batch ETL Pipeline Cloud Run Job."""
+
 import argparse
 import logging
 import sys
-import uuid
 from typing import Optional
-from fastapi import FastAPI
+import uuid
 from server.config import settings
-from server.extractor import extract_from_gcs
-from server.transformer import transform_sales_data
-from server.loader import load_to_bigquery
+from server.extractor import Extractor
+from server.loader import Loader
 from server.models import ETLBatchMetrics
+from server.transformer import Transformer
 
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
-logger = logging.getLogger("sales_etl_pipeline")
-
-app = FastAPI(
-    title=settings.PROJECT_NAME,
-    description="Daily Batch ETL Pipeline deployed as a Cloud Run Job",
-    version="1.0.0",
-)
-
-
-@app.get("/health")
-def health():
-    return {"status": "ok", "service": settings.PROJECT_NAME}
-
-
-@app.post("/run")
-def trigger_pipeline():
-    metrics = run_pipeline()
-    return {"status": "success", "metrics": metrics.model_dump()}
+logger = logging.getLogger("server.main")
 
 
 def run_pipeline(
     gcs_uri: Optional[str] = None,
-    project_id: Optional[str] = None,
-    dataset_id: Optional[str] = None,
-    table_id: Optional[str] = None,
-    partition_field: Optional[str] = None,
-    storage_client=None,
-    bq_client=None,
+    destination_table: Optional[str] = None,
+    batch_id: Optional[str] = None,
+    extractor: Optional[Extractor] = None,
+    transformer: Optional[Transformer] = None,
+    loader: Optional[Loader] = None,
 ) -> ETLBatchMetrics:
+    """Execute the end-to-end batch ETL data pipeline.
+
+    Steps:
+      1. Extract raw sales orders CSV from GCS (or local path).
+      2. Clean, validate, and deduplicate records.
+      3. Load clean records into partitioned BigQuery table.
+
+    Args:
+        gcs_uri: Source CSV URI (defaults to settings.GCS_SOURCE_URI).
+        destination_table: Target BigQuery table ID (defaults to settings.bq_table_id).
+        batch_id: Unique batch execution ID.
+        extractor: Optional Extractor instance for dependency injection.
+        transformer: Optional Transformer instance for dependency injection.
+        loader: Optional Loader instance for dependency injection.
+
+    Returns:
+        ETLBatchMetrics summarising the batch processing run.
     """
-    Orchestrate Extract, Transform, and Load steps for the Daily Sales Order Batch Pipeline.
-    """
+    current_batch_id = batch_id or str(uuid.uuid4())
     source_uri = gcs_uri or settings.GCS_SOURCE_URI
-    target_project = project_id or settings.GCP_PROJECT
-    target_dataset = dataset_id or settings.BIGQUERY_DATASET
-    target_table = table_id or settings.BIGQUERY_TABLE
-    part_field = partition_field or settings.PARTITION_FIELD
-    batch_id = str(uuid.uuid4())
+    target_table = destination_table or settings.bq_table_id
 
     logger.info("==================================================")
-    logger.info("Starting Daily Sales Order ETL Batch: %s", batch_id)
-    logger.info("Source GCS URI: %s", source_uri)
-    logger.info(
-        "Target BigQuery: %s.%s.%s", target_project, target_dataset, target_table
-    )
+    logger.info("Starting Daily Batch ETL Pipeline")
+    logger.info("Batch ID:          %s", current_batch_id)
+    logger.info("Source URI:        %s", source_uri)
+    logger.info("Destination Table: %s", target_table)
     logger.info("==================================================")
 
-    # 1. EXTRACT
-    raw_df = extract_from_gcs(source_uri, storage_client=storage_client)
+    # 1. Extraction Phase
+    ext = extractor or Extractor()
+    raw_df = ext.extract(source_uri)
 
-    # 2. TRANSFORM & DEDUPLICATE
-    clean_df, quarantined_df, metrics = transform_sales_data(raw_df, batch_id=batch_id)
+    if raw_df is None or raw_df.empty:
+        logger.warning("Extraction returned no records. Exiting pipeline gracefully.")
+        metrics = ETLBatchMetrics(
+            batch_id=current_batch_id,
+            raw_records=0,
+            quarantined_records=0,
+            deduplicated_records=0,
+            clean_records_to_load=0,
+        )
+        logger.info("Batch %s finished with 0 records processed.", current_batch_id)
+        return metrics
 
-    # 3. LOAD TO BIGQUERY
-    if not clean_df.empty:
-        try:
-            loaded_count = load_to_bigquery(
-                df=clean_df,
-                project_id=target_project,
-                dataset_id=target_dataset,
-                table_id=target_table,
-                partition_field=part_field,
-                client=bq_client,
-            )
-            logger.info(
-                "Successfully loaded %d records to BigQuery table.", loaded_count
-            )
-        except Exception as e:
-            logger.error("Failed to load records into BigQuery: %s", e, exc_info=True)
-            raise
+    # 2. Transformation Phase
+    trans = transformer or Transformer(batch_id=current_batch_id)
+    clean_df, metrics = trans.transform(raw_df, batch_id=current_batch_id)
+
+    # 3. Loading Phase
+    if clean_df is not None and not clean_df.empty:
+        ld = loader or Loader()
+        loaded_count = ld.load_records(clean_df, destination_table_id=target_table)
+        logger.info(
+            "Loaded %d clean records into BigQuery table %s", loaded_count, target_table
+        )
     else:
-        logger.info("No clean records to load into BigQuery.")
+        logger.warning("No clean records available to load into BigQuery.")
 
     logger.info("==================================================")
-    logger.info("ETL Batch %s Completed Successfully", batch_id)
-    logger.info("Metrics: %s", metrics.model_dump_json())
+    logger.info("ETL Pipeline Execution Summary (Batch: %s):", current_batch_id)
+    logger.info("  Raw Records Extracted:     %d", metrics.raw_records)
+    logger.info("  Quarantined Records:       %d", metrics.quarantined_records)
+    logger.info("  Deduplicated Records:      %d", metrics.deduplicated_records)
+    logger.info("  Clean Records Loaded:      %d", metrics.clean_records_to_load)
     logger.info("==================================================")
 
     return metrics
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Run Daily Batch Sales ETL Pipeline")
-    parser.add_argument(
-        "--gcs-uri", type=str, default=None, help="GCS Source URI for raw CSV"
+def main() -> int:
+    """CLI entrypoint for Cloud Run Job execution."""
+    parser = argparse.ArgumentParser(
+        description="Daily Batch ETL Pipeline for Sales Orders"
     )
-    parser.add_argument("--project", type=str, default=None, help="GCP Project ID")
-    parser.add_argument("--dataset", type=str, default=None, help="BigQuery Dataset ID")
-    parser.add_argument("--table", type=str, default=None, help="BigQuery Table ID")
+    parser.add_argument(
+        "--gcs-uri",
+        type=str,
+        default=None,
+        help="GCS URI for input CSV file (e.g., gs://bucket/path.csv)",
+    )
+    parser.add_argument(
+        "--destination-table",
+        type=str,
+        default=None,
+        help="BigQuery destination table ID (e.g., project.dataset.table)",
+    )
+    parser.add_argument(
+        "--batch-id",
+        type=str,
+        default=None,
+        help="Optional custom batch UUID identifier",
+    )
     args = parser.parse_args()
 
     try:
-        run_pipeline(
+        metrics = run_pipeline(
             gcs_uri=args.gcs_uri,
-            project_id=args.project,
-            dataset_id=args.dataset,
-            table_id=args.table,
+            destination_table=args.destination_table,
+            batch_id=args.batch_id,
         )
-        sys.exit(0)
+        logger.info("Batch run succeeded: %s", metrics.model_dump_json())
+        return 0
     except Exception as e:
-        logger.fatal("ETL Pipeline job failed: %s", e, exc_info=True)
-        sys.exit(1)
+        logger.critical("Fatal error during ETL batch run: %s", e, exc_info=True)
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
