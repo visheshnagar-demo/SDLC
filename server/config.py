@@ -3,14 +3,19 @@ from pydantic import BaseModel
 
 
 class Settings(BaseModel):
-    PROJECT_NAME: str = "Payment Gateway Service"
-    API_V1_STR: str = "/api/v1"
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:////tmp/app.db")
-    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "dev-secret-change-in-production")
-    ALLOWED_ORIGINS: list[str] = os.getenv(
-        "ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000"
-    ).split(",")
-    STRIPE_WEBHOOK_SECRET: str = os.getenv("STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+    PROJECT_NAME: str = "Daily Batch Sales ETL Pipeline"
+    GCP_PROJECT: str = os.getenv(
+        "GCP_PROJECT", os.getenv("GOOGLE_CLOUD_PROJECT", "upbeat-repeater-477110-q6")
+    )
+    GCS_SOURCE_URI: str = os.getenv(
+        "GCS_SOURCE_URI",
+        "gs://sdlc-workspec-store/etl/data/raw_sales_data.csv",
+    )
+    BIGQUERY_DATASET: str = os.getenv("BIGQUERY_DATASET", "analytics")
+    BIGQUERY_TABLE: str = os.getenv("BIGQUERY_TABLE", "new_sales_orders")
+    PARTITION_FIELD: str = os.getenv("PARTITION_FIELD", "created_at")
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+    BATCH_TIMEOUT_SECONDS: int = int(os.getenv("BATCH_TIMEOUT_SECONDS", "300"))
 
 
 settings = Settings()

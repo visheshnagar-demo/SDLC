@@ -1,4 +1,35 @@
-# Project
+# Daily Batch Sales ETL Pipeline (SCRUM-300)
+
+Daily batch ETL pipeline deployed as a Google Cloud Run Job that ingests raw sales order CSV files from Google Cloud Storage, cleans and deduplicates records, and loads them into a date-partitioned Google BigQuery table `analytics.new_sales_orders`.
+
+## Architecture Overview
+
+1. **Extractor (`server/extractor.py`)**: Ingests sales order CSV files from GCS (`gs://sdlc-workspec-store/etl/data/raw_sales_data.csv`).
+2. **Transformer (`server/transformer.py`)**: Trims whitespace, casts and validates types, quarantines invalid rows, and deduplicates records by `order_id`.
+3. **Loader (`server/loader.py`)**: Auto-creates and loads cleaned records into date-partitioned BigQuery table `analytics.new_sales_orders`.
+4. **Runner / Entrypoint (`server/main.py`)**: CLI and batch job runner for Cloud Run Job execution.
+
+## Requirements & Setup
+
+### Environment Variables
+- `GCP_PROJECT`: Google Cloud Platform project ID
+- `GCS_SOURCE_URI`: GCS URI to source CSV file (default: `gs://sdlc-workspec-store/etl/data/raw_sales_data.csv`)
+- `BIGQUERY_DATASET`: Target BigQuery dataset (default: `analytics`)
+- `BIGQUERY_TABLE`: Target BigQuery table (default: `new_sales_orders`)
+- `PARTITION_FIELD`: Date partitioning column (default: `created_at`)
+
+### Local Installation & Testing
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+pytest
+```
+
+### Running the Pipeline
+```bash
+python -m server.main --gcs-uri gs://sdlc-workspec-store/etl/data/raw_sales_data.csv
+```
 
 ## Server
 
